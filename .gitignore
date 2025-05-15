@@ -2,3 +2,4 @@ data/
 token.json
 credentials.json
 venv/
+src/*.egg-info
