@@ -46,7 +46,7 @@ class DatasetPrepareService:
         satellite_client = FirePred()
         img_collection = satellite_client.compute_daily_features(date_of_interest + 'T' + time_stamp_start,
                                                                date_of_interest + 'T' + time_stamp_end,
-                                                               self.geometry)        
+                                                               self.geometry)
         return img_collection
 
     def download_image_to_drive(self, image_collection, index:str, utm_zone:str):

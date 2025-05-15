@@ -16,17 +16,20 @@ def create_fire_config_globfire(geojson_path, output_path, year):
         'output_bucket': 'firespreadprediction',
         'rectangular_size': 0.5, 'year': year }
     
+    # ensures that datetime objects are dumped as YYYY-MM-DD
     class DateSafeYAMLDumper(yaml.SafeDumper):
         def represent_data(self, data):
             if isinstance(data, datetime):
                 return self.represent_scalar('tag:yaml.org,2002:timestamp', data.strftime('%Y-%m-%d'))
             return super().represent_data(data)
     
+    # Populate fire entries
     for idx in first_occurrences.index:
         first = first_occurrences.loc[idx]
         last = last_occurrences.loc[idx]
         
         end_date = last['FDate'] if pd.notna(last['FDate']) else last['IDate']
+        # 4 day buffer before and after ignition/containment
         start_date = first['IDate'] - timedelta(days=4)
         end_date = end_date + timedelta(days=4)
         
@@ -40,6 +43,10 @@ def create_fire_config_globfire(geojson_path, output_path, year):
     with open(output_path, 'w') as f:
         yaml.dump(config, f, Dumper=DateSafeYAMLDumper, default_flow_style=False, sort_keys=False)
 
-# Usage:
-YEAR = 2020
-create_fire_config_globfire(f'data/perims/combined_fires_{YEAR}.geojson', f'config/us_fire_{YEAR}_1e7_test.yml', YEAR)
+def main():
+    # Usage:
+    YEAR = 2020
+    create_fire_config_globfire(f'data/perims/combined_fires_{YEAR}.geojson', f'config/us_fire_{YEAR}_1e7_test.yml', YEAR)
+
+if __name__ == "__main__":
+    main()

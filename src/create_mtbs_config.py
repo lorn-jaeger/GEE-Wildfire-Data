@@ -40,6 +40,10 @@ def create_fire_config_mtbs(geojson_path, output_path, year):
     with open(output_path, 'w') as f:
         yaml.dump(config, f, Dumper=DateSafeYAMLDumper, default_flow_style=False, sort_keys=False)
 
-# Usage:
-YEAR = 2023
-create_fire_config_mtbs(f'data/mtbs_perims/mtbs_perimeter_data/mtbs_perims_{YEAR}.geojson', f'WildfireSpreadTSCreateDataset/config/us_fire_{YEAR}_mtbs.yml', YEAR)
+def main()
+    # Usage:
+    YEAR = 2023
+    create_fire_config_mtbs(f'data/mtbs_perims/mtbs_perimeter_data/mtbs_perims_{YEAR}.geojson', f'WildfireSpreadTSCreateDataset/config/us_fire_{YEAR}_mtbs.yml', YEAR)
+
+if __name__ == "__main__":
+    main()

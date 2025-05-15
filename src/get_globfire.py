@@ -1,11 +1,12 @@
 import ee
+import configuration
 
 # Trigger the authentication flow.
 ee.Authenticate()
 
 # Initialize the library.
 # TODO: This is where you put in your own project id
-ee.Initialize(project='ee-earthdata-459817')
+ee.Initialize(project=configuration.PROJECT)
 
 import ee
 import pandas as pd
@@ -197,6 +198,7 @@ def get_combined_fires(year, min_size=1e7, region=None):
     daily_gdf = get_daily_fires(year, min_size, region)
     final_gdf = get_final_fires(year, min_size, region)
     
+    # Handle missing data
     if daily_gdf is None and final_gdf is None:
         return None, None, None
     
@@ -282,38 +284,45 @@ def analyze_fires(gdf):
     
     return stats
 
-# Example usage
-YEAR = "2020"
-MIN_SIZE = 1e7  # 10 square kilometers
+def main():
+    # Example usage
+    YEAR = "2020"
+    MIN_SIZE = 1e7  # 10 square kilometers
 
-# Get both daily and final perimeters
-combined_gdf, daily_gdf, final_gdf = get_combined_fires(YEAR, MIN_SIZE)
+    # Get both daily and final perimeters
+    combined_gdf, daily_gdf, final_gdf = get_combined_fires(YEAR, MIN_SIZE)
 
-if combined_gdf is not None:
-    print(f"\nAnalysis Results for {YEAR}:")
-    
-    print("\nCombined Perimeters:")
-    combined_stats = analyze_fires(combined_gdf)
-    for key, value in combined_stats.items():
-        print(f"{key}: {value}")
-    
-    if daily_gdf is not None:
-        print("\nDaily Perimeters:")
-        daily_stats = analyze_fires(daily_gdf)
-        for key, value in daily_stats.items():
+    if combined_gdf is not None:
+        print(f"\nAnalysis Results for {YEAR}:")
+        
+        print("\nCombined Perimeters:")
+        combined_stats = analyze_fires(combined_gdf)
+        for key, value in combined_stats.items():
             print(f"{key}: {value}")
-    
-    if final_gdf is not None:
-        print("\nFinal Perimeters:")
-        final_stats = analyze_fires(final_gdf)
-        for key, value in final_stats.items():
-            print(f"{key}: {value}")
-    
-    # Temporal distribution
-    print("\nFires by month:")
-    monthly_counts = combined_gdf.groupby([combined_gdf['date'].dt.month, 'source']).size().unstack(fill_value=0)
-    print(monthly_counts)
+        
+        if daily_gdf is not None:
+            print("\nDaily Perimeters:")
+            daily_stats = analyze_fires(daily_gdf)
+            for key, value in daily_stats.items():
+                print(f"{key}: {value}")
+        
+        if final_gdf is not None:
+            print("\nFinal Perimeters:")
+            final_stats = analyze_fires(final_gdf)
+            for key, value in final_stats.items():
+                print(f"{key}: {value}")
+        
+        # Temporal distribution
+        print("\nFires by month:")
+        monthly_counts = combined_gdf.groupby([combined_gdf['date'].dt.month, 'source']).size().unstack(fill_value=0)
+        print(monthly_counts)
 
-# drop everything that does not have at least 2 Id in combined_gdf
-combined_gdf_reduced = combined_gdf[combined_gdf['Id'].isin(combined_gdf['Id'].value_counts()[combined_gdf['Id'].value_counts() > 1].index)]# save to geojson
-combined_gdf_reduced.to_file(f"data/perims/co smbined_fires_{YEAR}.geojson", driver="GeoJSON")
+    # drop everything that does not have at least 2 Id in combined_gdf
+    combined_gdf_reduced = combined_gdf[
+        combined_gdf['Id'].isin(
+            combined_gdf['Id'].value_counts()[combined_gdf['Id'].value_counts() > 1].index)]# save to geojson
+
+    combined_gdf_reduced.to_file(f"{configuration.DATA_DIR}combined_fires_{YEAR}.geojson", driver="GeoJSON")
+
+if __name__ == '__main__':
+    main()

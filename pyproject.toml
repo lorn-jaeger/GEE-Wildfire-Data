@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=64.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "EE-Wildfire"
+version = "0.1.0"
+description = "A short description of your project"
+authors = [
+    { name = "Your Name", email = "your.email@example.com" }
+]
+readme = "README.md"
+# license = { file = "LICENSE" }
+requires-python = ">=3.10"
+
+dependencies = [
+	"earthengine-api",
+	"tqdm",
+	# "yaml",
+	"pandas",
+	"raster_tools",
+	"geopandas",
+	"shapely",
+	"numpy",
+	"geemap",
+	"tdqm",
+	"google-api-python-client",
+	"google-auth-httplib2",
+	"google-auth-oauthlib",
+]
+
+[project.urls]
+#Homepage = "https://github.com/yourusername/yourproject"

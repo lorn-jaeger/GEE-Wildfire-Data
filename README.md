@@ -1,5 +1,7 @@
  # stuff todo
 
+- catch timeout
+
 - github repo
 
 - quality README
