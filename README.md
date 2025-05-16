@@ -2,7 +2,7 @@
 
 - Catch timeout when downloading data.
 
-- Tie to Jesse's google drive, might be weird because its a shared folder. Multiple writing.
+- Tie to Jesse's google drive, might be weird because its a shared folder.
 
 ## Project Summary
 Earth-Engine-Wildfire-Data is a Python command-line utility and library for extracting and
