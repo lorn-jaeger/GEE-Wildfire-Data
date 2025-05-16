@@ -198,7 +198,9 @@ def main():
         action="store_true",
         help="Download TIFF files from google drive.",
     )
-    parser.add_argument("--export-data", action="store_true", help="Export data?")
+    parser.add_argument("--export-data",
+                        action="store_true",
+                        help="Export to Google Drive.")
 
     # parser.add_argument("--import-data", action="store_true", help="import data?")
 
