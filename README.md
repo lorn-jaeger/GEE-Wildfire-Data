@@ -1,16 +1,8 @@
 # Todo List
 
-- catch timeout
-
-- quality README
-
-- central install file
-
-- strip notebooks into python files
+- catch timeout when downloading data
 
 - tie to Jesse's google drive, might be weird because its a shared folder. Multiple writing.
-
-- containerize and publish
 
 ## Project Summary
 Earth-Engine-Wildfire-Data is a Python command-line utility and library for extracting and
