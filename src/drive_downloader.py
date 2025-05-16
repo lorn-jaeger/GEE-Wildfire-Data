@@ -11,7 +11,8 @@ from tqdm import tqdm
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
 class DriveDownloader:
-    def __init__(self):
+    def __init__(self, credentials):
+        self.creds = credentials
         self.service = self._get_drive_service()
         
     def _get_drive_service(self):
@@ -24,7 +25,7 @@ class DriveDownloader:
                 creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    configuration.CREDENTIALS, SCOPES)
+                    self.creds, SCOPES)
                 creds = flow.run_local_server(port=0)
             
             with open('token.json', 'w') as token:
@@ -96,7 +97,7 @@ def main():
     
     downloader = DriveDownloader()
     # downloader.download_folder(drive_folder, local_folder)
-    downloader.download_folder(configuration.DRIVE_DIR, configuration.OUTPUT_DIR)
+    # downloader.download_folder(configuration.DRIVE_DIR, configuration.OUTPUT_DIR)
     print("\nDownload completed!")
 
 if __name__ == '__main__':

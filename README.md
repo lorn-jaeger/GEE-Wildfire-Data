@@ -36,13 +36,12 @@
  - Service Usage Consumer
 
  We then created an oath account for google drive access.
- - APIs & Services/Credentials/+Create credentials
-	- configure OAuth screen, must be a desktop app
+We need to create an OAuth account for Google Drive access. In the top right hamburger menu select:
+ - APIs & Services/Credentials/+Create credentials/OAuth client ID
 	- OAuth client ID
-		- select Desktop App and give it a name.
-		- keep the Client ID and Client secret in a text file for later use.
-		- click download JSON from this screen, rename it to credentials.json, and move it
-		to the head of the project.
+		- first configure OAuth screen. Select Desktop App and give it a name.
+		- keep track of the Client ID and Client secret, we will need those later.
+		- click download JSON from this screen, these are your credentials.
 
  TODO: enable apis
 

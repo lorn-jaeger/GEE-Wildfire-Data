@@ -1,14 +1,10 @@
-import sys
 import os
+from pathlib import Path
 import argparse
-from bqplot import default
-import drive_downloader
 import ee
-from pandas._config import config
 import yaml
 from tqdm import tqdm
 from get_globfire import get_combined_fires, analyze_fires
-from DataPreparation.satellites.FirePred import FirePred
 from DataPreparation.DatasetPrepareService import DatasetPrepareService
 from create_globfire_config import create_fire_config_globfire
 from drive_downloader import DriveDownloader
@@ -19,6 +15,12 @@ config_data = {}
 def get_full_geojson_path():
     return f"{config_data['geojson']}combined_fires_{config_data['year']}.geojson"
 
+def get_full_yaml_path():
+    # yaml_path = f"{config_data['geojson']}/us_fire_{config_data['year']}_1e7_test.yml"
+    # return yaml_path
+    ROOT = Path(__file__).resolve().parent
+    config_dir = ROOT / "config" / f"us_fire_{config_data['year']}_1e7_test.yml"
+    return config_dir
 
 def load_yaml_config(path):
     if os.path.exists(path):
@@ -27,22 +29,16 @@ def load_yaml_config(path):
     return {}
 
 def save_yaml_config(config, path):
-    # print(config)
-    # print(path)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w') as f:
         yaml.dump(config, f, sort_keys=False)
 
-def load_fire_config():
+def load_fire_config(yaml_path):
     with open(
-        f"config/us_fire_{config_data['year']}_1e7.yml", "r", encoding="utf8"
+        yaml_path, "r", encoding="utf8"
     ) as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
     return config
-
-
-def create_config(type):
-    return
 
 
 # from get_globfire.py
@@ -79,7 +75,6 @@ def generate_geojson():
             .size()
             .unstack(fill_value=0)
         )
-        comb
         print(monthly_counts)
 
     # drop everything that does not have at least 2 Id in combined_gdf
@@ -99,11 +94,11 @@ def generate_geojson():
 
 
 # from DatasetPrepareService.py
-def export_data():
+def export_data(yaml_path):
     project_id = config_data['project_id']
     
     # fp = FirePred()
-    config = load_fire_config()
+    config = load_fire_config(yaml_path)
     fire_names = list(config.keys())
     for non_fire_key in ["output_bucket", "rectangular_size", "year"]:
         fire_names.remove(non_fire_key)
@@ -137,7 +132,9 @@ def export_data():
 def main():
     global config_data
     base_parser = argparse.ArgumentParser(add_help=False)
-    base_parser.add_argument('--config', type=str,default="./config_options.yml" ,help="Path to JSON config file")
+    base_parser.add_argument('--config', 
+                             type=str,default="./config_options.yml" ,
+                             help="Path to JSON config file")
     args_partial, _ = base_parser.parse_known_args()
 
     # Load from YAML config (if given)
@@ -200,7 +197,15 @@ def main():
     )
     parser.add_argument("--export-data",
                         action="store_true",
-                        help="Export to Google Drive.")
+                        help="Export to Google Drive")
+
+    parser.add_argument("--show-config",
+                        action="store_true",
+                        help="Show current configuration.")
+
+    parser.add_argument("--force-new-geojson",
+                        action="store_true",
+                        help="Force generate new geojson.")
 
     # parser.add_argument("--import-data", action="store_true", help="import data?")
 
@@ -208,14 +213,16 @@ def main():
     # TODO: arguments to make configs
 
     args = parser.parse_args()
-    print(args)
 
     # Update config_data with any non-None CLI args (override)
     for key in ["year","min_size","output","drive_dir",
-                "credentials","project_id","geojson","download", "export_data"]:
+                "credentials","project_id","geojson",
+                "download", "export_data", "show_config",
+                "force_new_geojson"]:
         val = getattr(args,key)
         if val is not None:
             config_data[key]=val
+
 
     # save dictionary back to yaml file
     if config_path:
@@ -226,20 +233,22 @@ def main():
     ee.Initialize(project=config_data['project_id'])
 
     geojson_path = get_full_geojson_path()
-    if not os.path.exists(geojson_path):
+    if (not os.path.exists(geojson_path) or config_data['force_new_geojson']):
         generate_geojson()
 
     # generate the YAML output config
-    yaml_path = f"{config_data['output']}us_fire_{config_data['year']}_1e7_test.yml"
+    yaml_path = get_full_yaml_path()
     create_fire_config_globfire(geojson_path, yaml_path, config_data['year'])
     
+    if(config_data['show_config']):
+        print(config_data)
     
     if(config_data['download']):
-        downloader = DriveDownloader()
+        downloader = DriveDownloader(config_data['credentials'])
         downloader.download_folder(config_data['drive_dir'], config_data['output'])
 
     if(config_data['export_data']):
-        export_data()
+        export_data(yaml_path)
 
 
 

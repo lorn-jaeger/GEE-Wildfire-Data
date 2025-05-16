@@ -1,21 +1,7 @@
-# import ee
-# import configuration
-#
-# # Trigger the authentication flow.
-# ee.Authenticate()
-#
-# # Initialize the library.
-# # TODO: This is where you put in your own project id
-# ee.Initialize(project=configuration.PROJECT)
-#
 import ee
 import pandas as pd
 import geopandas as gpd
-from shapely.geometry import Polygon, mapping
-import datetime
-
-# Initialize the Earth Engine API
-# ee.Initialize()
+from shapely.geometry import Polygon
 
 # Define the geometry for contiguous USA
 usa_coords = [

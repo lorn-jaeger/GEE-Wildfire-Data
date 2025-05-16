@@ -6,4 +6,6 @@ drive_dir: EarthEngine_WildfireSpreadTS_2020
 credentials: /home/kyle/NRML/OAuth/credentials.json
 project_id: ee-earthdata-459817
 download: false
-export_data: true
+export_data: false
+show_config: false
+force_new_geojson: false

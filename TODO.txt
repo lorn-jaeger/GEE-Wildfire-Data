@@ -1,3 +1,0 @@
-Get perims for beyond 2021 (use MTBS, USFS, NIFC, VIIRS, other sources)
-- encode config files using the same setup as the globfire perims (modification required)
-

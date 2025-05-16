@@ -32,3 +32,6 @@ dependencies = [
 
 [project.urls]
 #Homepage = "https://github.com/yourusername/yourproject"
+
+[project.scripts]
+ee-wildfire = "main:main"
