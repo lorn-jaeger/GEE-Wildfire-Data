@@ -36,7 +36,7 @@ workflows.
 
  As of mid-2023, Google Earth Engine access must be linked to a Google Cloud Project, even for
  free/non-commercial usage. So sign up for a [non-commercial earth engine account](https://earthengine.google.com/noncommercial/).
- .
+ 
 
 
 ## Google API Instructions 
