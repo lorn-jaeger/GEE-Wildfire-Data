@@ -1,8 +1,10 @@
 import sys
+import os
 import argparse
 from bqplot import default
 import ee
 import configuration
+from pandas._config import config
 import yaml
 from tqdm import tqdm
 from get_globfire import get_combined_fires, analyze_fires
@@ -11,12 +13,22 @@ from DataPreparation.DatasetPrepareService import DatasetPrepareService
 from create_globfire_config import create_fire_config_globfire
 from drive_downloader import DriveDownloader
 
-MIN_SIZE = 1e7
+config_data = {}
 
+def load_yaml_config(path):
+    if os.path.exists(path):
+        with open(path, 'r') as f:
+            return yaml.safe_load(f) or {}
+    return {}
 
-def load_config():
+def save_yaml_config(config, path):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w') as f:
+        yaml.dump(config, f, sort_keys=False)
+
+def load_fire_config():
     with open(
-        f"config/us_fire_{configuration.YEAR}_1e7.yml", "r", encoding="utf8"
+        f"config/us_fire_{config_data['year']}_1e7.yml", "r", encoding="utf8"
     ) as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
     return config
@@ -27,14 +39,14 @@ def create_config(type):
 
 
 # from get_globfire.py
-def import_data():
+def generate_geojson():
     # Get both daily and final perimeters
     combined_gdf, daily_gdf, final_gdf = get_combined_fires(
-        configuration.YEAR, configuration.MIN_SIZE
+        config_data['year'], config_data['min_size'] 
     )
 
     if combined_gdf is not None:
-        print(f"\nAnalysis Results for {configuration.YEAR}:")
+        print(f"\nAnalysis Results for {config_data['year']}:")
 
         print("\nCombined Perimeters:")
         combined_stats = analyze_fires(combined_gdf)
@@ -72,17 +84,18 @@ def import_data():
     ]  # save to geojson
 
     combined_gdf_reduced.to_file(
-        f"{configuration.DATA_DIR}combined_fires_{configuration.YEAR}.geojson",
+        f"{config_data['geojson']}combined_fires_{config_data['year']}.geojson",
         driver="GeoJSON",
     )
 
 
 # from DatasetPrepareService.py
 def export_data():
-    ee.Authenticate()
-    ee.Initialize(project=configuration.PROJECT)
+    project_id = config_data['project_id']
+    print(project_id)
+    
     # fp = FirePred()
-    config = load_config()
+    config = load_fire_config()
     fire_names = list(config.keys())
     for non_fire_key in ["output_bucket", "rectangular_size", "year"]:
         fire_names.remove(non_fire_key)
@@ -114,48 +127,60 @@ def export_data():
 
 
 def main():
+    global config_data
+    base_parser = argparse.ArgumentParser(add_help=False)
+    base_parser.add_argument('--config', type=str,default="config_options.yml" ,help="Path to JSON config file")
+    args_partial, _ = base_parser.parse_known_args()
+
+    # Load from YAML config (if given)
+    config_path = args_partial.config
+    config_data = load_yaml_config(config_path) if config_path else {}
+
+    # Full parser
     parser = argparse.ArgumentParser(
-        prog="EE-Wildfire",
-        description="Generate fire configuration YAML from GeoJSON fire perimeters.",
+        parents=[base_parser],
+        description="Generate fire config YAML from GeoJSON."
     )
     parser.add_argument(
-        "--year", type=str, required=True, help="Year of fire parameters."
+        "--year", type=str, help="Year of fire parameters."
     )
 
-    parser.add_argument("--min-size", type=float, default=configuration.MIN_SIZE)
+    parser.add_argument("--min-size", type=float, 
+                        # default=configuration.MIN_SIZE,
+                        )
 
     parser.add_argument(
         "--output",
         type=str,
-        default=configuration.OUTPUT_DIR,
+        # default=configuration.OUTPUT_DIR,
         help="local directory where the TIFF files will go.",
     )
 
     parser.add_argument(
         "--drive-dir",
         type=str,
-        default=configuration.DATA_DIR,
+        # default=configuration.DATA_DIR,
         help="The google drive directory for TIFF files",
     )
 
     parser.add_argument(
         "--credentials",
         type=str,
-        default=configuration.CREDENTIALS,
+        # default=configuration.CREDENTIALS,
         help="Path to Google OAuth credentials JSON.",
     )
 
     parser.add_argument(
         "--project-id",
         type=str,
-        default=configuration.PROJECT,
+        # default=configuration.PROJECT,
         help="Project ID for Google Cloud",
     )
 
     parser.add_argument(
         "--geojson",
         type=str,
-        default=configuration.DATA_DIR,
+        # default=configuration.DATA_DIR,
         help="Directory to store geojson files",
     )
 
@@ -174,16 +199,19 @@ def main():
 
     args = parser.parse_args()
 
-    if args.import_data:
-        import_data()
+    # Update config_data with any non-None CLI args (override)
+    for key in ["year","min_size","output","drive_dir",
+                "credentials","project_id","geojson","download"]:
+        val = getattr(args,key)
+        if val is not None:
+            config_data[key]=val
 
-    if args.export_data:
-        export_data()
+    # use or generate GeoJSON
+    print(config_data)
+    ee.Authenticate()
+    ee.Initialize(project=config_data['project_id'])
 
-    if args.download:
-        downloader = DriveDownloader()
-        downloader.download_folder(configuration.DRIVE_DIR, configuration.OUTPUT_DIR)
-    return
+    # export_data()
 
 
 if __name__ == "__main__":
