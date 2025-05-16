@@ -2,6 +2,7 @@ import sys
 import os
 import argparse
 from bqplot import default
+import drive_downloader
 import ee
 import configuration
 from pandas._config import config
@@ -12,8 +13,13 @@ from DataPreparation.satellites.FirePred import FirePred
 from DataPreparation.DatasetPrepareService import DatasetPrepareService
 from create_globfire_config import create_fire_config_globfire
 from drive_downloader import DriveDownloader
+from create_globfire_config import create_fire_config_globfire
 
 config_data = {}
+
+def get_full_geojson_path():
+    return f"{config_data['geojson']}combined_fires_{config_data['year']}.geojson"
+
 
 def load_yaml_config(path):
     if os.path.exists(path):
@@ -22,6 +28,8 @@ def load_yaml_config(path):
     return {}
 
 def save_yaml_config(config, path):
+    # print(config)
+    # print(path)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w') as f:
         yaml.dump(config, f, sort_keys=False)
@@ -72,6 +80,7 @@ def generate_geojson():
             .size()
             .unstack(fill_value=0)
         )
+        comb
         print(monthly_counts)
 
     # drop everything that does not have at least 2 Id in combined_gdf
@@ -83,8 +92,9 @@ def generate_geojson():
         )
     ]  # save to geojson
 
+    geojson_path = get_full_geojson_path()
     combined_gdf_reduced.to_file(
-        f"{config_data['geojson']}combined_fires_{config_data['year']}.geojson",
+        geojson_path,
         driver="GeoJSON",
     )
 
@@ -92,7 +102,6 @@ def generate_geojson():
 # from DatasetPrepareService.py
 def export_data():
     project_id = config_data['project_id']
-    print(project_id)
     
     # fp = FirePred()
     config = load_fire_config()
@@ -129,7 +138,7 @@ def export_data():
 def main():
     global config_data
     base_parser = argparse.ArgumentParser(add_help=False)
-    base_parser.add_argument('--config', type=str,default="config_options.yml" ,help="Path to JSON config file")
+    base_parser.add_argument('--config', type=str,default="./config_options.yml" ,help="Path to JSON config file")
     args_partial, _ = base_parser.parse_known_args()
 
     # Load from YAML config (if given)
@@ -186,32 +195,51 @@ def main():
 
     parser.add_argument(
         "--download",
-        type=bool,
-        default=False,
+        # type=bool,
+        action="store_true",
         help="Download TIFF files from google drive.",
     )
+    parser.add_argument("--export-data", action="store_true", help="Export data?")
 
-    parser.add_argument("--export-data", type=bool, default=False, help="Export data?")
+    # parser.add_argument("--import-data", action="store_true", help="import data?")
 
-    parser.add_argument("--import-data", type=bool, default=False, help="import data?")
 
     # TODO: arguments to make configs
 
     args = parser.parse_args()
+    print(args)
 
     # Update config_data with any non-None CLI args (override)
     for key in ["year","min_size","output","drive_dir",
-                "credentials","project_id","geojson","download"]:
+                "credentials","project_id","geojson","download", "export_data"]:
         val = getattr(args,key)
         if val is not None:
             config_data[key]=val
 
+    # save dictionary back to yaml file
+    if config_path:
+        save_yaml_config(config_data, config_path)
+
     # use or generate GeoJSON
-    print(config_data)
     ee.Authenticate()
     ee.Initialize(project=config_data['project_id'])
 
-    # export_data()
+    geojson_path = get_full_geojson_path()
+    if not os.path.exists(geojson_path):
+        generate_geojson()
+
+    # generate the YAML output config
+    yaml_path = f"{config_data['output']}us_fire_{config_data['year']}_1e7_test.yml"
+    create_fire_config_globfire(geojson_path, yaml_path, config_data['year'])
+    
+    
+    if(config_data['download']):
+        downloader = DriveDownloader()
+        downloader.download_folder(config_data['drive_dir'], config_data['output'])
+
+    if(config_data['export_data']):
+        export_data()
+
 
 
 if __name__ == "__main__":
