@@ -5,5 +5,7 @@ venv/
 src/*.egg-info
 dist/
 
+src/DataPreparation/__pycache__/*
+src/DataPreparation/satellites/__pycache__/*
 __pycache__/
 **/__pycache__/
