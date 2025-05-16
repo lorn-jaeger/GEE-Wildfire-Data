@@ -52,4 +52,8 @@ We need to create an OAuth account for Google Drive access. In the top right ham
 
 TODO: main file config
 
+## Acknowledgements
+
+This project builds on work from the [WildfireSpreadTSCreateDataset]{https://github.com/SebastianGer/WildfireSpreadTSCreateDataset}. Credit to original authors for providing data, methods,
+and insights.
 

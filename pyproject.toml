@@ -4,13 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "EE-Wildfire"
-version = "0.1.0"
-description = "A short description of your project"
+version = "2025.0.1"
+description = "Pulls data from Google Earth Engine, syncs it to Google Drive, and downloads files."
 authors = [
-    { name = "Your Name", email = "your.email@example.com" }
+    { name = "Your Name", email = "your.email@example.com" },
+    { name = "Kyle Krstulich", email = "kylekrstulich@gmail.com" },
 ]
+
+maintainers = [
+    { name = "Kyle Krstulich", email = "kylekrstulich@gmail.com" },
+]
+
 readme = "README.md"
-# license = { file = "LICENSE" }
+license = { file = "LICENSE" }
 requires-python = ">=3.10"
 
 dependencies = [
@@ -27,11 +33,12 @@ dependencies = [
 	"google-api-python-client",
 	"google-auth-httplib2",
 	"google-auth-oauthlib",
-	"setuptools"
+	"setuptools",
+	"wheel",
 ]
 
 [project.urls]
-#Homepage = "https://github.com/yourusername/yourproject"
+Homepage = "https://github.com/KylesCorner/Earth-Engine-Wildfire-Data/tree/master"
 
 [project.scripts]
 ee-wildfire = "main:main"
