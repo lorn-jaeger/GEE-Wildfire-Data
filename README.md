@@ -1,8 +1,8 @@
 # Todo List
 
-- catch timeout when downloading data
+- Catch timeout when downloading data.
 
-- tie to Jesse's google drive, might be weird because its a shared folder. Multiple writing.
+- Tie to Jesse's google drive, might be weird because its a shared folder. Multiple writing.
 
 ## Project Summary
 Earth-Engine-Wildfire-Data is a Python command-line utility and library for extracting and
