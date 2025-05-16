@@ -80,6 +80,7 @@ This tool can be run from the command line to generate fire configuration YAML f
 | `--export-data`         | `flag`  | If set, data will be exported to Google Drive using Earth Engine.          |
 | `--show-config`         | `flag`  | Print the currently loaded configuration and exit. Useful for debugging.   |
 | `--force-new-geojson`   | `flag`  | Force the script to generate a new GeoJSON file even if one exists.        |
+| `--sync-year`   | `flag`  | Have all config and output files sync to the year in the config.        |
 
 ###  Basic Usage
 
