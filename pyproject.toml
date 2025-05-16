@@ -18,8 +18,17 @@ maintainers = [
 ]
 
 readme = "README.md"
+
 license = { file = "LICENSE" }
+
 requires-python = ">=3.10"
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python"
+]
+
+keywords = ["wildfire", "earth engine"]
 
 dependencies = [
 	"earthengine-api",
