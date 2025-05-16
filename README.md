@@ -1,4 +1,4 @@
- # Todo List
+# Todo List
 
 - catch timeout
 
@@ -12,7 +12,7 @@
 
 - containerize and publish
 
-# Prerequisite
+## Prerequisite
 
  I ran into some problems with google cloud. I signed up for a non-commercial earth engine account
  https://earthengine.google.com/noncommercial/.
@@ -21,7 +21,7 @@
  As of mid-2023, Google Earth Engine access must be linked to a Google Cloud Project, even for
  free/non-commercial usage.
 
- # Install/Config instructions
+## Google API Instructions 
 
  Make a service account and add these rolls:
  - Owner
@@ -53,10 +53,35 @@ From this menu select `Google Drive API` and click `Enable API`. Do the same for
  in google cloud navigate to API's & Servies/OAut concent screen/Audience
 	- Scroll down and under Test users click + Add users. Select your main account.
 
+## Install Instructions
 
-TODO: main file config
 
-## Acknowledgements
+## Command-Line Interface (CLI)
+
+This tool can be run from the command line to generate fire configuration YAML files from GeoJSON data. Configuration can be passed directly via flags or through a YAML file using `--config`.
+
+| Argument                | Type    | Description                                                                 |
+|-------------------------|---------|-----------------------------------------------------------------------------|
+| `--config`              | `str`   | Path to a YAML configuration file. Defaults to `./config_options.yml`.     |
+| `--year`                | `str`   | The year of the fire events to process.                                    |
+| `--min-size`            | `float` | Minimum fire size (in square meters) to include.                           |
+| `--output`              | `str`   | Local directory to store generated TIFF files.                             |
+| `--drive-dir`           | `str`   | Google Drive directory where TIFFs are uploaded or downloaded from.        |
+| `--credentials`         | `str`   | Path to the Google OAuth2 credentials JSON file. Required for GEE export.  |
+| `--project-id`          | `str`   | Google Cloud project ID associated with your Earth Engine access.          |
+| `--geojson`             | `str`   | Path to the input or output GeoJSON file containing fire perimeter data.   |
+| `--download`            | `flag`  | If set, the tool will download TIFF files from Google Drive.               |
+| `--export-data`         | `flag`  | If set, data will be exported to Google Drive using Earth Engine.          |
+| `--show-config`         | `flag`  | Print the currently loaded configuration and exit. Useful for debugging.   |
+| `--force-new-geojson`   | `flag`  | Force the script to generate a new GeoJSON file even if one exists.        |
+
+###  Basic Usage
+
+```bash
+ee-wildfire --config ./config_options.yml --year 2020 --geojson data/perims/combined_fires_2020.geojson
+```
+
+# Acknowledgements
 
 This project builds on work from the [WildfireSpreadTSCreateDataset]{https://github.com/SebastianGer/WildfireSpreadTSCreateDataset}. Credit to original authors for providing data, methods,
 and insights.
