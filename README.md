@@ -89,6 +89,6 @@ ee-wildfire --config ./config_options.yml --year 2020 --geojson data/perims/comb
 
 # Acknowledgements
 
-This project builds on work from the [WildfireSpreadTSCreateDataset]{https://github.com/SebastianGer/WildfireSpreadTSCreateDataset}. Credit to original authors for providing data, methods,
+This project builds on work from the [WildfireSpreadTSCreateDataset](https://github.com/SebastianGer/WildfireSpreadTSCreateDataset). Credit to original authors for providing data, methods,
 and insights.
 
