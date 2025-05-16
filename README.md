@@ -37,17 +37,17 @@
 
  We then created an oath account for google drive access.
 We need to create an OAuth account for Google Drive access. In the top right hamburger menu select:
+
  - APIs & Services/Credentials/+Create credentials/OAuth client ID
 	- OAuth client ID
 		- first configure OAuth screen. Select Desktop App and give it a name.
 		- keep track of the Client ID and Client secret, we will need those later.
 		- click download JSON from this screen, these are your credentials.
 
- TODO: enable apis
 Now we need to enable the apis. In the top right hamburger menu select:
-	- APIs & Services
-	From this menu select `Google Drive API` and click `Enable API`. Do the same for `Google
- Earth Engine API`
+
+- APIs & Services
+From this menu select `Google Drive API` and click `Enable API`. Do the same for `Google Earth Engine API`
 
  Now we need to add ourselves as a test user
  in google cloud navigate to API's & Servies/OAut concent screen/Audience
