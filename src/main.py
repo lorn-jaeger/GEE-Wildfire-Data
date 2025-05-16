@@ -22,6 +22,10 @@ def get_full_yaml_path():
     config_dir = ROOT / "config" / f"us_fire_{config_data['year']}_1e7_test.yml"
     return config_dir
 
+def sync_drive_path_with_year():
+    drive_path = f"EarthEngine_WildfireSpreadTS_{config_data['year']}"
+    config_data['drive_dir'] = drive_path
+
 def load_yaml_config(path):
     if os.path.exists(path):
         with open(path, 'r') as f:
@@ -207,10 +211,9 @@ def main():
                         action="store_true",
                         help="Force generate new geojson.")
 
-    # parser.add_argument("--import-data", action="store_true", help="import data?")
-
-
-    # TODO: arguments to make configs
+    parser.add_argument("--sync-year",
+                        action="store_true",
+                        help="Syncs the year to the input/output files")
 
     args = parser.parse_args()
 
@@ -218,7 +221,7 @@ def main():
     for key in ["year","min_size","output","drive_dir",
                 "credentials","project_id","geojson",
                 "download", "export_data", "show_config",
-                "force_new_geojson"]:
+                "force_new_geojson", "sync_year"]:
         val = getattr(args,key)
         if val is not None:
             config_data[key]=val
@@ -232,8 +235,14 @@ def main():
     ee.Authenticate()
     ee.Initialize(project=config_data['project_id'])
 
+
+    if(config_data['sync_year']):
+        sync_drive_path_with_year()
+
+
     geojson_path = get_full_geojson_path()
     if (not os.path.exists(geojson_path) or config_data['force_new_geojson']):
+        print("Generating Geojson...")
         generate_geojson()
 
     # generate the YAML output config
@@ -248,7 +257,9 @@ def main():
         downloader.download_folder(config_data['drive_dir'], config_data['output'])
 
     if(config_data['export_data']):
+        print("Exporting data...")
         export_data(yaml_path)
+
 
 
 

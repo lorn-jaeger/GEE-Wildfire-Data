@@ -1,4 +1,4 @@
-year: 2020
+year: '2019'
 min_size: 1000000
 geojson: /home/kyle/NRML/data/perims/
 output: /home/kyle/NRML/data/tiff/
@@ -7,5 +7,6 @@ credentials: /home/kyle/NRML/OAuth/credentials.json
 project_id: ee-earthdata-459817
 download: false
 export_data: false
-show_config: false
-force_new_geojson: false
+show_config: true
+force_new_geojson: true
+sync_year: false

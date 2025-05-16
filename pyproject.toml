@@ -39,6 +39,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/KylesCorner/Earth-Engine-Wildfire-Data/tree/master"
+Issues = "https://github.com/KylesCorner/Earth-Engine-Wildfire-Data/issues"
 
 [project.scripts]
 ee-wildfire = "main:main"

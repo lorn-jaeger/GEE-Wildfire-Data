@@ -3,3 +3,7 @@ token.json
 credentials.json
 venv/
 src/*.egg-info
+dist/
+
+__pycache__/
+**/__pycache__/
