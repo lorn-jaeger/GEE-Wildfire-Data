@@ -53,8 +53,14 @@ From this menu select `Google Drive API` and click `Enable API`. Do the same for
  in google cloud navigate to API's & Servies/OAut concent screen/Audience
 	- Scroll down and under Test users click + Add users. Select your main account.
 
-## Install Instructions
 
+## Install Instructions
+For the experimental build
+```bash
+git clone git@github.com:KylesCorner/Earth-Engine-Wildfire-Data.git
+cd Earth-Engine-Wildfire-Data
+pip instll -e .
+```
 
 ## Command-Line Interface (CLI)
 
