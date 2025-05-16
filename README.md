@@ -65,7 +65,13 @@ From this menu select `Google Drive API` and click `Enable API`. Do the same for
 
 
 ## Install Instructions
-For the experimental build
+
+For the stable build:
+```bash
+pip install ee-wildfire
+```
+
+For the experimental build:
 ```bash
 git clone git@github.com:KylesCorner/Earth-Engine-Wildfire-Data.git
 cd Earth-Engine-Wildfire-Data
