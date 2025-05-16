@@ -23,7 +23,7 @@
 
  # Install/Config instructions
 
- Make a service account and added these rolls:
+ Make a service account and add these rolls:
  - Owner
  - Service Usage Admin
  - Service Usage Consumer
@@ -44,6 +44,10 @@ We need to create an OAuth account for Google Drive access. In the top right ham
 		- click download JSON from this screen, these are your credentials.
 
  TODO: enable apis
+Now we need to enable the apis. In the top right hamburger menu select:
+	- APIs & Services
+	From this menu select `Google Drive API` and click `Enable API`. Do the same for `Google
+ Earth Engine API`
 
  Now we need to add ourselves as a test user
  in google cloud navigate to API's & Servies/OAut concent screen/Audience
