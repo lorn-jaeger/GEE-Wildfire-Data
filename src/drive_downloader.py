@@ -7,7 +7,6 @@ from googleapiclient.http import MediaIoBaseDownload
 import io
 from pathlib import Path
 from tqdm import tqdm
-import configuration
 
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 

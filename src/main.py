@@ -4,7 +4,6 @@ import argparse
 from bqplot import default
 import drive_downloader
 import ee
-import configuration
 from pandas._config import config
 import yaml
 from tqdm import tqdm

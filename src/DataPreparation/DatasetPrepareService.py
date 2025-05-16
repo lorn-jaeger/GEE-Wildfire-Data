@@ -13,7 +13,6 @@ if root_dir not in sys.path:
     sys.path.append(root_dir)
 
 from DataPreparation.satellites.FirePred import FirePred
-import configuration
 
 class DatasetPrepareService:
     def __init__(self, location, config):
