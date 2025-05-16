@@ -75,7 +75,7 @@ For the experimental build:
 ```bash
 git clone git@github.com:KylesCorner/Earth-Engine-Wildfire-Data.git
 cd Earth-Engine-Wildfire-Data
-pip instll -e .
+pip install -e .
 ```
 
 ## Command-Line Interface (CLI)
