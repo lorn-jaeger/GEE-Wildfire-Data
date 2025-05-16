@@ -12,6 +12,24 @@
 
 - containerize and publish
 
+## Project Summary
+Earth-Engine-Wildfire-Data is a Python command-line utility and library for extracting and
+transforming wildfire-related geospatial data from Google Earth Engine. It supports:
+
+- Access to MODIS, VIIRS, GRIDMET, and other remote sensing datasets.
+
+- Filtering wildfire perimeters by date, size, and region.
+
+- Combining daily and final fire perimeters.
+
+- Generating YAML config files for use in simulation or prediction tools.
+
+- Command-line configurability with persistent YAML-based settings.
+
+- This tool is intended for researchers, data scientists, or modelers working with wildfire data
+pipelines, particularly those interested in integrating Earth Engine datasets into geospatial ML
+workflows.
+
 ## Prerequisite
 
  Requires at least python 3.10.
