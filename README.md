@@ -14,12 +14,12 @@
 
 ## Prerequisite
 
- I ran into some problems with google cloud. I signed up for a non-commercial earth engine account
- https://earthengine.google.com/noncommercial/.
- Keep track of the project ID we will need it later.
+ Requires at least python 3.10.
 
  As of mid-2023, Google Earth Engine access must be linked to a Google Cloud Project, even for
- free/non-commercial usage.
+ free/non-commercial usage. So sign up for a [non-commercial earth engine account](https://earthengine.google.com/noncommercial/).
+ .
+
 
 ## Google API Instructions 
 
@@ -64,7 +64,8 @@ pip instll -e .
 
 ## Command-Line Interface (CLI)
 
-This tool can be run from the command line to generate fire configuration YAML files from GeoJSON data. Configuration can be passed directly via flags or through a YAML file using `--config`.
+This tool can be run from the command line to generate fire configuration YAML files from GeoJSON
+data. Configuration can be passed directly via flags or through a YAML file using `--config`.
 
 | Argument                | Type    | Description                                                                 |
 |-------------------------|---------|-----------------------------------------------------------------------------|
