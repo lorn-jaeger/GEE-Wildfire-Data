@@ -8,7 +8,7 @@ from get_globfire import get_combined_fires, analyze_fires
 from DataPreparation.DatasetPrepareService import DatasetPrepareService
 from create_globfire_config import create_fire_config_globfire
 from drive_downloader import DriveDownloader
-from create_globfire_config import create_fire_config_globfire
+from create_config import create_fire_config_globfire
 
 config_data = {}
 
