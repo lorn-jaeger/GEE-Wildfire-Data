@@ -13,11 +13,9 @@ from create_config import create_fire_config_globfire
 config_data = {}
 
 def get_full_geojson_path():
-    return f"{config_data['geojson']}combined_fires_{config_data['year']}.geojson"
+    return f"{config_data['geojson_dir']}combined_fires_{config_data['year']}.geojson"
 
 def get_full_yaml_path():
-    # yaml_path = f"{config_data['geojson']}/us_fire_{config_data['year']}_1e7_test.yml"
-    # return yaml_path
     ROOT = Path(__file__).resolve().parent
     config_dir = ROOT / "config" / f"us_fire_{config_data['year']}_1e7_test.yml"
     return config_dir
@@ -187,7 +185,7 @@ def main():
     )
 
     parser.add_argument(
-        "--geojson",
+        "--geojson-dir",
         type=str,
         # default=configuration.DATA_DIR,
         help="Directory to store geojson files",
@@ -219,7 +217,7 @@ def main():
 
     # Update config_data with any non-None CLI args (override)
     for key in ["year","min_size","output","drive_dir",
-                "credentials","project_id","geojson",
+                "credentials","project_id","geojson_dir",
                 "download", "export_data", "show_config",
                 "force_new_geojson", "sync_year"]:
         val = getattr(args,key)

@@ -112,7 +112,7 @@ data. Configuration can be passed directly via flags or through a YAML file usin
 | `--drive-dir`           | `str`   | Google Drive directory where TIFFs are uploaded or downloaded from.        |
 | `--credentials`         | `str`   | Path to the Google OAuth2 credentials JSON file. Required for GEE export.  |
 | `--project-id`          | `str`   | Google Cloud project ID associated with your Earth Engine access.          |
-| `--geojson`             | `str`   | Path to the input or output GeoJSON file containing fire perimeter data.   |
+| `--geojson-dir`             | `str`   | Path to the input or output directory for GeoJSON files containing fire perimeter data.   |
 | `--download`            | `flag`  | If set, the tool will download TIFF files from Google Drive.               |
 | `--export-data`         | `flag`  | If set, data will be exported to Google Drive using Earth Engine.          |
 | `--show-config`         | `flag`  | Print the currently loaded configuration and exit. Useful for debugging.   |
@@ -122,7 +122,7 @@ data. Configuration can be passed directly via flags or through a YAML file usin
 ###  Basic Usage
 
 ```bash
-ee-wildfire --config ./config_options.yml --year 2020 --geojson data/perims/combined_fires_2020.geojson
+ee-wildfire --config ./config_options.yml --year 2020 --geojson data/perims/
 ```
 
 # Acknowledgements
