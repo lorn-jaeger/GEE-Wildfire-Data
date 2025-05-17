@@ -71,11 +71,31 @@ For the stable build:
 pip install ee-wildfire
 ```
 
+
 For the experimental build:
 ```bash
 git clone git@github.com:KylesCorner/Earth-Engine-Wildfire-Data.git
 cd Earth-Engine-Wildfire-Data
 pip install -e .
+```
+
+## Configuration
+There are two ways to configure this tool; you can use command line arguments to alter the internal
+YAML file, or you can input your own YAML. Here's a template:
+
+```yaml
+year: '2020'
+min_size: 1000000
+geojson: /home/kyle/NRML/data/perims/
+output: /home/kyle/NRML/data/tiff/
+drive_dir: EarthEngine_WildfireSpreadTS_2020
+credentials: /home/kyle/NRML/OAuth/credentials.json
+project_id: project_id_here
+download: false
+export_data: false
+show_config: true
+force_new_geojson: false
+sync_year: false
 ```
 
 ## Command-Line Interface (CLI)
