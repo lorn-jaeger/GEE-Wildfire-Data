@@ -138,7 +138,7 @@ def export_data(yaml_path):
         dataset_pre = DatasetPrepareService(location=location, config=config)
 
         try:
-            print("Trying to export to Google Drive")
+            print(f"Trying to export {location} to Google Drive")
             dataset_pre.extract_dataset_from_gee_to_drive("32610", n_buffer_days=4)
         except Exception as e:
             print(f"Failed on {location}: {str(e)}")
@@ -263,6 +263,8 @@ def main():
     if config_path:
         save_yaml_config(config_data, config_path)
 
+    if(config_data['show_config']):
+        print(config_data)
 
     geojson_path = get_full_geojson_path()
     if (not os.path.exists(geojson_path) or config_data['force_new_geojson']):
@@ -274,11 +276,6 @@ def main():
     # print(f"[LOG] Yaml path from main(): {yaml_path}")
     create_fire_config_globfire(geojson_path, yaml_path, config_data['year'])
     
-    if(config_data['show_config']):
-        print(config_data)
-
-
-
     if(config_data['export_data']):
         print("Exporting data...")
         export_data(yaml_path)   
