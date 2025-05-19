@@ -7,9 +7,23 @@ from tqdm import tqdm
 from get_globfire import get_combined_fires, analyze_fires
 from DataPreparation.DatasetPrepareService import DatasetPrepareService
 from drive_downloader import DriveDownloader
-from create_config import create_fire_config_globfire
+from create_fire_config import create_fire_config_globfire
+
+try:
+    import tomllib  # Python 3.11+
+except ImportError:
+    import tomli as tomllib  # Fallback for older versions
 
 config_data = {}
+ARG_NAMESPACE = ["year","min_size","output","drive_dir",
+                "credentials","project_id","geojson_dir",
+                "download", "export_data", "show_config",
+                "force_new_geojson", "sync_year",]
+
+def get_version_from_pyproject(path="pyproject.toml"):
+    with open(path, "rb") as f:
+        data = tomllib.load(f)
+    return data["project"]["version"]
 
 def get_full_geojson_path():
     return f"{config_data['geojson_dir']}combined_fires_{config_data['year']}.geojson"
@@ -22,6 +36,12 @@ def get_full_yaml_path():
 def sync_drive_path_with_year():
     drive_path = f"EarthEngine_WildfireSpreadTS_{config_data['year']}"
     config_data['drive_dir'] = drive_path
+
+def sync_tiff_output_with_year():
+    parent_tiff_path = Path(config_data['output']).parent
+    new_tiff_path = parent_tiff_path / config_data['year']
+    new_tiff_path.mkdir(parents=True, exist_ok=True)
+    config_data['output'] = str(new_tiff_path) + "/"
 
 def load_yaml_config(path):
     if os.path.exists(path):
@@ -118,7 +138,7 @@ def export_data(yaml_path):
         dataset_pre = DatasetPrepareService(location=location, config=config)
 
         try:
-            print("Trying to export to Google Drive")
+            print(f"Trying to export {location} to Google Drive")
             dataset_pre.extract_dataset_from_gee_to_drive("32610", n_buffer_days=4)
         except Exception as e:
             print(f"Failed on {location}: {str(e)}")
@@ -215,21 +235,20 @@ def main():
                         action="store_true",
                         help="Syncs the year to the input/output files")
 
+    version = get_version_from_pyproject()
+
+    parser.add_argument("--version",
+                        action="version",
+                        version=f"ee-wildfire version = {version}")
+
     args = parser.parse_args()
 
     # Update config_data with any non-None CLI args (override)
-    for key in ["year","min_size","output","drive_dir",
-                "credentials","project_id","geojson_dir",
-                "download", "export_data", "show_config",
-                "force_new_geojson", "sync_year"]:
+    for key in ARG_NAMESPACE:
         val = getattr(args,key)
         if val is not None:
             config_data[key]=val
 
-
-    # save dictionary back to yaml file
-    if config_path:
-        save_yaml_config(config_data, config_path)
 
     # use or generate GeoJSON
     ee.Authenticate()
@@ -238,7 +257,14 @@ def main():
 
     if(config_data['sync_year']):
         sync_drive_path_with_year()
+        sync_tiff_output_with_year()
 
+    # save dictionary back to yaml file
+    if config_path:
+        save_yaml_config(config_data, config_path)
+
+    if(config_data['show_config']):
+        print(config_data)
 
     geojson_path = get_full_geojson_path()
     if (not os.path.exists(geojson_path) or config_data['force_new_geojson']):
@@ -250,9 +276,6 @@ def main():
     # print(f"[LOG] Yaml path from main(): {yaml_path}")
     create_fire_config_globfire(geojson_path, yaml_path, config_data['year'])
     
-    if(config_data['show_config']):
-        print(config_data)
-
     if(config_data['export_data']):
         print("Exporting data...")
         export_data(yaml_path)   
@@ -260,11 +283,6 @@ def main():
     if(config_data['download']):
         downloader = DriveDownloader(config_data['credentials'])
         downloader.download_folder(config_data['drive_dir'], config_data['output'])
-
-
-
-
-
 
 if __name__ == "__main__":
     main()

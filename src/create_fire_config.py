@@ -10,10 +10,10 @@ def create_fire_config_globfire(geojson_path, output_path, year):
     # print(f"[LOG] from create_config, gdf: {gdf}")
     gdf['IDate'] = pd.to_datetime(gdf['IDate'], unit='ms')
     gdf['FDate'] = pd.to_datetime(gdf['FDate'], format='mixed')
-    print(f"[LOG] from create_config, gdf Idate: {gdf['IDate']}")
+    # print(f"[LOG] from create_config, gdf Idate: {gdf['IDate']}")
     
     gdf = gdf[gdf['IDate'].dt.year == int(year)]
-    print(f"[LOG] from create_config, second gdf: {gdf}")
+    # print(f"[LOG] from create_config, second gdf: {gdf}")
     first_occurrences = gdf.sort_values('IDate').groupby('Id').first()
     last_occurrences = gdf.sort_values('IDate').groupby('Id').last()
     
@@ -85,3 +85,9 @@ def create_fire_config_mtbs(geojson_path, output_path, year):
     with open(output_path, 'w') as f:
         yaml.dump(config, f, Dumper=DateSafeYAMLDumper, default_flow_style=False, sort_keys=False)
 
+def load_fire_config(yaml_path):
+    with open(
+        yaml_path, "r", encoding="utf8"
+    ) as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+    return config
