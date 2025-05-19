@@ -1,6 +1,8 @@
 import datetime
 
 import math
+
+# Google didn't provide documentation stub. This is to fix LSP yelling
 from ee import Image #type: ignore
 from ee import ImageCollection #type: ignore
 from ee import FeatureCollection #type: ignore
