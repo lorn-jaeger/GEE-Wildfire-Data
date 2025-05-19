@@ -15,6 +15,10 @@ except ImportError:
     import tomli as tomllib  # Fallback for older versions
 
 config_data = {}
+ARG_NAMESPACE = ["year","min_size","output","drive_dir",
+                "credentials","project_id","geojson_dir",
+                "download", "export_data", "show_config",
+                "force_new_geojson", "sync_year",]
 
 def get_version_from_pyproject(path="pyproject.toml"):
     with open(path, "rb") as f:
@@ -234,18 +238,11 @@ def main():
     args = parser.parse_args()
 
     # Update config_data with any non-None CLI args (override)
-    for key in ["year","min_size","output","drive_dir",
-                "credentials","project_id","geojson_dir",
-                "download", "export_data", "show_config",
-                "force_new_geojson", "sync_year", "version"]:
+    for key in ARG_NAMESPACE:
         val = getattr(args,key)
         if val is not None:
             config_data[key]=val
 
-
-    # save dictionary back to yaml file
-    if config_path:
-        save_yaml_config(config_data, config_path)
 
     # use or generate GeoJSON
     ee.Authenticate()
@@ -254,6 +251,10 @@ def main():
 
     if(config_data['sync_year']):
         sync_drive_path_with_year()
+
+    # save dictionary back to yaml file
+    if config_path:
+        save_yaml_config(config_data, config_path)
 
 
     geojson_path = get_full_geojson_path()
@@ -278,11 +279,6 @@ def main():
     if(config_data['download']):
         downloader = DriveDownloader(config_data['credentials'])
         downloader.download_folder(config_data['drive_dir'], config_data['output'])
-
-
-
-
-
 
 if __name__ == "__main__":
     main()
