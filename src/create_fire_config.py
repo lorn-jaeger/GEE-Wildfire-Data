@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import yaml
 
+#FIX: if no directory is found, create one
 def create_fire_config_globfire(geojson_path, output_path, year):
 
     # print(f"[LOG] from create_config, geojson_path: {geojson_path}")

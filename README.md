@@ -31,6 +31,7 @@ workflows.
 
  As of mid-2023, Google Earth Engine access must be linked to a Google Cloud Project, even for
  free/non-commercial usage. So sign up for a [non-commercial earth engine account](https://earthengine.google.com/noncommercial/).
+
  
 
 
@@ -66,6 +67,26 @@ From this menu select `Google Drive API` and click `Enable API`. Do the same for
  in google cloud navigate to API's & Servies/OAut concent screen/Audience
 	- Scroll down and under Test users click + Add users. Select your main account.
 
+### Install `gcloud` CLI And Authenticate
+```bash
+# Download the Google Cloud CLI installer
+curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-454.0.0-linux-x86_64.tar.gz
+
+# Extract it
+tar -xf google-cloud-cli-*.tar.gz
+
+# Install it
+./google-cloud-sdk/install.sh
+
+# Restart your shell or source your profile
+exec -l $SHELL
+
+# Confirm it's installed
+gcloud version
+
+# Once gcloud is installed, authenticate with CLI
+earthengine authenticate --quiet
+```
 
 ## Install Instructions
 

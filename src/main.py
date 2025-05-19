@@ -154,6 +154,7 @@ def export_data(yaml_path):
 
 def main():
     global config_data
+    # FIX: this erros and doesn't actully update any values in the internal config
     base_parser = argparse.ArgumentParser(add_help=False)
     base_parser.add_argument('--config', 
                              type=str,default="./config_options.yml" ,
@@ -212,6 +213,7 @@ def main():
         help="Directory to store geojson files",
     )
 
+    #FIX: I want authentication to be over CLI not web browser
     parser.add_argument(
         "--download",
         # type=bool,
