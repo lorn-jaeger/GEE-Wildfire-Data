@@ -9,7 +9,17 @@ from DataPreparation.DatasetPrepareService import DatasetPrepareService
 from drive_downloader import DriveDownloader
 from create_config import create_fire_config_globfire
 
+try:
+    import tomllib  # Python 3.11+
+except ImportError:
+    import tomli as tomllib  # Fallback for older versions
+
 config_data = {}
+
+def get_version_from_pyproject(path="pyproject.toml"):
+    with open(path, "rb") as f:
+        data = tomllib.load(f)
+    return data["project"]["version"]
 
 def get_full_geojson_path():
     return f"{config_data['geojson_dir']}combined_fires_{config_data['year']}.geojson"
@@ -215,13 +225,19 @@ def main():
                         action="store_true",
                         help="Syncs the year to the input/output files")
 
+    version = get_version_from_pyproject()
+
+    parser.add_argument("--version",
+                        action="version",
+                        version=f"ee-wildfire version = {version}")
+
     args = parser.parse_args()
 
     # Update config_data with any non-None CLI args (override)
     for key in ["year","min_size","output","drive_dir",
                 "credentials","project_id","geojson_dir",
                 "download", "export_data", "show_config",
-                "force_new_geojson", "sync_year"]:
+                "force_new_geojson", "sync_year", "version"]:
         val = getattr(args,key)
         if val is not None:
             config_data[key]=val
@@ -252,6 +268,8 @@ def main():
     
     if(config_data['show_config']):
         print(config_data)
+
+
 
     if(config_data['export_data']):
         print("Exporting data...")
