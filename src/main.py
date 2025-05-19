@@ -6,7 +6,6 @@ import yaml
 from tqdm import tqdm
 from get_globfire import get_combined_fires, analyze_fires
 from DataPreparation.DatasetPrepareService import DatasetPrepareService
-from create_globfire_config import create_fire_config_globfire
 from drive_downloader import DriveDownloader
 from create_config import create_fire_config_globfire
 
@@ -17,7 +16,7 @@ def get_full_geojson_path():
 
 def get_full_yaml_path():
     ROOT = Path(__file__).resolve().parent
-    config_dir = ROOT / "config" / f"us_fire_{config_data['year']}_1e7_test.yml"
+    config_dir = ROOT / "config" / f"us_fire_{config_data['year']}_1e7.yml"
     return config_dir
 
 def sync_drive_path_with_year():
@@ -83,8 +82,8 @@ def generate_geojson():
     combined_gdf_reduced = combined_gdf[
         combined_gdf["Id"].isin(
             combined_gdf["Id"]
-            .value_counts()[combined_gdf["Id"].value_counts() > 1]
-            .index
+        .value_counts()[combined_gdf["Id"].value_counts() > 1]
+        .index
         )
     ]  # save to geojson
 
@@ -97,10 +96,12 @@ def generate_geojson():
 
 # from DatasetPrepareService.py
 def export_data(yaml_path):
-    project_id = config_data['project_id']
+    #project_id = config_data['project_id']
     
     # fp = FirePred()
     config = load_fire_config(yaml_path)
+    # print(f"[LOG] from export_data, yaml path: {yaml_path}")
+    # print(f"[LOG] from export_data, config: {config}")
     fire_names = list(config.keys())
     for non_fire_key in ["output_bucket", "rectangular_size", "year"]:
         fire_names.remove(non_fire_key)
@@ -117,6 +118,7 @@ def export_data(yaml_path):
         dataset_pre = DatasetPrepareService(location=location, config=config)
 
         try:
+            print("Trying to export to Google Drive")
             dataset_pre.extract_dataset_from_gee_to_drive("32610", n_buffer_days=4)
         except Exception as e:
             print(f"Failed on {location}: {str(e)}")
@@ -245,18 +247,21 @@ def main():
 
     # generate the YAML output config
     yaml_path = get_full_yaml_path()
+    # print(f"[LOG] Yaml path from main(): {yaml_path}")
     create_fire_config_globfire(geojson_path, yaml_path, config_data['year'])
     
     if(config_data['show_config']):
         print(config_data)
-    
+
+    if(config_data['export_data']):
+        print("Exporting data...")
+        export_data(yaml_path)   
+
     if(config_data['download']):
         downloader = DriveDownloader(config_data['credentials'])
         downloader.download_folder(config_data['drive_dir'], config_data['output'])
 
-    if(config_data['export_data']):
-        print("Exporting data...")
-        export_data(yaml_path)
+
 
 
 
