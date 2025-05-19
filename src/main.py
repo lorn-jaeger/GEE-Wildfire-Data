@@ -19,11 +19,8 @@ ARG_NAMESPACE = ["year","min_size","output","drive_dir",
                 "credentials","project_id","geojson_dir",
                 "download", "export_data", "show_config",
                 "force_new_geojson", "sync_year",]
+VERSION = "2025.0.5"
 
-def get_version_from_pyproject(path="pyproject.toml"):
-    with open(path, "rb") as f:
-        data = tomllib.load(f)
-    return data["project"]["version"]
 
 def get_full_geojson_path():
     return f"{config_data['geojson_dir']}combined_fires_{config_data['year']}.geojson"
@@ -235,11 +232,10 @@ def main():
                         action="store_true",
                         help="Syncs the year to the input/output files")
 
-    version = get_version_from_pyproject()
 
     parser.add_argument("--version",
                         action="version",
-                        version=f"ee-wildfire version = {version}")
+                        version=f"ee-wildfire version = {VERSION}")
 
     args = parser.parse_args()
 
