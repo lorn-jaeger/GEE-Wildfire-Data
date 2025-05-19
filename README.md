@@ -86,7 +86,7 @@ YAML file, or you can input your own YAML. Here's a template:
 ```yaml
 year: '2020'
 min_size: 1000000
-geojson: /home/kyle/NRML/data/perims/
+geojson_dir: /home/kyle/NRML/data/perims/
 output: /home/kyle/NRML/data/tiff/
 drive_dir: EarthEngine_WildfireSpreadTS_2020
 credentials: /home/kyle/NRML/OAuth/credentials.json
