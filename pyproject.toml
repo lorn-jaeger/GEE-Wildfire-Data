@@ -47,6 +47,7 @@ dependencies = [
 	"setuptools",
 	"wheel",
 	"tomli",
+
 ]
 
 [project.urls]
