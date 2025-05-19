@@ -1,5 +1,8 @@
 # Todo List
 
+- Authentication requires GUI access to web-browser. I want the authentication to happen on the
+command line, so that the tool works over ssh.
+
 - Catch timeout when downloading data.
 
 - Tie to Jesse's google drive, might be weird because its a shared folder.
