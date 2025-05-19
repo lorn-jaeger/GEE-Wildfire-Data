@@ -7,7 +7,7 @@ from tqdm import tqdm
 from get_globfire import get_combined_fires, analyze_fires
 from DataPreparation.DatasetPrepareService import DatasetPrepareService
 from drive_downloader import DriveDownloader
-from create_config import create_fire_config_globfire
+from create_fire_config import create_fire_config_globfire
 
 try:
     import tomllib  # Python 3.11+
@@ -36,6 +36,12 @@ def get_full_yaml_path():
 def sync_drive_path_with_year():
     drive_path = f"EarthEngine_WildfireSpreadTS_{config_data['year']}"
     config_data['drive_dir'] = drive_path
+
+def sync_tiff_output_with_year():
+    parent_tiff_path = Path(config_data['output']).parent
+    new_tiff_path = parent_tiff_path / config_data['year']
+    new_tiff_path.mkdir(parents=True, exist_ok=True)
+    config_data['output'] = str(new_tiff_path) + "/"
 
 def load_yaml_config(path):
     if os.path.exists(path):
@@ -251,6 +257,7 @@ def main():
 
     if(config_data['sync_year']):
         sync_drive_path_with_year()
+        sync_tiff_output_with_year()
 
     # save dictionary back to yaml file
     if config_path:

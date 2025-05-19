@@ -5,11 +5,12 @@ convert_tiff_to_hdf5.py
 """
 import h5py
 import tifffile
-import utils
 
+
+def read_and_stack():
+    return
 
 def main():
-    print(utils.get_tiff_path())
     return
 
 if __name__ == "__main__":
