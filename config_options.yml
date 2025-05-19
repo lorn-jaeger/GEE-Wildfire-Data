@@ -7,6 +7,6 @@ credentials: /home/kyle/NRML/OAuth/credentials.json
 project_id: ee-earthdata-459817
 download: false
 export_data: true
-show_config: true
+show_config: false
 force_new_geojson: false
 sync_year: true
