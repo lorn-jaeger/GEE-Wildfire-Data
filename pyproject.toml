@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ee-wildfire"
-version = "2025.0.5"
+version = "2025.0.6"
 description = "Pulls data from Google Earth Engine, syncs it to Google Drive, and downloads files."
 authors = [
     { name = "Jake Bova", email = "developer.montana@gmail.com" },

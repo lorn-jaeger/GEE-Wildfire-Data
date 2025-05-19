@@ -15,11 +15,13 @@ except ImportError:
     import tomli as tomllib  # Fallback for older versions
 
 config_data = {}
+
 ARG_NAMESPACE = ["year","min_size","output","drive_dir",
                 "credentials","project_id","geojson_dir",
                 "download", "export_data", "show_config",
                 "force_new_geojson", "sync_year",]
-VERSION = "2025.0.5"
+
+VERSION = "2025.0.6"
 
 
 def get_full_geojson_path():
