@@ -46,6 +46,7 @@ dependencies = [
 	"google-auth-oauthlib",
 	"setuptools",
 	"wheel",
+	"tomli",
 ]
 
 [project.urls]
