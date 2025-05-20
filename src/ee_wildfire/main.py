@@ -11,7 +11,7 @@ from ee_wildfire.DataPreparation.DatasetPrepareService import DatasetPrepareServ
 from ee_wildfire.drive_downloader import DriveDownloader
 from ee_wildfire.create_fire_config import create_fire_config_globfire
 
-VERSION = "2025.1.0"
+VERSION = "2025.1.1"
 
 config_data = {}
 
@@ -23,7 +23,6 @@ ARG_NAMESPACE = ["year","min_size","output","drive_dir",
                 "force_new_geojson", "sync_year",]
 
 
-# FIX: catch errors if file/path doesn't exist
 def get_full_geojson_path():
     return f"{config_data['geojson_dir']}combined_fires_{config_data['year']}.geojson"
 
@@ -115,14 +114,7 @@ def generate_geojson():
     else:
         raise TypeError("combined_gdf is None or missing 'Id' column")
 
-    # combined_gdf_reduced = combined_gdf[
-    #     combined_gdf["Id"].isin(
-    #         combined_gdf["Id"]
-    #     .value_counts()[combined_gdf["Id"].value_counts() > 1]
-    #     .index
-    #     )
-    # ]  # save to geojson
-
+    # save to geojson
     geojson_path = get_full_geojson_path()
     combined_gdf_reduced.to_file(
         geojson_path,
@@ -258,6 +250,18 @@ def main():
         if val is not None:
             config_data[key]=val
 
+    if(config_data['sync_year']):
+        sync_drive_path_with_year()
+        sync_tiff_output_with_year()
+
+    if(config_data['show_config']):
+        print(config_data)
+
+    # save dictionary back to yaml file
+    if config_path:
+        save_yaml_config(config_data, config_path)
+
+
     # Read the service account creds
     credentials_path = config_data.get('credentials')
     if not credentials_path:
@@ -277,18 +281,6 @@ def main():
 
     # use or generate GeoJSON
     Initialize(credentials)
-
-
-    if(config_data['sync_year']):
-        sync_drive_path_with_year()
-        sync_tiff_output_with_year()
-
-    # save dictionary back to yaml file
-    if config_path:
-        save_yaml_config(config_data, config_path)
-
-    if(config_data['show_config']):
-        print(config_data)
 
     geojson_path = get_full_geojson_path()
     if (not os.path.exists(geojson_path) or config_data['force_new_geojson']):

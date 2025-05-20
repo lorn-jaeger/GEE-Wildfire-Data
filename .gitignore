@@ -6,7 +6,7 @@ src/*.egg-info
 <<<<<<< HEAD
 dist/
 
-src/DataPreparation/__pycache__/*
-src/DataPreparation/satellites/__pycache__/*
 __pycache__/
 **/__pycache__/
+
+**/*.egg-info
