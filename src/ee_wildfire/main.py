@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
 import argparse
-import ee
+from ee import ServiceAccountCredentials #type: ignore
+from ee import Initialize
 import json
 import yaml
 from tqdm import tqdm
@@ -15,7 +16,7 @@ try:
 except ImportError:
     import tomli as tomllib  # Fallback for older versions
 
-VERSION = "2025.0.11"
+VERSION = "2025.0.12"
 
 config_data = {}
 
@@ -258,16 +259,19 @@ def main():
     if not credentials_path:
         raise KeyError("Missing required key 'credentials' in config_data.")
 
-    with open(credentials_path) as f:
-        service_account_info = json.load(f)
+    try:
+        with open(credentials_path) as f:
+            service_account_info = json.load(f)
 
-        credentials = ee.ServiceAccountCredentials(
-            service_account_info['client_email'],
-            key_data=json.dumps(service_account_info)
-        )
+            credentials = ServiceAccountCredentials(
+                service_account_info['client_email'],
+                key_data=json.dumps(service_account_info)
+            )
+    except FileNotFoundError:
+        print(f"{credentials_path} is not found!")
 
     # use or generate GeoJSON
-    ee.Initialize(credentials)
+    Initialize(credentials)
 
 
     if(config_data['sync_year']):
