@@ -15,21 +15,23 @@ try:
 except ImportError:
     import tomli as tomllib  # Fallback for older versions
 
+VERSION = "2025.0.9"
+
 config_data = {}
+
+ROOT = Path(__file__).resolve().parent
 
 ARG_NAMESPACE = ["year","min_size","output","drive_dir",
                 "credentials","geojson_dir",
                 "download", "export_data", "show_config",
                 "force_new_geojson", "sync_year",]
 
-VERSION = "2025.0.8"
 
 # FIX: catch errors if file/path doesn't exist
 def get_full_geojson_path():
     return f"{config_data['geojson_dir']}combined_fires_{config_data['year']}.geojson"
 
 def get_full_yaml_path():
-    ROOT = Path(__file__).resolve().parent
     config_dir = ROOT / "config" / f"us_fire_{config_data['year']}_1e7.yml"
     return config_dir
 
@@ -163,10 +165,12 @@ def export_data(yaml_path):
 
 def main():
     global config_data
-    # FIX: this erros and doesn't actully update any values in the internal config
+    internal_config_path = ROOT / "config_options.yml"
+
+    # FIX: this doesn't actully update any values in the internal config
     base_parser = argparse.ArgumentParser(add_help=False)
     base_parser.add_argument('--config', 
-                             type=str,default="./config_options.yml" ,
+                             type=str,default=internal_config_path ,
                              help="Path to JSON config file")
     args_partial, _ = base_parser.parse_known_args()
 
@@ -207,17 +211,9 @@ def main():
         help="Path to Google OAuth credentials JSON.",
     )
 
-    # parser.add_argument(
-    #     "--project-id",
-    #     type=str,
-    #     # default=configuration.PROJECT,
-    #     help="Project ID for Google Cloud",
-    # )
-
     parser.add_argument(
         "--geojson-dir",
         type=str,
-        # default=configuration.DATA_DIR,
         help="Directory to store geojson files",
     )
 
