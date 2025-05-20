@@ -13,7 +13,7 @@ ee_wildfire = ["config_options.yml"]
 
 [project]
 name = "ee-wildfire"
-version = "2025.0.13"
+version = "2025.1.0"
 description = "Pulls data from Google Earth Engine, syncs it to Google Drive, and downloads files."
 authors = [
     { name = "Jake Bova", email = "developer.montana@gmail.com" },
@@ -33,7 +33,7 @@ license = { file = "LICENSE" }
 requires-python = ">=3.10"
 
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python"
 ]
 
@@ -42,7 +42,6 @@ keywords = ["wildfire", "earth engine"]
 dependencies = [
 	"earthengine-api",
 	"tqdm",
-	# "yaml",
 	"pandas",
 	"raster_tools",
 	"geopandas",
@@ -55,7 +54,6 @@ dependencies = [
 	"google-auth-oauthlib",
 	"setuptools",
 	"wheel",
-
 ]
 
 

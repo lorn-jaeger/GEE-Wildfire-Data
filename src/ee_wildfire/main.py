@@ -11,12 +11,7 @@ from ee_wildfire.DataPreparation.DatasetPrepareService import DatasetPrepareServ
 from ee_wildfire.drive_downloader import DriveDownloader
 from ee_wildfire.create_fire_config import create_fire_config_globfire
 
-try:
-    import tomllib  # Python 3.11+
-except ImportError:
-    import tomli as tomllib  # Fallback for older versions
-
-VERSION = "2025.0.13"
+VERSION = "2025.1.0"
 
 config_data = {}
 
@@ -111,13 +106,22 @@ def generate_geojson():
         print(monthly_counts)
 
     # drop everything that does not have at least 2 Id in combined_gdf
-    combined_gdf_reduced = combined_gdf[
-        combined_gdf["Id"].isin(
-            combined_gdf["Id"]
-        .value_counts()[combined_gdf["Id"].value_counts() > 1]
-        .index
-        )
-    ]  # save to geojson
+    combined_gdf_reduced = None
+
+    if combined_gdf is not None and "Id" in combined_gdf.columns:
+        id_counts = combined_gdf["Id"].value_counts()
+        repeated_ids = id_counts[id_counts > 1].index.tolist()
+        combined_gdf_reduced = combined_gdf[combined_gdf["Id"].isin(repeated_ids)]
+    else:
+        raise TypeError("combined_gdf is None or missing 'Id' column")
+
+    # combined_gdf_reduced = combined_gdf[
+    #     combined_gdf["Id"].isin(
+    #         combined_gdf["Id"]
+    #     .value_counts()[combined_gdf["Id"].value_counts() > 1]
+    #     .index
+    #     )
+    # ]  # save to geojson
 
     geojson_path = get_full_geojson_path()
     combined_gdf_reduced.to_file(
@@ -257,7 +261,7 @@ def main():
     # Read the service account creds
     credentials_path = config_data.get('credentials')
     if not credentials_path:
-        raise KeyError("Missing required key 'credentials' in config_data.")
+        raise KeyError(f"Malformed configuration yaml at {credentials_path}. Missing credentials field.")
 
     try:
         with open(credentials_path) as f:
@@ -268,7 +272,8 @@ def main():
                 key_data=json.dumps(service_account_info)
             )
     except FileNotFoundError:
-        print(f"{credentials_path} is not found!")
+        print(f"The authetication file {credentials_path} is not found!")
+        exit()
 
     # use or generate GeoJSON
     Initialize(credentials)

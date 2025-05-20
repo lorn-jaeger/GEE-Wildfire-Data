@@ -1,11 +1,11 @@
-year: '2020'
+year: '2018'
 min_size: 1000000
 geojson_dir: /home/kyle/NRML/data/perims/
-output: /home/kyle/NRML/data/tiff/
-drive_dir: EarthEngine_WildfireSpreadTS_2020
+output: /home/kyle/NRML/data/2018/
+drive_dir: EarthEngine_WildfireSpreadTS_2018
 credentials: /home/kyle/NRML/OAuth/credentials.json
 download: false
 export_data: false
-show_config: false
-force_new_geojson: false
-sync_year: false
+show_config: true
+force_new_geojson: true
+sync_year: true
