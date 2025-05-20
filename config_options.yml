@@ -1,11 +1,10 @@
-year: '2019'
+year: '2021'
 min_size: 1000000
 geojson_dir: /home/kyle/NRML/data/perims/
-output: /home/kyle/NRML/data/tiff/2019/
-drive_dir: EarthEngine_WildfireSpreadTS_2019
+output: /home/kyle/NRML/data/tiff/2021/
+drive_dir: EarthEngine_WildfireSpreadTS_2021
 credentials: /home/kyle/NRML/OAuth/credentials.json
-project_id: ee-earthdata-459817
-download: false
+download: true
 export_data: false
 show_config: true
 force_new_geojson: false

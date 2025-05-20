@@ -2,8 +2,8 @@ import geopandas as gpd
 import pandas as pd
 from datetime import datetime, timedelta
 import yaml
+import os
 
-#FIX: if no directory is found, create one
 def create_fire_config_globfire(geojson_path, output_path, year):
 
     # print(f"[LOG] from create_config, geojson_path: {geojson_path}")
@@ -45,7 +45,9 @@ def create_fire_config_globfire(geojson_path, output_path, year):
             'start': start_date.date(),
             'end': end_date.date()
         }
-    
+    # Ensure the directory exists
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
     with open(output_path, 'w') as f:
         yaml.dump(config, f, Dumper=DateSafeYAMLDumper, default_flow_style=False, sort_keys=False)
 

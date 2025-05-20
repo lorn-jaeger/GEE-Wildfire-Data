@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import argparse
 import ee
+import json
 import yaml
 from tqdm import tqdm
 from get_globfire import get_combined_fires, analyze_fires
@@ -17,13 +18,13 @@ except ImportError:
 config_data = {}
 
 ARG_NAMESPACE = ["year","min_size","output","drive_dir",
-                "credentials","project_id","geojson_dir",
+                "credentials","geojson_dir",
                 "download", "export_data", "show_config",
                 "force_new_geojson", "sync_year",]
 
 VERSION = "2025.0.7"
 
-
+# FIX: catch errors if file/path doesn't exist
 def get_full_geojson_path():
     return f"{config_data['geojson_dir']}combined_fires_{config_data['year']}.geojson"
 
@@ -115,7 +116,6 @@ def generate_geojson():
 
 # from DatasetPrepareService.py
 def export_data(yaml_path):
-    #project_id = config_data['project_id']
     
     # fp = FirePred()
     config = load_fire_config(yaml_path)
@@ -199,12 +199,12 @@ def main():
         help="Path to Google OAuth credentials JSON.",
     )
 
-    parser.add_argument(
-        "--project-id",
-        type=str,
-        # default=configuration.PROJECT,
-        help="Project ID for Google Cloud",
-    )
+    # parser.add_argument(
+    #     "--project-id",
+    #     type=str,
+    #     # default=configuration.PROJECT,
+    #     help="Project ID for Google Cloud",
+    # )
 
     parser.add_argument(
         "--geojson-dir",
@@ -213,7 +213,6 @@ def main():
         help="Directory to store geojson files",
     )
 
-    #FIX: I want authentication to be over CLI not web browser
     parser.add_argument(
         "--download",
         # type=bool,
@@ -243,16 +242,24 @@ def main():
 
     args = parser.parse_args()
 
+
     # Update config_data with any non-None CLI args (override)
     for key in ARG_NAMESPACE:
         val = getattr(args,key)
         if val is not None:
             config_data[key]=val
 
+    # Read the service account creds
+    with open(config_data['credentials']) as f:
+        service_account_info = json.load(f)
+
+        credentials = ee.ServiceAccountCredentials(
+            service_account_info['client_email'],
+            key_data=json.dumps(service_account_info)
+        )
 
     # use or generate GeoJSON
-    ee.Authenticate()
-    ee.Initialize(project=config_data['project_id'])
+    ee.Initialize(credentials)
 
 
     if(config_data['sync_year']):

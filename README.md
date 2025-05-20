@@ -32,61 +32,66 @@ workflows.
  As of mid-2023, Google Earth Engine access must be linked to a Google Cloud Project, even for
  free/non-commercial usage. So sign up for a [non-commercial earth engine account](https://earthengine.google.com/noncommercial/).
 
- 
+## 🔐 Google API Setup Instructions
 
+To run this project with Google Earth Engine and Google Drive access, follow the steps below to create and configure your credentials.
 
-## Google API Instructions 
+---
 
- Make a service account and add these rolls:
- - Owner
- - Service Usage Admin
- - Service Usage Consumer
- - Storage Admin
- - Storage Object Creator
+### 1. ✅ Create a Service Account
 
- In main account add these rolls:
- - Owner
- - Service Usage Admin
- - Service Usage Consumer
+In the [Google Cloud Console](https://console.cloud.google.com/), do the following:
 
- We then created an oath account for google drive access.
-We need to create an OAuth account for Google Drive access. In the top right hamburger menu select:
+- Go to **IAM & Admin → Service Accounts → Create Service Account**
+- Assign the following roles to the **Service Account**:
+  - `Owner`
+  - `Service Usage Admin`
+  - `Service Usage Consumer`
+  - `Storage Admin`
+  - `Storage Object Creator`
 
- - APIs & Services/Credentials/+Create credentials/OAuth client ID
-	- OAuth client ID
-		- first configure OAuth screen. Select Desktop App and give it a name.
-		- keep track of the Client ID and Client secret, we will need those later.
-		- click download JSON from this screen, these are your credentials.
+---
 
-Now we need to enable the apis. In the top right hamburger menu select:
+### 2. 🔑 Assign Roles to Your Personal Account
 
-- APIs & Services
-From this menu select `Google Drive API` and click `Enable API`. Do the same for `Google Earth Engine API`
+Make sure your **main Google Cloud account** (the one you'll log in with) has these roles:
 
- Now we need to add ourselves as a test user
- in google cloud navigate to API's & Servies/OAut concent screen/Audience
-	- Scroll down and under Test users click + Add users. Select your main account.
+- `Owner`
+- `Service Usage Admin`
+- `Service Usage Consumer`
 
-### Install `gcloud` CLI And Authenticate
-```bash
-# Download the Google Cloud CLI installer
-curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-454.0.0-linux-x86_64.tar.gz
+---
 
-# Extract it
-tar -xf google-cloud-cli-*.tar.gz
+### 3. 🧭 Create OAuth Credentials (for Google Drive Access)
 
-# Install it
-./google-cloud-sdk/install.sh
+Still in the Google Cloud Console:
 
-# Restart your shell or source your profile
-exec -l $SHELL
+- Go to **APIs & Services → Credentials → + Create Credentials → OAuth Client ID**
+- If prompted, **configure the OAuth consent screen**:
+  - Choose **Desktop App**
+  - Provide a name (e.g., "Drive Access")
+- Once created:
+  - **Download the JSON** file (this is your OAuth credentials)
+  - **Save** the `client_id` and `client_secret` (you’ll use these in your config)
 
-# Confirm it's installed
-gcloud version
+---
 
-# Once gcloud is installed, authenticate with CLI
-earthengine authenticate --quiet
-```
+### 4. 🚀 Enable Required APIs
+
+In the left-hand menu:
+
+- Go to **APIs & Services → Library**
+- Enable the following APIs:
+  - `Google Drive API`
+  - `Google Earth Engine API`
+
+---
+
+### 5. 👤 Add Test Users (Required for OAuth)
+
+- Go to **APIs & Services → OAuth consent screen**
+- Scroll to the **Test Users** section
+- Click **+ Add Users** and add your personal Google account (the one you'll use for authentication)
 
 ## Install Instructions
 
@@ -94,7 +99,6 @@ For the stable build:
 ```bash
 pip install ee-wildfire
 ```
-
 
 For the experimental build:
 ```bash
@@ -114,12 +118,11 @@ geojson_dir: /home/kyle/NRML/data/perims/
 output: /home/kyle/NRML/data/tiff/
 drive_dir: EarthEngine_WildfireSpreadTS_2020
 credentials: /home/kyle/NRML/OAuth/credentials.json
-project_id: project_id_here
 download: false
 export_data: false
 show_config: true
 force_new_geojson: false
-sync_year: false
+sync_year: true
 ```
 
 ## Command-Line Interface (CLI)
@@ -135,7 +138,6 @@ data. Configuration can be passed directly via flags or through a YAML file usin
 | `--output`              | `str`   | Local directory to store generated TIFF files.                             |
 | `--drive-dir`           | `str`   | Google Drive directory where TIFFs are uploaded or downloaded from.        |
 | `--credentials`         | `str`   | Path to the Google OAuth2 credentials JSON file. Required for GEE export.  |
-| `--project-id`          | `str`   | Google Cloud project ID associated with your Earth Engine access.          |
 | `--geojson-dir`             | `str`   | Path to the input or output directory for GeoJSON files containing fire perimeter data.   |
 | `--download`            | `flag`  | If set, the tool will download TIFF files from Google Drive.               |
 | `--export-data`         | `flag`  | If set, data will be exported to Google Drive using Earth Engine.          |
