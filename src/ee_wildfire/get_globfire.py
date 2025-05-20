@@ -242,8 +242,15 @@ def analyze_fires(gdf):
     """
     Perform basic analysis on fire perimeters.
     """
-    if gdf is None or len(gdf) == 0:
-        return None
+    if gdf is None or gdf.empty:
+        return {
+            "total_fires":0,
+            'unique_fires':0,
+            'total_area_km2': 0,
+            'mean_area_km2': 0,
+            'max_area_km2': 0,
+            'date_range': "0 to 0",
+        }
     
     # Basic statistics
     stats = {

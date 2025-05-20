@@ -5,10 +5,10 @@ import ee
 import json
 import yaml
 from tqdm import tqdm
-from get_globfire import get_combined_fires, analyze_fires
-from DataPreparation.DatasetPrepareService import DatasetPrepareService
-from drive_downloader import DriveDownloader
-from create_fire_config import create_fire_config_globfire
+from ee_wildfire.get_globfire import get_combined_fires, analyze_fires
+from ee_wildfire.DataPreparation.DatasetPrepareService import DatasetPrepareService
+from ee_wildfire.drive_downloader import DriveDownloader
+from ee_wildfire.create_fire_config import create_fire_config_globfire
 
 try:
     import tomllib  # Python 3.11+
@@ -22,7 +22,7 @@ ARG_NAMESPACE = ["year","min_size","output","drive_dir",
                 "download", "export_data", "show_config",
                 "force_new_geojson", "sync_year",]
 
-VERSION = "2025.0.7"
+VERSION = "2025.0.8"
 
 # FIX: catch errors if file/path doesn't exist
 def get_full_geojson_path():
@@ -74,20 +74,29 @@ def generate_geojson():
 
         print("\nCombined Perimeters:")
         combined_stats = analyze_fires(combined_gdf)
-        for key, value in combined_stats.items():
-            print(f"{key}: {value}")
+        if combined_stats is not None:
+            for key, value in combined_stats.items():
+                print(f"{key}: {value}")
+        else:
+            print("No stats available for combined perimeters.")
 
         if daily_gdf is not None:
             print("\nDaily Perimeters:")
             daily_stats = analyze_fires(daily_gdf)
-            for key, value in daily_stats.items():
-                print(f"{key}: {value}")
+            if daily_stats is not None:
+                for key, value in daily_stats.items():
+                    print(f"{key}: {value}")
+            else:
+                print("No stats available for daily perimeters.")
 
         if final_gdf is not None:
             print("\nFinal Perimeters:")
             final_stats = analyze_fires(final_gdf)
-            for key, value in final_stats.items():
-                print(f"{key}: {value}")
+            if final_stats is not None:
+                for key, value in final_stats.items():
+                    print(f"{key}: {value}")
+            else:
+                print("No stats available for final perimeters.")
 
         # Temporal distribution
         print("\nFires by month:")
@@ -195,7 +204,6 @@ def main():
     parser.add_argument(
         "--credentials",
         type=str,
-        # default=configuration.CREDENTIALS,
         help="Path to Google OAuth credentials JSON.",
     )
 
@@ -250,7 +258,11 @@ def main():
             config_data[key]=val
 
     # Read the service account creds
-    with open(config_data['credentials']) as f:
+    credentials_path = config_data.get('credentials')
+    if not credentials_path:
+        raise KeyError("Missing required key 'credentials' in config_data.")
+
+    with open(credentials_path) as f:
         service_account_info = json.load(f)
 
         credentials = ee.ServiceAccountCredentials(
