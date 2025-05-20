@@ -1,13 +1,4 @@
-# Todo List
-
-- Authentication requires GUI access to web-browser. I want the authentication to happen on the
-command line, so that the tool works over ssh.
-
-- Catch timeout when downloading data.
-
-- Tie to Jesse's google drive, might be weird because its a shared folder.
-
-## Project Summary
+# Project Summary
 Earth-Engine-Wildfire-Data is a Python command-line utility and library for extracting and
 transforming wildfire-related geospatial data from Google Earth Engine. It supports:
 
@@ -25,7 +16,7 @@ transforming wildfire-related geospatial data from Google Earth Engine. It suppo
 pipelines, particularly those interested in integrating Earth Engine datasets into geospatial ML
 workflows.
 
-## Prerequisite
+# Prerequisite
 
  Requires at least python 3.10.
 
@@ -93,7 +84,7 @@ In the left-hand menu:
 - Scroll to the **Test Users** section
 - Click **+ Add Users** and add your personal Google account (the one you'll use for authentication)
 
-## Install Instructions
+# Install Instructions
 
 For the stable build:
 ```bash
@@ -107,7 +98,7 @@ cd Earth-Engine-Wildfire-Data
 pip install -e .
 ```
 
-## Configuration
+# Configuration
 There are two ways to configure this tool; you can use command line arguments to alter the internal
 YAML file, or you can input your own YAML. Here's a template:
 
@@ -149,7 +140,7 @@ data. Configuration can be passed directly via flags or through a YAML file usin
 ###  Basic Usage
 
 ```bash
-ee-wildfire --config ./config_options.yml --year 2020 --geojson data/perims/
+ee-wildfire --config ./config_options.yml --year 2020 --geojson data/perims/ --sync-year
 ```
 
 # Acknowledgements
