@@ -16,7 +16,7 @@ try:
 except ImportError:
     import tomli as tomllib  # Fallback for older versions
 
-VERSION = "2025.0.12"
+VERSION = "2025.0.13"
 
 config_data = {}
 
