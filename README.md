@@ -111,7 +111,7 @@ output: /home/kyle/NRML/data/tiff/2020/
 drive_dir: EarthEngine_WildfireSpreadTS_2020
 credentials: /home/kyle/NRML/OAuth/credentials.json
 download: false
-export_data: false
+export: false
 show_config: true
 force_new_geojson: false
 sync_year: true
@@ -132,7 +132,7 @@ data. Configuration can be passed directly via flags or through a YAML file usin
 | `--credentials`         | `str`   | Path to the Google OAuth2 credentials JSON file. Required for GEE export.  |
 | `--geojson-dir`             | `str`   | Path to the input or output directory for GeoJSON files containing fire perimeter data.   |
 | `--download`            | `flag`  | If set, the tool will download TIFF files from Google Drive.               |
-| `--export-data`         | `flag`  | If set, data will be exported to Google Drive using Earth Engine.          |
+| `--export`         | `flag`  | If set, data will be exported to Google Drive using Earth Engine.          |
 | `--show-config`         | `flag`  | Print the currently loaded configuration and exit. Useful for debugging.   |
 | `--force-new-geojson`   | `flag`  | Force the script to generate a new GeoJSON file even if one exists.        |
 | `--sync-year`   | `flag`  | Have all config and output files sync to the year in the config.        |

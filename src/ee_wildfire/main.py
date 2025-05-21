@@ -7,10 +7,10 @@ import json
 from google.oauth2.reauth import refresh_grant
 import yaml
 from tqdm import tqdm
-from get_globfire import get_combined_fires, analyze_fires
-from DataPreparation.DatasetPrepareService import DatasetPrepareService
-from drive_downloader import DriveDownloader
-from create_fire_config import create_fire_config_globfire
+from ee_wildfire.get_globfire import get_combined_fires, analyze_fires
+from ee_wildfire.DataPreparation.DatasetPrepareService import DatasetPrepareService
+from ee_wildfire.drive_downloader import DriveDownloader
+from ee_wildfire.create_fire_config import create_fire_config_globfire
 
 VERSION = "2025.1.2"
 CRS_CODE = "32610"
@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parent
 
 ARG_NAMESPACE = ["year","min_size","output","drive_dir",
                 "credentials","geojson_dir", "project_id",
-                "download", "export_data", "show_config",
+                "download", "export", "show_config",
                 "force_new_geojson", "sync_year",]
 
 
@@ -224,7 +224,7 @@ def main():
         action="store_true",
         help="Download TIFF files from google drive.",
     )
-    parser.add_argument("--export-data",
+    parser.add_argument("--export",
                         action="store_true",
                         help="Export to Google Drive")
 
@@ -295,7 +295,7 @@ def main():
     yaml_path = get_full_yaml_path()
     create_fire_config_globfire(geojson_path, yaml_path, config_data['year'])
     
-    if(config_data['export_data']):
+    if(config_data['export']):
         print("Exporting data...")
         export_data(yaml_path)   
 

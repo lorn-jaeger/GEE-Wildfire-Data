@@ -6,7 +6,7 @@ output: /home/kyle/NRML/data/tiff/2020/
 drive_dir: EarthEngine_WildfireSpreadTS_2020
 credentials: /home/kyle/NRML/OAuth/credentials.json
 download: false
-export_data: true
+export: true
 show_config: true
 force_new_geojson: false
 sync_year: false
