@@ -1,16 +1,16 @@
 import os
 from pathlib import Path
 import argparse
-from ee import ServiceAccountCredentials #type: ignore
+from ee import Authenticate, ServiceAccountCredentials #type: ignore
 from ee import Initialize
 import json
 from google.oauth2.reauth import refresh_grant
 import yaml
 from tqdm import tqdm
-from ee_wildfire.get_globfire import get_combined_fires, analyze_fires
-from ee_wildfire.DataPreparation.DatasetPrepareService import DatasetPrepareService
-from ee_wildfire.drive_downloader import DriveDownloader
-from ee_wildfire.create_fire_config import create_fire_config_globfire
+from get_globfire import get_combined_fires, analyze_fires
+from DataPreparation.DatasetPrepareService import DatasetPrepareService
+from drive_downloader import DriveDownloader
+from create_fire_config import create_fire_config_globfire
 
 VERSION = "2025.1.2"
 CRS_CODE = "32610"
@@ -22,7 +22,7 @@ config_data = {}
 ROOT = Path(__file__).resolve().parent
 
 ARG_NAMESPACE = ["year","min_size","output","drive_dir",
-                "credentials","geojson_dir",
+                "credentials","geojson_dir", "project_id",
                 "download", "export_data", "show_config",
                 "force_new_geojson", "sync_year",]
 
@@ -245,6 +245,12 @@ def main():
                         action="version",
                         version=f"ee-wildfire version = {VERSION}")
 
+    parser.add_argument(
+        "--project-id",
+        type=str,
+        help="Project ID for Google Cloud",
+    )
+
     args = parser.parse_args()
 
 
@@ -271,26 +277,15 @@ def main():
         save_yaml_config(config_data, config_path)
 
 
-    # Read the service account creds
+    # Read the user account creds
     credentials_path = config_data.get('credentials')
     if not credentials_path:
         raise KeyError(f"Malformed configuration yaml at {credentials_path}. Missing credentials field.")
 
-    try:
-        with open(credentials_path) as f:
-            service_account_info = json.load(f)
+    Authenticate()
+    Initialize(project=config_data['project_id'])
 
-            credentials = ServiceAccountCredentials(
-                service_account_info['client_email'],
-                key_data=json.dumps(service_account_info)
-            )
-    except FileNotFoundError:
-        print(f"The authetication file {credentials_path} is not found! Run with --credentials PATH.")
-        exit()
-
-    # use or generate GeoJSON
-    Initialize(credentials)
-
+    # use or generate geojson
     geojson_path = get_full_geojson_path()
     if (not os.path.exists(geojson_path) or config_data['force_new_geojson']):
         print("Generating Geojson...")

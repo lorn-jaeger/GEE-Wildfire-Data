@@ -1,12 +1,16 @@
 # TODO List
 
+- [ ] Authenticate with google user account not a service account.
+
+- [ ] We want to pull fires with a small minimum size. But this has a known issue [^1].
+
 - [x] Dataset only goes to 2021, make a bounds check for year.
 
 - [ ] Remote desktop for ssh compatibility?
 
 - [ ] Configuration is funky. It should be streamlined
 
-- [ ] We want to pull fires with a small minimum size. But this has a known issue [^1].
+- [ ] When generating geojson, make sure the path exists and/or create it.
 
 - [ ] file conversion tiff to hdf5
 

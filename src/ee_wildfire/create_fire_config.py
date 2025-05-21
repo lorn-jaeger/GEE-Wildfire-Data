@@ -12,33 +12,33 @@ def create_fire_config_globfire(geojson_path, output_path, year):
     gdf['IDate'] = pd.to_datetime(gdf['IDate'], unit='ms')
     gdf['FDate'] = pd.to_datetime(gdf['FDate'], format='mixed')
     # print(f"[LOG] from create_config, gdf Idate: {gdf['IDate']}")
-    
+
     gdf = gdf[gdf['IDate'].dt.year == int(year)]
     # print(f"[LOG] from create_config, second gdf: {gdf}")
     first_occurrences = gdf.sort_values('IDate').groupby('Id').first()
     last_occurrences = gdf.sort_values('IDate').groupby('Id').last()
-    
+
     config = {
         'output_bucket': 'firespreadprediction',
         'rectangular_size': 0.5, 'year': year }
-    
+
     # ensures that datetime objects are dumped as YYYY-MM-DD
     class DateSafeYAMLDumper(yaml.SafeDumper):
         def represent_data(self, data):
             if isinstance(data, datetime):
                 return self.represent_scalar('tag:yaml.org,2002:timestamp', data.strftime('%Y-%m-%d'))
             return super().represent_data(data)
-    
+
     # Populate fire entries
     for idx in first_occurrences.index:
         first = first_occurrences.loc[idx]
         last = last_occurrences.loc[idx]
-        
+
         end_date = last['FDate'] if pd.notna(last['FDate']) else last['IDate']
         # 4 day buffer before and after ignition/containment
         start_date = first['IDate'] - timedelta(days=4)
         end_date = end_date + timedelta(days=4)
-        
+
         config[f'fire_{idx}'] = {
             'latitude': float(first['lat']),
             'longitude': float(first['lon']),
