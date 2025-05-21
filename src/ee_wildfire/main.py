@@ -4,6 +4,7 @@ import argparse
 from ee import ServiceAccountCredentials #type: ignore
 from ee import Initialize
 import json
+from google.oauth2.reauth import refresh_grant
 import yaml
 from tqdm import tqdm
 from ee_wildfire.get_globfire import get_combined_fires, analyze_fires
@@ -13,6 +14,8 @@ from ee_wildfire.create_fire_config import create_fire_config_globfire
 
 VERSION = "2025.1.1"
 CRS_CODE = "32610"
+MIN_YEAR = 2001
+MAX_YEAR = 2021
 
 config_data = {}
 
@@ -251,6 +254,11 @@ def main():
         if val is not None:
             config_data[key]=val
 
+    # check if year is within bounds of the dataset
+    reference_year = int(config_data['year'])
+    if((reference_year < MIN_YEAR) or (reference_year > MAX_YEAR)):
+        raise IndexError(f"Year {reference_year} is not contained within the dataset.")
+
     if(config_data['sync_year']):
         sync_drive_path_with_year()
         sync_tiff_output_with_year()
@@ -290,7 +298,6 @@ def main():
 
     # generate the YAML output config
     yaml_path = get_full_yaml_path()
-    # print(f"[LOG] Yaml path from main(): {yaml_path}")
     create_fire_config_globfire(geojson_path, yaml_path, config_data['year'])
     
     if(config_data['export_data']):
