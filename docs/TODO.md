@@ -1,6 +1,6 @@
 # TODO List
 
-- [ ] Authenticate with google user account not a service account.
+- [x] Authenticate with google user account not a service account.
 
 - [ ] We want to pull fires with a small minimum size. But this has a known issue [^1].
 
