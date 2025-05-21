@@ -2,9 +2,17 @@
 
 - [x] Dataset only goes to 2021, make a bounds check for year.
 
+- [ ] Remote desktop for ssh compatibility?
+
+- [ ] Configuration is funky. It should be streamlined
+
+- [ ] We want to pull fires with a small minimum size. But this has a known issue [^2].
+
 - [ ] file conversion tiff to hdf5
 
 - [ ] Catch timeout when downloading data.[^2]
+
+- [ ] Program config defaults should have relative paths.
 
 - [ ] Tie to Jesse's google drive, might be weird because its a shared folder.
 
@@ -13,7 +21,7 @@
 # Known Issues
 
 - There were a ton of fires in 2021, and Google doesn't like it when you pull 
-  more than 5000 entries at once. How the batch exporting is done will need to be changed.[^2]
+  more than 5000 entries at once. How the exporting is done will need to be changed, done in batches by month.[^2]
 
 
 # Footnotes
