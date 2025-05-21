@@ -136,7 +136,6 @@ data. Configuration can be passed directly via flags or through a YAML file usin
 | `--force-new-geojson`   | `flag`  | Force the script to generate a new GeoJSON file even if one exists.        |
 | `--sync-year`   | `flag`  | Have all config and output files sync to the year in the config.        |
 | `--version`   | `flag`  | Outputs current program version.        |
-
 ###  Basic Usage
 
 ```bash

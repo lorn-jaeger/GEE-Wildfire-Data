@@ -12,6 +12,7 @@ from ee_wildfire.drive_downloader import DriveDownloader
 from ee_wildfire.create_fire_config import create_fire_config_globfire
 
 VERSION = "2025.1.1"
+CRS_CODE = "32610"
 
 config_data = {}
 
@@ -146,7 +147,7 @@ def export_data(yaml_path):
 
         try:
             print(f"Trying to export {location} to Google Drive")
-            dataset_pre.extract_dataset_from_gee_to_drive("32610", n_buffer_days=4)
+            dataset_pre.extract_dataset_from_gee_to_drive(CRS_CODE , n_buffer_days=4)
         except Exception as e:
             print(f"Failed on {location}: {str(e)}")
             failed_locations.append(location)
@@ -276,7 +277,7 @@ def main():
                 key_data=json.dumps(service_account_info)
             )
     except FileNotFoundError:
-        print(f"The authetication file {credentials_path} is not found!")
+        print(f"The authetication file {credentials_path} is not found! Run with --credentials PATH.")
         exit()
 
     # use or generate GeoJSON
