@@ -12,7 +12,7 @@ from ee_wildfire.DataPreparation.DatasetPrepareService import DatasetPrepareServ
 from ee_wildfire.drive_downloader import DriveDownloader
 from ee_wildfire.create_fire_config import create_fire_config_globfire
 
-VERSION = "2025.1.1"
+VERSION = "2025.1.2"
 CRS_CODE = "32610"
 MIN_YEAR = 2001
 MAX_YEAR = 2021
