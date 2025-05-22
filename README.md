@@ -16,6 +16,8 @@ transforming wildfire-related geospatial data from Google Earth Engine. It suppo
 pipelines, particularly those interested in integrating Earth Engine datasets into geospatial ML
 workflows.
 
+- The [Trello page](https://trello.com/b/eEd18oio/natrual-resource-management-lab) contains the current TODO list and future features.
+
 # Prerequisite
 
  Requires at least python 3.10.
