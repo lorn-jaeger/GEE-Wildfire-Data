@@ -1,7 +1,6 @@
 import datetime
 import ee
 import geemap
-import yaml
 from tqdm import tqdm
 import sys
 from pathlib import Path
@@ -100,44 +99,3 @@ class DatasetPrepareService:
                 print(f"Failed processing {date_of_interest}: {str(e)}")
                 raise
 
-# def main():
-#     # Load config file
-#     YEAR = input("Enter the year: ")
-#     with open(f"config/us_fire_{YEAR}_1e7.yml", "r", encoding="utf8") as f:
-#         config = yaml.load(f, Loader=yaml.FullLoader)
-#
-#     # Initialize Earth Engine with your personal account
-#     geemap.ee_initialize(project=configuration.PROJECT)
-#
-#     # Extract fire names from config
-#     fire_names = list(config.keys())
-#     for non_fire_key in ["output_bucket", "rectangular_size", "year"]:
-#         fire_names.remove(non_fire_key)
-#     locations = fire_names
-#
-#     # Track any failures
-#     failed_locations = []
-#
-#     # Process each location
-#     for location in tqdm(locations):
-#         print(f"\nFailed locations so far: {failed_locations}")
-#         print(f"Current Location: {location}")
-#
-#         dataset_pre = DatasetPrepareService(location=location, config=config)
-#
-#         try:
-#             dataset_pre.extract_dataset_from_gee_to_drive('32610', n_buffer_days=4)
-#         except Exception as e:
-#             print(f"Failed on {location}: {str(e)}")
-#             failed_locations.append(location)
-#             continue
-#
-#     if failed_locations:
-#         print("\nFailed locations:")
-#         for loc in failed_locations:
-#             print(f"- {loc}")
-#     else:
-#         print("\nAll locations processed successfully!")
-#
-# if __name__ == '__main__':
-#     main()
