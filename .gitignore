@@ -13,3 +13,4 @@ __pycache__/
 **/*.egg-info
 
 docs/meeting_notes/
+src/ee_wildfire/user_config.yml
