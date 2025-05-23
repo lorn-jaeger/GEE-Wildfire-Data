@@ -16,7 +16,7 @@ import os
 class UserConfig:
 
     def __init__(self, yaml_path = None):
-        if(yaml_path):
+        if(yaml_path and (yaml_path != INTERNAL_USER_CONFIG_DIR)):
             config_data = load_yaml_config(yaml_path)
             self._load_config(config_data)
 

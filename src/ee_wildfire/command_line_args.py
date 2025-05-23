@@ -173,9 +173,9 @@ def parse():
 
     args, _ = base_parser.parse_known_args()
 
+    outside_user_config_path = args.config
 
-
-    config = UserConfig()
+    config = UserConfig(yaml_path=outside_user_config_path)
     config.change_configuration_from_yaml(args.config)
     config.change_bool_from_args(args)
 
