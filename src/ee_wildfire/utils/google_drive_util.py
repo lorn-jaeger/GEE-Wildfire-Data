@@ -23,6 +23,7 @@ def sync_tiff_output_with_year(config_data):
     new_tiff_path = parent_tiff_path / config_data['year']
     new_tiff_path.mkdir(parents=True, exist_ok=True)
     config_data['output'] = str(new_tiff_path) + "/"
+
 def export_data(yaml_path):
     
     # fp = FirePred()

@@ -10,11 +10,12 @@ from ee_wildfire.constants import *
 def validate_yaml_path(yaml_path):
     return os.path.exists(yaml_path)
 
-def get_full_yaml_path(config_data):
-    config_dir = ROOT / "config" / f"us_fire_{config_data['year']}_1e7.yml"
+def get_full_yaml_path(config):
+    config_dir = ROOT / "config" / f"us_fire_{config.year}_1e7.yml"
     return config_dir
 
 def load_yaml_config(yaml_path):
+    #TODO: make sure this handles relative pathing
     if validate_yaml_path(yaml_path):
         with open(yaml_path, 'r') as f:
             return yaml.safe_load(f) or {}

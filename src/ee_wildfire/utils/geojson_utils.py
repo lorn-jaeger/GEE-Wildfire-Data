@@ -4,12 +4,18 @@ geojson_utils.py
 this has a bunch of helper functions to handle geojson files
 """
 from ee_wildfire.get_globfire import get_combined_fires, analyze_fires
+from ee_wildfire.UserConfig.UserConfig import UserConfig
 
-def generate_geojson(config_data):
+def get_full_geojson_path(config: UserConfig):
+    return config.geojson_dir / f"combined_fires_{config.year}.geojson"
+    
+
+
+def generate_geojson(config):
     # Get both daily and final perimeters
-    year = config_data['year']
-    min_size = config_data['min_size']
-    geojson_path = f"{config_data['geojson_dir']}combined_fires_{year}.geojson"
+    year = config.year
+    min_size = config.min_size
+    geojson_path = get_full_geojson_path(config)
     
     combined_gdf, daily_gdf, final_gdf = get_combined_fires(
         year, min_size 
