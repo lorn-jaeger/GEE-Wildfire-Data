@@ -25,13 +25,13 @@ workflows.
  As of mid-2023, Google Earth Engine access must be linked to a Google Cloud Project, even for
  free/non-commercial usage. So sign up for a [non-commercial earth engine account](https://earthengine.google.com/noncommercial/).
 
-## 🔐 Google API Setup Instructions
+# 🔐 Google API Setup Instructions
 
 To run this project with Google Earth Engine and Google Drive access, follow the steps below to create and configure your credentials.
 
 ---
 
-### 1. ✅ Create a Service Account
+## 1. ✅ Create a Service Account
 
 In the [Google Cloud Console](https://console.cloud.google.com/), do the following:
 
@@ -45,7 +45,7 @@ In the [Google Cloud Console](https://console.cloud.google.com/), do the followi
 
 ---
 
-### 2. 🔑 Assign Roles to Your Personal Account
+## 2. 🔑 Assign Roles to Your Personal Account
 
 Make sure your **main Google Cloud account** (the one you'll log in with) has these roles:
 
@@ -55,7 +55,7 @@ Make sure your **main Google Cloud account** (the one you'll log in with) has th
 
 ---
 
-### 3. 🧭 Create OAuth Credentials (for Google Drive Access)
+## 3. 🧭 Create OAuth Credentials (for Google Drive Access)
 
 Still in the Google Cloud Console:
 
@@ -69,7 +69,7 @@ Still in the Google Cloud Console:
 
 ---
 
-### 4. 🚀 Enable Required APIs
+## 4. 🚀 Enable Required APIs
 
 In the left-hand menu:
 
@@ -80,7 +80,7 @@ In the left-hand menu:
 
 ---
 
-### 5. 👤 Add Test Users (Required for OAuth)
+## 5. 👤 Add Test Users (Required for OAuth)
 
 - Go to **APIs & Services → OAuth consent screen**
 - Scroll to the **Test Users** section
@@ -101,49 +101,38 @@ pip install -e .
 ```
 
 # Configuration
-There are two ways to configure this tool; you can use command line arguments to alter the internal
-YAML file, or you can input your own YAML. Here's a template:
+
+Template for configuration:
 
 ```yaml
-year: '2020'
-min_size: 10000000
-project_id: YOUR_PROJECT_ID
-geojson_dir: /home/kyle/NRML/data/perims/
-output: /home/kyle/NRML/data/tiff/2020/
-drive_dir: EarthEngine_WildfireSpreadTS_2020
-credentials: /home/kyle/NRML/OAuth/credentials.json
-download: false
-export: false
-show_config: true
-force_new_geojson: false
-sync_year: true
+project_id: YOUR PROJECT ID # google cloud api project id for earth engine
+credentials: /home/kyle/ee_wildfire_data/OAuth/credentials.json # account information from google cloud
+year: '2021' # year to batch
+month: '1'
+geojson_dir: /home/kyle/ee_wildfire_data/perims # where to store your geojson fire parameters
+tiff_dir: /home/kyle/ee_wildfire_data/tiff/2021 # where to store your tiff files downloaded from google drive
+drive_dir: EarthEngine_WildfireSpreadTS_2021 # google drive directory for data exporting
+download: false # flag to download data?
+export: false # flag to export data?
+force_new_geojson: false # some times when attempting to export large amounts of data it fails and corrupts the geojson param file. This regenerates it.
 ```
 
+To finish configuration you will need to use the `-config` command line argument.
+
 ## Command-Line Interface (CLI)
+| Argument | Description |
+| -------- | ------------|
+| `-config PATH`| Loads a YAML config file located at PATH.|
+| `-show-config` | Prints current config to command line. |
+| `-export` | Export data from Google Earth Engine to Google Drive. |
+| `-download` | Downloads data from Google Drive to your local machine. |
+| `-force-new-geojson` | Forces the creation of new geojson fire parameters. |
 
-This tool can be run from the command line to generate fire configuration YAML files from GeoJSON
-data. Configuration can be passed directly via flags or through a YAML file using `--config`.
 
-| Argument                | Type    | Description                                                                 |
-|-------------------------|---------|-----------------------------------------------------------------------------|
-| `--config`              | `str`   | Path to a YAML configuration file. Defaults to `./config_options.yml`.     |
-| `--year`                | `str`   | The year of the fire events to process.                                    |
-| `--min-size`            | `float` | Minimum fire size (in square meters) to include.                           |
-| `--output`              | `str`   | Local directory to store generated TIFF files.                             |
-| `--drive-dir`           | `str`   | Google Drive directory where TIFFs are uploaded or downloaded from.        |
-| `--credentials`         | `str`   | Path to the Google OAuth2 credentials JSON file. Required for GEE export.  |
-| `--geojson-dir`             | `str`   | Path to the input or output directory for GeoJSON files containing fire perimeter data.   |
-| `--download`            | `flag`  | If set, the tool will download TIFF files from Google Drive.               |
-| `--export`         | `flag`  | If set, data will be exported to Google Drive using Earth Engine.          |
-| `--show-config`         | `flag`  | Print the currently loaded configuration and exit. Useful for debugging.   |
-| `--force-new-geojson`   | `flag`  | Force the script to generate a new GeoJSON file even if one exists.        |
-| `--sync-year`   | `flag`  | Have all config and output files sync to the year in the config.        |
-| `--version`   | `flag`  | Outputs current program version.        |
-| `--project-id` | `str` | Your Google project ID|
 ###  Basic Usage
 
 ```bash
-ee-wildfire --config ./config_options.yml --year 2020 --geojson data/perims/ --sync-year
+ee-wildfire -config /path/to/some/config.yml -export -download
 ```
 
 # Acknowledgements
