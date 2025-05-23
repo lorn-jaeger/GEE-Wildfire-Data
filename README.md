@@ -106,11 +106,9 @@ Template for configuration:
 
 ```yaml
 project_id: YOUR PROJECT ID # google cloud api project id for earth engine
-credentials: /home/kyle/ee_wildfire_data/OAuth/credentials.json # account information from google cloud
+data_dir: ~/ee_wildfire_data/ # Directory to store all the data for this program.
 year: '2021' # year to batch
 month: '1'
-geojson_dir: /home/kyle/ee_wildfire_data/perims # where to store your geojson fire parameters
-tiff_dir: /home/kyle/ee_wildfire_data/tiff/2021 # where to store your tiff files downloaded from google drive
 download: false # flag to download data?
 export: false # flag to export data?
 force_new_geojson: false # some times when attempting to export large amounts of data it fails and corrupts the geojson param file. This regenerates it.
@@ -131,7 +129,11 @@ To finish configuration you will need to use the `-config` command line argument
 ###  Basic Usage
 
 ```bash
-ee-wildfire -config /path/to/some/config.yml -export -download
+ee-wildfire -config /path/to/some/config.yml -show-config
+```
+
+```bash
+ee-wildfire -force-new-geojson -export -download
 ```
 
 # Acknowledgements

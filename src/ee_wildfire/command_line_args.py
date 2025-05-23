@@ -16,13 +16,6 @@ from ee_wildfire.utils.google_drive_util import export_data
 from ee_wildfire.drive_downloader import DriveDownloader
 from ee_wildfire.UserConfig.UserConfig import UserConfig
 
-def get_namespace():
-    namespace = []
-    for name in COMMAND_ARGS:
-        if(name != "-version"):
-            namespace.append(name[1:].replace("-","_"))
-    return namespace
-
 def parse():
     # base_parser = argparse.ArgumentParser(add_help=False)
     # base_parser.add_argument('--config', 
@@ -181,25 +174,41 @@ def parse():
     args, _ = base_parser.parse_known_args()
 
 
+
     config = UserConfig()
     config.change_configuration_from_yaml(args.config)
+    config.change_bool_from_args(args)
 
     if(args.show_config):
         print(config)
 
     full_geojson_path = get_full_geojson_path(config)
-    if(args.force_new_geojson or not os.path.exists(full_geojson_path)):
-        print("Generating Geojson...")
+    geojson_exist = os.path.exists(full_geojson_path)
+    if(not geojson_exist or config.force_new_geojson):
+
+        if(not geojson_exist):
+            print(f"Geojson at '{full_geojson_path}' does not exist. Generating Geojson...")
+
+        if(config.force_new_geojson):
+            print(f"Forcing the generation of new Geojson...")
+
         generate_geojson(config)
 
+            # TODO: split batch into smaller chunks
+
+    #TODO: check if geojson is corrupted, if so regen
+
     # generate the YAML output config
+    print("Generating fire configuration...")
     create_fire_config_globfire(config)
 
-    if(args.export):
+
+    if(config.export):
+        print("Exporting data...")
         export_data(get_full_yaml_path(config))
 
-    if(args.download):
-        print(config.google_drive_dir)
+    if(config.download):
+        print("Downloading data...")
         config.downloader.download_folder(config.google_drive_dir, config.tiff_dir)
 
 
