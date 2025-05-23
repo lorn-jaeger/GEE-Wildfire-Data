@@ -5,17 +5,18 @@ this has a bunch of helper functions to handle geojson files
 """
 from ee_wildfire.get_globfire import get_combined_fires, analyze_fires
 
-def get_full_geojson_path(config_data):
-    return f"{config_data['geojson_dir']}combined_fires_{config_data['year']}.geojson"
-
 def generate_geojson(config_data):
     # Get both daily and final perimeters
+    year = config_data['year']
+    min_size = config_data['min_size']
+    geojson_path = f"{config_data['geojson_dir']}combined_fires_{year}.geojson"
+    
     combined_gdf, daily_gdf, final_gdf = get_combined_fires(
-        config_data['year'], config_data['min_size'] 
+        year, min_size 
     )
 
     if combined_gdf is not None:
-        print(f"\nAnalysis Results for {config_data['year']}:")
+        print(f"\nAnalysis Results for {year}:")
 
         print("\nCombined Perimeters:")
         combined_stats = analyze_fires(combined_gdf)
@@ -63,7 +64,6 @@ def generate_geojson(config_data):
         raise TypeError("combined_gdf is None or missing 'Id' column")
 
     # save to geojson
-    geojson_path = get_full_geojson_path(config_data)
     combined_gdf_reduced.to_file(
         geojson_path,
         driver="GeoJSON",
