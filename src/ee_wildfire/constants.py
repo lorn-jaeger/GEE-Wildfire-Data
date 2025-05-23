@@ -24,7 +24,7 @@ DEFAULT_TIFF_DIR = DEFAULT_DATA_DIR / "tiff" / str(MAX_YEAR)
 
 DEFAULT_GEOJSON_DIR = DEFAULT_DATA_DIR / "perims"
 
-DEFAULT_GOOGLE_DRIVE_DIR = "EarthEngine_WildfireSpreadTS_" + str(MAX_YEAR)
+DEFAULT_GOOGLE_DRIVE_DIR = "EarthEngine_WildfireSpreadTS_"
 
 INTERNAL_USER_CONFIG_DIR = ROOT / "user_config.yml"
 

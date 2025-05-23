@@ -111,7 +111,6 @@ year: '2021' # year to batch
 month: '1'
 geojson_dir: /home/kyle/ee_wildfire_data/perims # where to store your geojson fire parameters
 tiff_dir: /home/kyle/ee_wildfire_data/tiff/2021 # where to store your tiff files downloaded from google drive
-drive_dir: EarthEngine_WildfireSpreadTS_2021 # google drive directory for data exporting
 download: false # flag to download data?
 export: false # flag to export data?
 force_new_geojson: false # some times when attempting to export large amounts of data it fails and corrupts the geojson param file. This regenerates it.

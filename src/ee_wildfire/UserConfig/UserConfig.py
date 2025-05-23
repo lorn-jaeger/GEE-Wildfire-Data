@@ -40,7 +40,6 @@ class UserConfig:
         self.month = "1"
         self.geojson_dir = DEFAULT_DATA_DIR / "perims"
         self.tiff_dir = DEFAULT_DATA_DIR / "tiff" / self.year
-        self.google_drive_dir = DEFAULT_GOOGLE_DRIVE_DIR
         self.download = False
         self.export = False
         self.force_new_geojson = False
@@ -58,7 +57,6 @@ class UserConfig:
         self.month = config_data['month']
         self.geojson_dir = Path(config_data['geojson_dir'])
         self.tiff_dir = Path(config_data['tiff_dir'])
-        self.google_drive_dir = config_data['drive_dir']
         self.download = config_data['download']
         self.export = config_data['export']
         self.force_new_geojson = config_data['force_new_geojson']
@@ -82,6 +80,8 @@ class UserConfig:
 
 
     def _validate_paths(self):
+
+        self.google_drive_dir = DEFAULT_GOOGLE_DRIVE_DIR + str(self.year)
 
         def try_make_path(path):
             if not os.path.exists(path):
@@ -112,6 +112,8 @@ class UserConfig:
         config_data = load_yaml_config(yaml_path)
         if(len(config_data) == 0):
             self._load_default_config(yaml_path)
+        else:
+            self._load_config(config_data)
 
 
 
