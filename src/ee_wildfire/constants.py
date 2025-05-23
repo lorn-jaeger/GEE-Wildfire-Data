@@ -6,7 +6,7 @@ This is where the programs constant variables are stored
 
 from pathlib import Path
 
-VERSION = "2025.1.3"
+VERSION = "2025.1.4"
 
 CRS_CODE = "32610"
 
