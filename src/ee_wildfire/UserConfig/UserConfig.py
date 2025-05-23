@@ -1,5 +1,7 @@
 
 from csv import Error
+
+from pandas._config import config
 from ee_wildfire.utils.yaml_utils import load_yaml_config, validate_yaml_path, load_internal_user_config, save_yaml_config
 from ee_wildfire.constants import *
 from ee_wildfire.drive_downloader import DriveDownloader
@@ -55,6 +57,7 @@ class UserConfig:
         self.download = False
         self.export = False
         self.force_new_geojson = False
+        self.min_size = 1e7
 
         self._validate_paths()
         self._save_config()
@@ -72,6 +75,7 @@ class UserConfig:
         self.download = config_data['download']
         self.export = config_data['export']
         self.force_new_geojson = config_data['force_new_geojson']
+        self.min_size = config_data['min_size']
         self._validate_paths()
         self._save_config()
 
@@ -87,6 +91,7 @@ class UserConfig:
             'download':self.download,
             'export':self.export,
             'force_new_geojson':self.force_new_geojson,
+            'min_size':self.min_size,
         }
         return config_data
 

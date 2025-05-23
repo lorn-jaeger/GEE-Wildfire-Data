@@ -188,7 +188,8 @@ def parse():
         print(config)
 
     full_geojson_path = get_full_geojson_path(config)
-    if(args.force_new_geojson or os.path.exists(full_geojson_path)):
+    if(args.force_new_geojson or not os.path.exists(full_geojson_path)):
+        print("Generating Geojson...")
         generate_geojson(config)
 
     # generate the YAML output config

@@ -1,0 +1,11 @@
+project_id: ee-earthdata-459817
+credentials: /home/kyle/ee_wildfire_data/OAuth/credentials.json
+min_size: 1_000_000
+year: '2017'
+month: '1'
+geojson_dir: /home/kyle/ee_wildfire_data/perims
+tiff_dir: /home/kyle/ee_wildfire_data/tiff/2017
+drive_dir: EarthEngine_WildfireSpreadTS_2017
+download: false
+export: false
+force_new_geojson: false

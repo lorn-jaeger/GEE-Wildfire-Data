@@ -10,7 +10,6 @@ def get_full_geojson_path(config: UserConfig):
     return config.geojson_dir / f"combined_fires_{config.year}.geojson"
     
 
-
 def generate_geojson(config):
     # Get both daily and final perimeters
     year = config.year
