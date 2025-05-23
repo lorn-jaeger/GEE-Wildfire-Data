@@ -4,7 +4,12 @@ from datetime import datetime, timedelta
 import yaml
 import os
 
-def create_fire_config_globfire(geojson_path, output_path, year):
+from ee_wildfire.utils.yaml_utils import get_full_yaml_path
+
+def create_fire_config_globfire(config):
+    output_path = get_full_yaml_path(config)
+    geojson_path = config.geojson_dir
+    year = config.year
 
     # print(f"[LOG] from create_config, geojson_path: {geojson_path}")
     gdf = gpd.read_file(geojson_path)

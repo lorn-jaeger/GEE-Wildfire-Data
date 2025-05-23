@@ -16,6 +16,12 @@ from ee_wildfire.utils.google_drive_util import export_data
 from ee_wildfire.drive_downloader import DriveDownloader
 from ee_wildfire.UserConfig.UserConfig import UserConfig
 
+def get_namespace():
+    namespace = []
+    for name in COMMAND_ARGS:
+        if(name != "-version"):
+            namespace.append(name[1:].replace("-","_"))
+    return namespace
 
 def parse():
     # base_parser = argparse.ArgumentParser(add_help=False)
@@ -185,54 +191,8 @@ def parse():
     if(args.force_new_geojson or os.path.exists(full_geojson_path)):
         generate_geojson(config)
 
-    if(args.export):
-        export_data(get_full_yaml_path(config))
-
-    if(args.download):
-        print(config.google_drive_dir)
-        config.downloader.download_folder(config.google_drive_dir, config.tiff_dir)
-
-def get_namespace():
-    namespace = []
-    for name in COMMAND_ARGS:
-        if(name != "-version"):
-            namespace.append(name[1:].replace("-","_"))
-    return namespace
-
-def main():
-    base_parser = argparse.ArgumentParser(add_help=False)
-    for cmd in COMMAND_ARGS.keys():
-        _type, _default, _action, _help = COMMAND_ARGS[cmd]
-        if(_type):
-            base_parser.add_argument(cmd,
-                                     type=_type,
-                                     default=_default,
-                                     action=_action,
-                                     help=_help)
-        elif(cmd != "-version"):
-            base_parser.add_argument(cmd,
-                                     default=_default,
-                                     action=_action,
-                                     help=_help)
-        else:
-            base_parser.add_argument(cmd,
-                                     action=_action,
-                                     version=VERSION,
-                                     help=_help)
-
-
-    args, _ = base_parser.parse_known_args()
-
-
-    config = UserConfig()
-    config.change_configuration_from_yaml(args.config)
-
-    if(args.show_config):
-        print(config)
-
-    full_geojson_path = get_full_geojson_path(config)
-    if(args.force_new_geojson or os.path.exists(full_geojson_path)):
-        generate_geojson(config)
+    # generate the YAML output config
+    create_fire_config_globfire(config)
 
     if(args.export):
         export_data(get_full_yaml_path(config))
@@ -242,7 +202,3 @@ def main():
         config.downloader.download_folder(config.google_drive_dir, config.tiff_dir)
 
 
-
-
-if __name__ == "__main__":
-    main()

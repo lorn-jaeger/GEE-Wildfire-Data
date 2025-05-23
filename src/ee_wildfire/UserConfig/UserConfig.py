@@ -30,7 +30,19 @@ class UserConfig:
         self._authenticate()
 
     def __str__(self):
-        return str(self._to_dict())
+        output_str = [
+            f"Project ID:                       {self.project_id}",
+            f"Year:                             {self.year}",
+            f"Credentials path:                 {self.credentials}",
+            f"Geojson path:                     {self.geojson_dir}",
+            f"Tiff directory path:              {self.tiff_dir}",
+            f"Are you downloading?              {self.download}",
+            f"Are you exporting data?           {self.export}",
+            f"Are you needing a new Geojson?    {self.force_new_geojson}"
+        ]
+
+        return "\n".join(output_str)
+        # return str(self._to_dict())
 
     def _load_default_config(self,path):
         print(f"No user configuration found at '{path}'. Loading default.")
