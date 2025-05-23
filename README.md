@@ -109,6 +109,7 @@ project_id: YOUR PROJECT ID # google cloud api project id for earth engine
 data_dir: ~/ee_wildfire_data/ # Directory to store all the data for this program.
 year: '2021' # year to batch
 month: '1'
+min_size: 10_000_000 # minimum size of fire image
 download: false # flag to download data?
 export: false # flag to export data?
 force_new_geojson: false # some times when attempting to export large amounts of data it fails and corrupts the geojson param file. This regenerates it.
