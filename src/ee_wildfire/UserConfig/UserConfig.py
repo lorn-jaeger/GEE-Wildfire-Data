@@ -1,9 +1,7 @@
 
 from csv import Error
 
-from numpy import show_config
-from pandas._config import config
-from ee_wildfire.utils.yaml_utils import load_yaml_config, validate_yaml_path, load_internal_user_config, save_yaml_config
+from ee_wildfire.utils.yaml_utils import *
 from ee_wildfire.constants import *
 from ee_wildfire.drive_downloader import DriveDownloader
 
@@ -36,6 +34,7 @@ class UserConfig:
             f"Year:                             {self.year}",
             f"Min Size:                         {self.min_size}",
             f"Data directory path               {self.data_dir}",
+            f"Google Drive path                 {self.google_drive_dir}",
             f"Credentials path:                 {self.credentials}",
             f"Geojson path:                     {self.geojson_dir}",
             f"Tiff directory path:              {self.tiff_dir}",
@@ -82,6 +81,7 @@ class UserConfig:
         self.export = config_data['export']
         self.force_new_geojson = config_data['force_new_geojson']
         self.min_size = config_data['min_size']
+
         self._validate_paths()
         self._save_config()
 
@@ -102,7 +102,7 @@ class UserConfig:
         }
         return config_data
 
-    def _validate_and_sync_year(self):
+    def _validate_and_sync_time(self):
         if(int(self.year) < MIN_YEAR):
             raise IndexError(f"Querry year '{self.year}' is smaller than the minimum year '{MIN_YEAR}'")
 
@@ -131,7 +131,7 @@ class UserConfig:
         try_make_path(self.data_dir)
         try_make_path(self.geojson_dir)
         try_make_path(self.tiff_dir)
-        self._validate_and_sync_year()
+        self._validate_and_sync_time()
 
 
     def _authenticate(self):
@@ -140,24 +140,21 @@ class UserConfig:
         Initialize(project=self.project_id)
         self.downloader = DriveDownloader(self.credentials)
 
-# =========================================================================== #
-#                               Public Methods
-# =========================================================================== #
-
-    def get_namespace(self):
+    def _get_namespace(self):
         namespace = []
         for name in COMMAND_ARGS:
             if(name != "-version"):
                 fixed_name = name[1:].replace("-","_")
                 namespace.append(fixed_name)
         return namespace
+# =========================================================================== #
+#                               Public Methods
+# =========================================================================== #
+
 
     def change_configuration_from_yaml(self, yaml_path):
 
         config_data = load_yaml_config(yaml_path)
-        # print("changing user config from yaml")
-        # print(f"[LOG] config data length: {len(config_data)}")
-        # print(config_data)
 
         if(len(config_data) == 0):
             self._load_default_config(yaml_path)
@@ -166,7 +163,7 @@ class UserConfig:
             self._load_config(config_data)
 
     def change_bool_from_args(self, args):
-        namespace = self.get_namespace()
+        namespace = self._get_namespace()
         internal_config = args.config == INTERNAL_USER_CONFIG_DIR
         for key in namespace:
             val = getattr(args,key)
@@ -179,6 +176,11 @@ class UserConfig:
 
                 if (key == "download"):
                     self.download = val
+
+    def change_year(self,year):
+        self.year = str(year);
+        self._validate_and_sync_time()
+        pass
 
 
 def main():
