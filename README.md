@@ -127,7 +127,6 @@ To finish configuration you will need to use the `-config` command line argument
 | `-show-config` | Prints current config to command line. |
 | `-export` | Export data from Google Earth Engine to Google Drive. |
 | `-download` | Downloads data from Google Drive to your local machine. |
-| `-force-new-geojson` | Forces the creation of new geojson fire parameters. |
 
 
 ###  Basic Usage

@@ -40,7 +40,7 @@ DEFAULT_DATA_DIR = HOME / "ee_wildfire_data"
 
 DEFAULT_TIFF_DIR = DEFAULT_DATA_DIR / "tiff" / str(MAX_YEAR)
 
-DEFAULT_GEOJSON_DIR = DEFAULT_DATA_DIR / "perims"
+DEFAULT_OAUTH_DIR = DEFAULT_DATA_DIR / "OAuth" / "credentials.json"
 
 DEFAULT_GOOGLE_DRIVE_DIR = "EarthEngine_WildfireSpreadTS_"
 
@@ -54,7 +54,6 @@ COMMAND_ARGS = {
     "-download":            (None,  False,                      "store_true",   "Download from drive."),
     "-show-config":         (None,  False,                      "store_true",   "Show user configuration."),
     "-version":             (None,  None,                       "version",      "Show current version"),
-    "-force-new-geojson":   (None,  False,                      "store_true",   "Force new geojson generation."),
 
 }
 

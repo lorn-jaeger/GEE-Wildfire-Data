@@ -42,7 +42,6 @@ class UserConfig:
             f"Tiff directory path:              {self.tiff_dir}",
             f"Are you downloading?              {self.download}",
             f"Are you exporting data?           {self.export}",
-            f"Are you needing a new Geojson?    {self.force_new_geojson}",
             f"Start date:                       {self.start_date}",
             f"End date:                         {self.end_date}",
         ]
@@ -68,7 +67,6 @@ class UserConfig:
         self.download = False
         self.export = False
         # TODO: do i need this? we generate the geodata frame everytime the program is called
-        self.force_new_geojson = False
 
         self._validate_paths()
         self._save_config()
@@ -88,7 +86,6 @@ class UserConfig:
         self.credentials = self.data_dir / "OAuth" / "credentials.json"
         self.download = config_data['download']
         self.export = config_data['export']
-        self.force_new_geojson = config_data['force_new_geojson']
         self.min_size = config_data['min_size']
         # self.geodataframe = self._get_geodataframe()
 
@@ -102,11 +99,10 @@ class UserConfig:
             'credentials':str(self.credentials),
             'start_date':self.start_date,
             'end_date':self.end_date,
-            'tiff_dir':str(self.tiff_dir),
+            # 'tiff_dir':str(self.tiff_dir),
             'drive_dir':self.google_drive_dir,
             'download':self.download,
             'export':self.export,
-            'force_new_geojson':self.force_new_geojson,
             'min_size':self.min_size,
         }
         return config_data
