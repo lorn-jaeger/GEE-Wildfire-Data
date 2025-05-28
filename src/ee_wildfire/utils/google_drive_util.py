@@ -48,6 +48,7 @@ def export_data(yaml_path):
         try:
             print(f"Trying to export {location} to Google Drive")
             dataset_pre.extract_dataset_from_gee_to_drive(CRS_CODE , n_buffer_days=4)
+        #FIX: This exception needs to be more specific
         except Exception as e:
             print(f"Failed on {location}: {str(e)}")
             failed_locations.append(location)
@@ -59,4 +60,6 @@ def export_data(yaml_path):
             print(f"- {loc}")
     else:
         print("\nAll locations processed successfully!")
+
+    return True
 

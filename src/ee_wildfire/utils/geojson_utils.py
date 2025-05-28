@@ -2,9 +2,13 @@
 geojson_utils.py
 
 this has a bunch of helper functions to handle geojson files
+
+This file is now legacy. DO NOT USE
 """
 from ee_wildfire.get_globfire import get_combined_fires, analyze_fires
 from ee_wildfire.UserConfig.UserConfig import UserConfig
+
+
 
 def get_full_geojson_path(config: UserConfig):
     return config.geojson_dir / f"combined_fires_{config.year}.geojson"

@@ -10,10 +10,12 @@ from ee_wildfire.utils.geojson_utils import get_full_geojson_path
 def create_fire_config_globfire(config):
     output_path = get_full_yaml_path(config)
     year = config.year
-    geojson_path = get_full_geojson_path(config)
+    # geojson_path = get_full_geojson_path(config)
+    # FIX: not saving geojson, just pull value from get_globfire.py
 
     # print(f"[LOG] from create_config, geojson_path: {geojson_path}")
-    gdf = gpd.read_file(geojson_path)
+    gdf = config.geodataframe
+    # gdf = gpd.read_file(geojson_path)
     # print(f"[LOG] from create_config, gdf: {gdf}")
     gdf['IDate'] = pd.to_datetime(gdf['IDate'], unit='ms')
     gdf['FDate'] = pd.to_datetime(gdf['FDate'], format='mixed')
@@ -40,6 +42,7 @@ def create_fire_config_globfire(config):
         first = first_occurrences.loc[idx]
         last = last_occurrences.loc[idx]
 
+        # no final date, just pulls last inital date
         end_date = last['FDate'] if pd.notna(last['FDate']) else last['IDate']
         # 4 day buffer before and after ignition/containment
         start_date = first['IDate'] - timedelta(days=4)
@@ -52,6 +55,7 @@ def create_fire_config_globfire(config):
             'end': end_date.date()
         }
     # Ensure the directory exists
+    # FIX: path validation should be handed by UserConfig
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     with open(output_path, 'w') as f:
@@ -93,10 +97,3 @@ def create_fire_config_mtbs(geojson_path, output_path, year):
     
     with open(output_path, 'w') as f:
         yaml.dump(config, f, Dumper=DateSafeYAMLDumper, default_flow_style=False, sort_keys=False)
-
-def load_fire_config(yaml_path):
-    with open(
-        yaml_path, "r", encoding="utf8"
-    ) as f:
-        config = yaml.load(f, Loader=yaml.FullLoader)
-    return config

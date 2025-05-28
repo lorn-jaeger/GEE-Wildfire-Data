@@ -1,7 +1,10 @@
+from shutil import ignore_patterns
 import ee
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Polygon
+from tqdm import tqdm
+
 
 # Define the geometry for contiguous USA
 usa_coords = [
@@ -57,6 +60,9 @@ def compute_centroid(feature):
         'lat': centroid.get(1)
     })
 
+def time_to_milli(time):
+    return time.timestamp() * 1000
+
 def ee_featurecollection_to_gdf(fc):
     """Convert Earth Engine FeatureCollection to GeoPandas DataFrame."""
     features = fc.getInfo()['features']
@@ -79,6 +85,7 @@ def ee_featurecollection_to_gdf(fc):
     
     # Create GeoDataFrame
     df = pd.DataFrame(properties)
+    # TODO: pull crs into constants file
     gdf = gpd.GeoDataFrame(df, geometry=geometries, crs="EPSG:4326")
     
     # Convert area to numeric
@@ -87,7 +94,8 @@ def ee_featurecollection_to_gdf(fc):
     
     return gdf
 
-def get_daily_fires(year, min_size=1e7, region=None):
+# FIX: for both daily and final. have a date range and loop through each day and concatnate each dataframe into one
+def get_daily_fires(config):
     """
     Get daily fire perimeters from the GlobFire database.
     
@@ -96,38 +104,58 @@ def get_daily_fires(year, min_size=1e7, region=None):
         min_size (float): Minimum fire size in square meters
         region (ee.Geometry, optional): Region to filter fires
     """
-    if region is None:
-        region = create_usa_geometry()
-    
-    collection_name = f'JRC/GWIS/GlobFire/v2/DailyPerimeters/{year}'
-    
-    try:
-        polygons = (ee.FeatureCollection(collection_name)
-                   .filterBounds(region))
-        
-        polygons = polygons.map(compute_area)
-        polygons = (polygons
-                   .filter(ee.Filter.gt('area', min_size))
-                   .filter(ee.Filter.lt('area', 1e20)))
-        
-        polygons = polygons.map(compute_centroid)
-        
-        gdf = ee_featurecollection_to_gdf(polygons)
-        
-        if not gdf.empty:
-            gdf['source'] = 'daily'
-            # Convert IDate to datetime directly for each row
-            gdf['date'] = pd.to_datetime(gdf['IDate'], unit='ms')
-            # For daily perimeters, end_date is same as start date
-            gdf['end_date'] = gdf['date']
-        
-        return gdf
-        
-    except ee.ee_exception.EEException as e:
-        print(f"Error accessing daily collection for {year}: {str(e)}")
-        return None
 
-def get_final_fires(year, min_size=1e7, region=None):
+    # FIX: these should be values in UserConfig
+    year = config.year
+    min_size = config.min_size
+    region = create_usa_geometry()
+    # start_date = time_to_milli(config.start_date)
+    # end_date = time_to_milli(config.end_date)
+    date_range = pd.date_range(start=config.start_date, end=config.end_date, freq='W')
+    all_gdfs = []
+    collection_name = f'JRC/GWIS/GlobFire/v2/DailyPerimeters/{year}'
+
+    for week in tqdm(date_range, desc=collection_name):
+        start_ms = time_to_milli(week)
+        end_ms = time_to_milli(week + pd.Timedelta(weeks=1))
+    
+        try:
+            polygons = (ee.FeatureCollection(collection_name)
+                       .filterBounds(region))
+            
+            polygons = polygons.map(compute_area)
+            polygons = (polygons
+                       .filter(ee.Filter.gt('area', min_size))
+                       .filter(ee.Filter.lt('area', 1e20))
+                       .filter(ee.Filter.gt('IDate', start_ms))
+                       .filter(ee.Filter.lt('IDate', end_ms)))
+
+            
+            polygons = polygons.map(compute_centroid)
+            
+            # TODO: its really slow past here...
+            gdf = ee_featurecollection_to_gdf(polygons)
+
+
+            
+            # FIX: Do something about gdf being empty.
+            if not gdf.empty:
+                gdf['source'] = 'daily'
+                # Convert IDate to datetime directly for each row
+                gdf['date'] = pd.to_datetime(gdf['IDate'], unit='ms')
+                # For daily perimeters, end_date is same as start date
+                gdf['end_date'] = gdf['date']
+
+            all_gdfs.append(gdf)
+        
+        
+        except ee.ee_exception.EEException as e:
+            print(f"Error accessing daily collection for {year}: {str(e)}")
+            return None
+
+    return gpd.GeoDataFrame(pd.concat(all_gdfs, ignore_index=True), crs=all_gdfs[0].crs)
+
+def get_final_fires(config):
     """
     Get final fire perimeters from the GlobFire database.
     
@@ -136,40 +164,52 @@ def get_final_fires(year, min_size=1e7, region=None):
         min_size (float): Minimum fire size in square meters
         region (ee.Geometry, optional): Region to filter fires
     """
-    if region is None:
-        region = create_usa_geometry()
+    year = config.year
+    min_size = config.min_size
+    start_date = time_to_milli(config.start_date)
+    end_date = time_to_milli(config.end_date)
+    region = create_usa_geometry()
+    date_range = pd.date_range(start=config.start_date, end=config.end_date, freq='W')
+    collection_name = 'JRC/GWIS/GlobFire/v2/FinalPerimeters'
+    all_gdfs = []
     
-    start_date = ee.Date(f'{year}-01-01')
-    end_date = ee.Date(f'{year}-12-31')
+    # FIX: these should be values in UserConfig
+    # start_date = ee.Date(f'{year}-01-01')
+    # end_date = ee.Date(f'{year}-12-31')
     
-    try:
-        polygons = (ee.FeatureCollection('JRC/GWIS/GlobFire/v2/FinalPerimeters')
-                   .filter(ee.Filter.gt('IDate', start_date.millis()))
-                   .filter(ee.Filter.lt('IDate', end_date.millis()))
-                   .filterBounds(region))
-        
-        polygons = polygons.map(compute_area)
-        polygons = (polygons
-                   .filter(ee.Filter.gt('area', min_size))
-                   .filter(ee.Filter.lt('area', 1e20)))
-        
-        polygons = polygons.map(compute_centroid)
-        
-        gdf = ee_featurecollection_to_gdf(polygons)
-        
-        if not gdf.empty:
-            gdf['source'] = 'final'
-            # Convert IDate and FDate to datetime for each row
-            gdf['date'] = pd.to_datetime(gdf['IDate'], unit='ms')
-            gdf['end_date'] = pd.to_datetime(gdf['FDate'], unit='ms')
-        
-        return gdf
-        
-    except ee.ee_exception.EEException as e:
-        print(f"Error accessing final perimeters for {year}: {str(e)}")
-        return None
+    for week in tqdm(date_range, desc=collection_name):
 
-def get_combined_fires(year, min_size=1e7, region=None):
+        try:
+            polygons = (ee.FeatureCollection(collection_name)
+                       .filter(ee.Filter.gt('IDate', start_date))
+                       .filter(ee.Filter.lt('IDate', end_date))
+                       .filterBounds(region))
+            
+            polygons = polygons.map(compute_area)
+            polygons = (polygons
+                       .filter(ee.Filter.gt('area', min_size))
+                       .filter(ee.Filter.lt('area', 1e20)))
+            
+            polygons = polygons.map(compute_centroid)
+            
+            gdf = ee_featurecollection_to_gdf(polygons)
+            
+            if not gdf.empty:
+                gdf['source'] = 'final'
+                # Convert IDate and FDate to datetime for each row
+                gdf['date'] = pd.to_datetime(gdf['IDate'], unit='ms')
+                gdf['end_date'] = pd.to_datetime(gdf['FDate'], unit='ms')
+            
+            all_gdfs.append(gdf)
+            
+        except ee.ee_exception.EEException as e:
+            print(f"Error accessing final perimeters for {year}: {str(e)}")
+            return None
+
+    return gpd.GeoDataFrame(pd.concat(all_gdfs, ignore_index=True), crs=all_gdfs[0].crs)
+
+# region default to USA
+def get_combined_fires(config):
     """
     Get both daily and final fire perimeters and combine them based on Id.
     
@@ -181,10 +221,11 @@ def get_combined_fires(year, min_size=1e7, region=None):
     Returns:
         tuple: (combined_gdf, daily_gdf, final_gdf)
     """
-    daily_gdf = get_daily_fires(year, min_size, region)
-    final_gdf = get_final_fires(year, min_size, region)
+    daily_gdf = get_daily_fires(config)
+    final_gdf = get_final_fires(config)
     
     # Handle missing data
+    # FIX: gets currupted right here, bad way to deal with errors
     if daily_gdf is None and final_gdf is None:
         return None, None, None
     
@@ -236,7 +277,7 @@ def get_combined_fires(year, min_size=1e7, region=None):
     # Sort by Id and date for consistency
     combined_gdf = combined_gdf.sort_values(['Id', 'date'])
     
-    return combined_gdf, daily_gdf, final_gdf
+    return combined_gdf
 
 def analyze_fires(gdf):
     """
@@ -276,3 +317,21 @@ def analyze_fires(gdf):
         stats['fires_with_both_perims'] = fires_with_both
     
     return stats
+
+def main():
+    from ee_wildfire.UserConfig.UserConfig import UserConfig
+    uf = UserConfig()
+    print(uf)
+
+    # daily_fire = get_daily_fires(uf)
+    final_fire = get_final_fires(uf)
+    # combined_fire = get_combined_fires(uf)
+
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+        # print(combined_fire)
+        print(final_fire)
+
+
+
+if __name__ == "__main__":
+    main()

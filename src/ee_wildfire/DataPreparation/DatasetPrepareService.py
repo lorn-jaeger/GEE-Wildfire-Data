@@ -70,6 +70,7 @@ class DatasetPrepareService:
                 maxPixels=1e13
             )
             print(f"Successfully queued export for {filename}")
+            #TODO: Get file name for drive downloader
         except Exception as e:
             print(f"Export failed for {filename}: {str(e)}")
             raise

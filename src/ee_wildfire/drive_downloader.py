@@ -53,6 +53,7 @@ class DriveDownloader:
         """Download all files from the specified Drive folder."""
         try:
             folder_id = self._get_folder_id(drive_folder_path)
+            # TODO: Check if I even need do the path stuff. It should be handled by UserConfig.py
             output_dir = Path(local_path)
             output_dir.mkdir(parents=True, exist_ok=True)
             
@@ -72,6 +73,7 @@ class DriveDownloader:
                 if not page_token:
                     break
             
+            #FIX: Check if this includes the last file name exported. If userconfig recently_exported=True
             print(f"Found {len(files)} files")
             
             for file in tqdm(files, desc="Downloading files"):
@@ -92,13 +94,14 @@ class DriveDownloader:
             raise
 
 def main():
-    # drive_folder = input("Enter Drive folder path (e.g., EarthEngine_WildfireSpreadTS): ")
-    # local_folder = input("Enter local download path: ")
-    
-    downloader = DriveDownloader()
-    # downloader.download_folder(drive_folder, local_folder)
-    # downloader.download_folder(configuration.DRIVE_DIR, configuration.OUTPUT_DIR)
-    print("\nDownload completed!")
+    from ee_wildfire.UserConfig.UserConfig import UserConfig
+    from ee_wildfire.command_line_args import run
+    uf = UserConfig()
+    uf.change_year(2020)
+    uf.download = True
+    print(uf)
+    run(uf)
+
 
 if __name__ == '__main__':
     main()
