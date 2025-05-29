@@ -5,6 +5,7 @@ from tqdm import tqdm
 import sys
 from pathlib import Path
 import time
+from ee_wildfire.constants import DEFAULT_GOOGLE_DRIVE_DIR
 
 # Add the parent directory to the Python path to enable imports
 root_dir = str(Path(__file__).parent.parent)
@@ -49,12 +50,8 @@ class DatasetPrepareService:
 
     def download_image_to_drive(self, image_collection, index:str, utm_zone:str):
         """Export the given images to Google Drive using geemap."""
-        if "year" in self.config:
-            folder = f"EarthEngine_WildfireSpreadTS_{self.config['year']}"
-            filename = f"{self.location}/{index}"
-        else:
-            folder = "EarthEngine_WildfireSpreadTS"
-            filename = f"{self.location}/{index}"
+        folder = DEFAULT_GOOGLE_DRIVE_DIR
+        filename = f"{self.location}/{index}"
 
         img = image_collection.max().toFloat()
         
@@ -69,20 +66,21 @@ class DatasetPrepareService:
                 crs=f'EPSG:{utm_zone}',
                 maxPixels=1e13
             )
-            print(f"Successfully queued export for {filename}")
-            #TODO: Get file name for drive downloader
+            # tqdm.write(f"Successfully queed export for {filename}")
         except Exception as e:
-            print(f"Export failed for {filename}: {str(e)}")
+            tqdm.write(f"Exprt failed for {filename}: {str(e)}")
             raise
         
     def extract_dataset_from_gee_to_drive(self, utm_zone:str, n_buffer_days:int=0):
         """Iterate over the time period and download the data for each day to Google Drive."""
+
         buffer_days = datetime.timedelta(days=n_buffer_days)
         time_dif = self.end_time - self.start_time + 2 * buffer_days + datetime.timedelta(days=1)
+        day_bar = tqdm(range(time_dif.days), desc=f"Days for {self.location}", leave=False)
 
-        for i in range(time_dif.days):
+        for i in day_bar:
             date_of_interest = str(self.start_time - buffer_days + datetime.timedelta(days=i))
-            print(f"Processing date: {date_of_interest}")
+            # tqdm.write(f"Processing date: {date_of_interest}")
 
             try:
                 img_collection = self.prepare_daily_image(date_of_interest=date_of_interest)
@@ -97,6 +95,6 @@ class DatasetPrepareService:
                 if len(max_img.getInfo().get('bands')) != 0:
                     self.download_image_to_drive(img_collection, date_of_interest, utm_zone)
             except Exception as e:
-                print(f"Failed processing {date_of_interest}: {str(e)}")
+                tqdm.write(f"Failed pocessing {date_of_interest}: {str(e)}")
                 raise
 

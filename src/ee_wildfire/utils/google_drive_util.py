@@ -10,19 +10,19 @@ from ee_wildfire.constants import CRS_CODE
 from ee_wildfire.DataPreparation.DatasetPrepareService import DatasetPrepareService
 from tqdm import tqdm
 
-def sync(config_data):
-    sync_drive_path_with_year(config_data)
-    sync_tiff_output_with_year(config_data)
-                              
-def sync_drive_path_with_year(config_data):
-    drive_path = f"EarthEngine_WildfireSpreadTS_{config_data['year']}"
-    config_data['drive_dir'] = drive_path
-
-def sync_tiff_output_with_year(config_data):
-    parent_tiff_path = Path(config_data['output']).parent
-    new_tiff_path = parent_tiff_path / config_data['year']
-    new_tiff_path.mkdir(parents=True, exist_ok=True)
-    config_data['output'] = str(new_tiff_path) + "/"
+# def sync(config_data):
+#     sync_drive_path_with_year(config_data)
+#     sync_tiff_output_with_year(config_data)
+#
+# def sync_drive_path_with_year(config_data):
+#     drive_path = f"EarthEngine_WildfireSpreadTS_{config_data['year']}"
+#     config_data['drive_dir'] = drive_path
+#
+# def sync_tiff_output_with_year(config_data):
+#     parent_tiff_path = Path(config_data['output']).parent
+#     new_tiff_path = parent_tiff_path / config_data['year']
+#     new_tiff_path.mkdir(parents=True, exist_ok=True)
+#     config_data['output'] = str(new_tiff_path) + "/"
 
 def export_data(yaml_path):
     
@@ -37,22 +37,28 @@ def export_data(yaml_path):
 
     # Track any failures
     failed_locations = []
+    progress_bar = tqdm(locations, desc="Fires processed")
+    failed_fire_bar = tqdm(total=len(locations), desc="Number of failed locations", leave=False)
 
     # Process each location
-    for location in tqdm(locations):
-        print(f"\nFailed locations so far: {failed_locations}")
-        print(f"Current Location: {location}")
+    for location in progress_bar:
+        # print(f"\nFailed locations so far: {failed_locations}")
+        # print(f"Current Location: {location}")
+        desc_fire = location
 
         dataset_pre = DatasetPrepareService(location=location, config=config)
 
         try:
-            print(f"Trying to export {location} to Google Drive")
+            # print(f"Trying to export {location} to Google Drive")
             dataset_pre.extract_dataset_from_gee_to_drive(CRS_CODE , n_buffer_days=4)
         #FIX: This exception needs to be more specific
         except Exception as e:
-            print(f"Failed on {location}: {str(e)}")
+            # print(f"Failed on {location}: {str(e)}")
+            failed_fire_bar.update(1)
             failed_locations.append(location)
             continue
+
+    failed_fire_bar.close()
 
     if failed_locations:
         print("\nFailed locations:")
@@ -60,6 +66,7 @@ def export_data(yaml_path):
             print(f"- {loc}")
     else:
         print("\nAll locations processed successfully!")
+
 
     return True
 

@@ -10,24 +10,25 @@ from ee_wildfire.create_fire_config import create_fire_config_globfire
 from ee_wildfire.utils.yaml_utils import load_yaml_config, save_yaml_config, get_full_yaml_path
 from ee_wildfire.utils.google_drive_util import export_data
 from ee_wildfire.UserConfig.UserConfig import UserConfig
+from tqdm import tqdm
 
 def run(config):
     if(config.export or config.download):
         # generate geodata frame
-        print("Generating GeoDataFrame...")
+        tqdm.write("Generating GeoDataFrame...")
         config.get_geodataframe()
         # generate the YAML output config
-        print("Generating fire configuration...")
+        tqdm.write("Generating Fire Configuration...")
         create_fire_config_globfire(config)
 
     # export data from earth engine to google drive
     if(config.export):
-        print("Exporting data...")
+        tqdm.write("Exporting Data...")
         export_data(get_full_yaml_path(config))
 
     # download from google drive to local machine
     if(config.download):
-        print("Downloading data...")
+        tqdm.write("Downloading Data...")
         config.downloader.download_folder(config.google_drive_dir, config.tiff_dir)
 
 def parse():
@@ -61,7 +62,7 @@ def parse():
     config.change_bool_from_args(args)
 
     if(args.show_config):
-        print(config)
+        tqdm.write(str(config))
 
     run(config)
 

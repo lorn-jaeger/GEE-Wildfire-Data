@@ -76,6 +76,7 @@ class UserConfig:
 
     # loading from already built yaml user config
     def _load_config(self, config_data):
+        # FIX: check if key exists, if not load default value
         self.start_date = config_data['start_date']
         self.end_date = config_data['end_date']
         self.project_id = config_data['project_id']
@@ -86,6 +87,7 @@ class UserConfig:
         self.download = config_data['download']
         self.export = config_data['export']
         self.min_size = config_data['min_size']
+        self.drive_dir = config_data['drive_dir']
         # self.geodataframe = self._get_geodataframe()
 
         self._validate_paths()
@@ -98,7 +100,6 @@ class UserConfig:
             'credentials':str(self.credentials),
             'start_date':self.start_date,
             'end_date':self.end_date,
-            # 'tiff_dir':str(self.tiff_dir),
             'drive_dir':self.google_drive_dir,
             'download':self.download,
             'export':self.export,
@@ -107,7 +108,6 @@ class UserConfig:
         return config_data
 
     def _validate_and_sync_time(self):
-        # FIX: this needs to work for yyyy-mm-dd kind of dates
 
         # validate year
         if(int(self.year) < MIN_YEAR):
@@ -116,12 +116,12 @@ class UserConfig:
         if(int(self.year) > MAX_YEAR):
             raise IndexError(f"Querry year '{self.year}' is larger than the maximum year '{MAX_YEAR}'")
 
-        self.tiff_dir = self.tiff_dir.parent / self.year
-        self.google_drive_dir = DEFAULT_GOOGLE_DRIVE_DIR + str(self.year)
+        # self.tiff_dir = self.tiff_dir.parent / self.year
+        # self.google_drive_dir = DEFAULT_GOOGLE_DRIVE_DIR + str(self.year)
 
     def _validate_paths(self):
 
-        self.google_drive_dir = DEFAULT_GOOGLE_DRIVE_DIR + str(self.year)
+        self.google_drive_dir = DEFAULT_GOOGLE_DRIVE_DIR
 
         def try_make_path(path):
             if not os.path.exists(path):
@@ -154,9 +154,7 @@ class UserConfig:
 # =========================================================================== #
 
     def get_geodataframe(self):
-        print("Generating GeoDataFrame...")
         self.geodataframe = get_combined_fires(self)
-
 
     def change_configuration_from_yaml(self, yaml_path):
 

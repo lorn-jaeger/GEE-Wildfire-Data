@@ -42,7 +42,7 @@ DEFAULT_TIFF_DIR = DEFAULT_DATA_DIR / "tiff" / str(MAX_YEAR)
 
 DEFAULT_OAUTH_DIR = DEFAULT_DATA_DIR / "OAuth" / "credentials.json"
 
-DEFAULT_GOOGLE_DRIVE_DIR = "EarthEngine_WildfireSpreadTS_"
+DEFAULT_GOOGLE_DRIVE_DIR = "EarthEngine_WildfireSpreadTS"
 
 INTERNAL_USER_CONFIG_DIR = ROOT / "user_config.yml"
 

@@ -1,4 +1,5 @@
 import os
+import time
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -97,7 +98,6 @@ def main():
     from ee_wildfire.UserConfig.UserConfig import UserConfig
     from ee_wildfire.command_line_args import run
     uf = UserConfig()
-    uf.change_year(2020)
     uf.download = True
     print(uf)
     run(uf)
