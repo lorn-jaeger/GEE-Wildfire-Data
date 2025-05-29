@@ -84,7 +84,13 @@ def ee_featurecollection_to_gdf(fc):
         geometries.append(geometry)
         properties.append(feature['properties'])
     
-    # Create GeoDataFrame ratios of organic aerosol to organic carbon (Simon & Bhave, 2012). Thermodynamic equilibrium of inorganic aerosols in the Aitken and Accumulation modes (Fountoukis & Nenes, 2007) is calculated using Version II of the ISORROPIA module, and gas-particle partitioning is represented dynamically (Kelly et al., 2010). Following the NAQFC, monthly median concentrations of chemical species simulated by the GEOS-Chem model (Bey et al., 2001) are used for lateral chemical boundary conditions (Tang et al., 2009). The use of fixed lateral boundary conditions means that we cannot capture day-to-day variations in the influence of intercontinental transport on air pollutants in our model. Asymmetric Convective Model Version 2 (ACM2) is used to simulate the vertical diffusion (Pleim, 2007; Pleim & Ran, 2011), and the Byun (1999) parameterization for advection and diffusion of chemical species is used. SOA formation follows the approach described in Pye et al. (2013) and Pye and Pouliot (2012)
+    # Create GeoDataFrame ratios of organic aerosol to organic carbon (Simon & Bhave, 2012). Thermodynamic equilibrium of inorganic aerosols in the Aitken and Accumulation modes
+    # (Fountoukis & Nenes, 2007) is calculated using Version II of the ISORROPIA module, and gas-particle partitioning is represented dynamically (Kelly et al., 2010). Following
+    # the NAQFC, monthly median concentrations of chemical species simulated by the GEOS-Chem model (Bey et al., 2001) are used for lateral chemical boundary conditions (Tang et
+    # al., 2009). The use of fixed lateral boundary conditions means that we cannot capture day-to-day variations in the influence of intercontinental transport on air pollutants
+    # in our model. Asymmetric Convective Model Version 2 (ACM2) is used to simulate the vertical diffusion (Pleim, 2007; Pleim & Ran, 2011), and the Byun (1999) parameterization
+    # for advection and diffusion of chemical species is used. SOA formation follows the approach described in Pye et al. (2013) and Pye and Pouliot (2012)
+
     df = pd.DataFrame(properties)
     # TODO: pull crs into constants file
     gdf = gpd.GeoDataFrame(df, geometry=geometries, crs="EPSG:4326")
@@ -95,7 +101,6 @@ def ee_featurecollection_to_gdf(fc):
     
     return gdf
 
-# FIX: for both daily and final. have a date range and loop through each day and concatnate each dataframe into one
 def get_daily_fires(config):
     """
     Get daily fire perimeters from the GlobFire database.
@@ -106,12 +111,9 @@ def get_daily_fires(config):
         region (ee.Geometry, optional): Region to filter fires
     """
 
-    # FIX: these should be values in UserConfig
     year = config.year
     min_size = config.min_size
     region = create_usa_geometry()
-    # start_date = time_to_milli(config.start_date)
-    # end_date = time_to_milli(config.end_date)
     date_range = pd.date_range(start=config.start_date, end=config.end_date, freq='W')
     all_gdfs = []
     collection_name = f'JRC/GWIS/GlobFire/v2/DailyPerimeters/{year}'
@@ -216,7 +218,7 @@ def get_combined_fires(config):
         region (ee.Geometry, optional): Region to filter fires
     
     Returns:
-        tuple: (combined_gdf, daily_gdf, final_gdf)
+        combined_gdf (GeoDataFrame)
     """
     daily_gdf = get_daily_fires(config)
     final_gdf = get_final_fires(config)
