@@ -1,12 +1,13 @@
-from shutil import ignore_patterns
-import ee
+from ee import ee_exception
+from ee.filter import Filter
+from ee.geometry import Geometry
+from ee.featurecollection import FeatureCollection
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Polygon
 from tqdm import tqdm
 
 
-# Define the geometry for contiguous USA
 usa_coords = [
     [-125.1803892906456, 35.26328285844432],
     [-117.08916345892665, 33.2311514593429],
@@ -46,7 +47,7 @@ usa_coords = [
 
 def create_usa_geometry():
     """Create an Earth Engine geometry object for the contiguous USA."""
-    return ee.Geometry.Polygon([usa_coords])
+    return Geometry.Polygon([usa_coords])
 
 def compute_area(feature):
     """Compute the area of a feature and set it as a property."""
@@ -83,7 +84,7 @@ def ee_featurecollection_to_gdf(fc):
         geometries.append(geometry)
         properties.append(feature['properties'])
     
-    # Create GeoDataFrame
+    # Create GeoDataFrame ratios of organic aerosol to organic carbon (Simon & Bhave, 2012). Thermodynamic equilibrium of inorganic aerosols in the Aitken and Accumulation modes (Fountoukis & Nenes, 2007) is calculated using Version II of the ISORROPIA module, and gas-particle partitioning is represented dynamically (Kelly et al., 2010). Following the NAQFC, monthly median concentrations of chemical species simulated by the GEOS-Chem model (Bey et al., 2001) are used for lateral chemical boundary conditions (Tang et al., 2009). The use of fixed lateral boundary conditions means that we cannot capture day-to-day variations in the influence of intercontinental transport on air pollutants in our model. Asymmetric Convective Model Version 2 (ACM2) is used to simulate the vertical diffusion (Pleim, 2007; Pleim & Ran, 2011), and the Byun (1999) parameterization for advection and diffusion of chemical species is used. SOA formation follows the approach described in Pye et al. (2013) and Pye and Pouliot (2012)
     df = pd.DataFrame(properties)
     # TODO: pull crs into constants file
     gdf = gpd.GeoDataFrame(df, geometry=geometries, crs="EPSG:4326")
@@ -120,15 +121,15 @@ def get_daily_fires(config):
         end_ms = time_to_milli(week + pd.Timedelta(weeks=1))
     
         try:
-            polygons = (ee.FeatureCollection(collection_name)
+            polygons = (FeatureCollection(collection_name)
                        .filterBounds(region))
             
             polygons = polygons.map(compute_area)
             polygons = (polygons
-                       .filter(ee.Filter.gt('area', min_size))
-                       .filter(ee.Filter.lt('area', 1e20))
-                       .filter(ee.Filter.gt('IDate', start_ms))
-                       .filter(ee.Filter.lt('IDate', end_ms)))
+                       .filter(Filter.gt('area', min_size))
+                       .filter(Filter.lt('area', 1e20))
+                       .filter(Filter.gt('IDate', start_ms))
+                       .filter(Filter.lt('IDate', end_ms)))
 
             
             polygons = polygons.map(compute_centroid)
@@ -138,7 +139,6 @@ def get_daily_fires(config):
 
 
             
-            # FIX: Do something about gdf being empty.
             if not gdf.empty:
                 gdf['source'] = 'daily'
                 # Convert IDate to datetime directly for each row
@@ -149,7 +149,7 @@ def get_daily_fires(config):
             all_gdfs.append(gdf)
         
         
-        except ee.ee_exception.EEException as e:
+        except ee_exception.EEException as e:
             print(f"Error accessing daily collection for {year}: {str(e)}")
             return None
 
@@ -173,22 +173,19 @@ def get_final_fires(config):
     collection_name = 'JRC/GWIS/GlobFire/v2/FinalPerimeters'
     all_gdfs = []
     
-    # FIX: these should be values in UserConfig
-    # start_date = ee.Date(f'{year}-01-01')
-    # end_date = ee.Date(f'{year}-12-31')
     
     for week in tqdm(date_range, desc=collection_name):
 
         try:
-            polygons = (ee.FeatureCollection(collection_name)
-                       .filter(ee.Filter.gt('IDate', start_date))
-                       .filter(ee.Filter.lt('IDate', end_date))
+            polygons = (FeatureCollection(collection_name)
+                       .filter(Filter.gt('IDate', start_date))
+                       .filter(Filter.lt('IDate', end_date))
                        .filterBounds(region))
             
             polygons = polygons.map(compute_area)
             polygons = (polygons
-                       .filter(ee.Filter.gt('area', min_size))
-                       .filter(ee.Filter.lt('area', 1e20)))
+                       .filter(Filter.gt('area', min_size))
+                       .filter(Filter.lt('area', 1e20)))
             
             polygons = polygons.map(compute_centroid)
             
@@ -202,7 +199,7 @@ def get_final_fires(config):
             
             all_gdfs.append(gdf)
             
-        except ee.ee_exception.EEException as e:
+        except ee_exception.EEException as e:
             print(f"Error accessing final perimeters for {year}: {str(e)}")
             return None
 
