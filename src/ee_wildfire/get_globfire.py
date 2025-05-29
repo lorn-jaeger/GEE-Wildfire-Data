@@ -84,12 +84,6 @@ def ee_featurecollection_to_gdf(fc):
         geometries.append(geometry)
         properties.append(feature['properties'])
     
-    # Create GeoDataFrame ratios of organic aerosol to organic carbon (Simon & Bhave, 2012). Thermodynamic equilibrium of inorganic aerosols in the Aitken and Accumulation modes
-    # (Fountoukis & Nenes, 2007) is calculated using Version II of the ISORROPIA module, and gas-particle partitioning is represented dynamically (Kelly et al., 2010). Following
-    # the NAQFC, monthly median concentrations of chemical species simulated by the GEOS-Chem model (Bey et al., 2001) are used for lateral chemical boundary conditions (Tang et
-    # al., 2009). The use of fixed lateral boundary conditions means that we cannot capture day-to-day variations in the influence of intercontinental transport on air pollutants
-    # in our model. Asymmetric Convective Model Version 2 (ACM2) is used to simulate the vertical diffusion (Pleim, 2007; Pleim & Ran, 2011), and the Byun (1999) parameterization
-    # for advection and diffusion of chemical species is used. SOA formation follows the approach described in Pye et al. (2013) and Pye and Pouliot (2012)
 
     df = pd.DataFrame(properties)
     # TODO: pull crs into constants file
@@ -128,9 +122,9 @@ def get_daily_fires(config):
             
             polygons = polygons.map(compute_area)
             polygons = (polygons
-                       .filter(Filter.gt('area', min_size))
+                       .filter(Filter.gte('area', min_size))
                        .filter(Filter.lt('area', 1e20))
-                       .filter(Filter.gt('IDate', start_ms))
+                       .filter(Filter.gte('IDate', start_ms))
                        .filter(Filter.lt('IDate', end_ms)))
 
             
@@ -139,8 +133,6 @@ def get_daily_fires(config):
             # TODO: its really slow past here...
             gdf = ee_featurecollection_to_gdf(polygons)
 
-
-            
             if not gdf.empty:
                 gdf['source'] = 'daily'
                 # Convert IDate to datetime directly for each row
