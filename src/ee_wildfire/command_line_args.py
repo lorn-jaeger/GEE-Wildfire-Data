@@ -12,15 +12,20 @@ from ee_wildfire.utils.google_drive_util import export_data
 from ee_wildfire.UserConfig.UserConfig import UserConfig
 
 def run(config):
-    # generate the YAML output config
-    print("Generating fire configuration...")
-    create_fire_config_globfire(config)
+    if(config.export or config.download):
+        # generate geodata frame
+        print("Generating GeoDataFrame...")
+        config.get_geodataframe()
+        # generate the YAML output config
+        print("Generating fire configuration...")
+        create_fire_config_globfire(config)
 
-
+    # export data from earth engine to google drive
     if(config.export):
         print("Exporting data...")
         export_data(get_full_yaml_path(config))
 
+    # download from google drive to local machine
     if(config.download):
         print("Downloading data...")
         config.downloader.download_folder(config.google_drive_dir, config.tiff_dir)
