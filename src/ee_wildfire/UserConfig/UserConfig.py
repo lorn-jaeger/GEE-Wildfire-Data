@@ -28,7 +28,6 @@ class UserConfig:
             self._load_default_config(INTERNAL_USER_CONFIG_DIR)
 
         self._authenticate()
-        self._get_geodataframe()
 
     def __str__(self):
         # TODO: add start/end date. remove year and month
@@ -140,9 +139,6 @@ class UserConfig:
         try_make_path(self.tiff_dir)
         self._validate_and_sync_time()
 
-    def _get_geodataframe(self):
-        print("Generating GeoDataFrame...")
-        self.geodataframe = get_combined_fires(self)
 
 
 
@@ -156,6 +152,10 @@ class UserConfig:
 # =========================================================================== #
 #                               Public Methods
 # =========================================================================== #
+
+    def get_geodataframe(self):
+        print("Generating GeoDataFrame...")
+        self.geodataframe = get_combined_fires(self)
 
 
     def change_configuration_from_yaml(self, yaml_path):
