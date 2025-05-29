@@ -6,6 +6,8 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 import io
+from ee_wildfire import constants
+from ee_wildfire.constants import *
 from pathlib import Path
 from tqdm import tqdm
 
@@ -75,7 +77,7 @@ class DriveDownloader:
                     break
             
             #FIX: Check if this includes the last file name exported. If userconfig recently_exported=True
-            print(f"Found {len(files)} files")
+            tqdm.write(f"Found {len(files)} files")
             
             for file in tqdm(files, desc="Downloading files"):
                 request = self.service.files().get_media(fileId=file['id'])
@@ -91,16 +93,83 @@ class DriveDownloader:
                     f.write(fh.getvalue())
                     
         except Exception as e:
-            print(f"Error downloading folder: {str(e)}")
+            tqdm.write(f"Error downloading folder: {str(e)}")
             raise
+
+    def download_files(self, drive_folder_path: str, local_path: Path, expected_files: list):
+        folder_id = self._get_folder_id(drive_folder_path)
+        total_files = len(expected_files)
+        missing_bar = tqdm(total=total_files, desc="Waiting for files", unit="file")
+        seen_files = set()
+
+        missing_bar.update(0)
+        while True:
+            results = self.service.files().list(
+                q=f"'{folder_id}' in parents and mimeType='image/tiff' and trashed=false",
+                spaces="drive",
+                fields="files(id, name)"
+            ).execute()
+
+            files = results.get("files", [])
+            found_names = {f['name'] for f in files}
+            current_missing = set(expected_files) - found_names
+            newly_found = seen_files - current_missing
+
+            if newly_found:
+                missing_bar.update(len(newly_found) - missing_bar.n)
+
+            seen_files = current_missing
+
+            if not current_missing:
+                missing_bar.close()
+                tqdm.write("All files found! Downloading...")
+                break
+
+            else:
+                missing_bar.set_description(f"Waiting ({len(current_missing)} missing)")
+                time.sleep(5)
+
+
+        # Build a dict for easy access
+        file_map = {f['name']: f for f in files if f['name'] in expected_files}
+
+        # for f in files:
+        #     if f['name'] in expected_files:
+        #         request = self.service.files().get_media(fileId=f['id'])
+        #         file_path = os.path.join(local_path, f['name'])
+        #
+        #         with open(file_path, 'wb') as fh:
+        #             downloader = MediaIoBaseDownload(fh, request)
+        #             done = False
+        #             while not done:
+        #                 status, done = downloader.next_chunk()
+        #                 tqdm.write(f"Downloading {f['name']}: {int(status.progress() * 100)}%")
+        for fname in expected_files:
+            file = file_map[fname]
+            request = self.service.files().get_media(fileId=file['id'])
+            file_path = os.path.join(local_path, fname)
+
+            fh = io.FileIO(file_path, 'wb')
+            downloader = MediaIoBaseDownload(fh, request)
+
+            file_size = int(file.get('size', 0))
+
+            with tqdm(total=file_size, unit='B', unit_scale=True, desc=f"Downloading {fname}") as pbar:
+                done = False
+                while not done:
+                    status, done = downloader.next_chunk()
+                    if status:
+                        pbar.update(int(status.resumable_progress) - pbar.n)
 
 def main():
     from ee_wildfire.UserConfig.UserConfig import UserConfig
     from ee_wildfire.command_line_args import run
     uf = UserConfig()
-    uf.download = True
-    print(uf)
-    run(uf)
+    exported_files = [
+        "Image_Export_fire_24844724_2021-01-12.tif",
+        "Image_Export_fire_24844724_2021-01-26.tif",
+    ]
+    print(uf.downloader.download_files(constants.DEFAULT_GOOGLE_DRIVE_DIR, constants.DEFAULT_TIFF_DIR, exported_files))
 
 
 if __name__ == '__main__':

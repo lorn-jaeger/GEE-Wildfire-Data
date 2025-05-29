@@ -17,19 +17,22 @@ def run(config):
         # generate geodata frame
         tqdm.write("Generating GeoDataFrame...")
         config.get_geodataframe()
+
         # generate the YAML output config
         tqdm.write("Generating Fire Configuration...")
         create_fire_config_globfire(config)
 
+    if((not config.export) and config.download):
+        config.downloader.download_folder(config.google_drive_dir, config.tiff_dir)
+
     # export data from earth engine to google drive
     if(config.export):
         tqdm.write("Exporting Data...")
-        export_data(get_full_yaml_path(config))
+        export_data(yaml_path=get_full_yaml_path(config), user_config=config)
 
     # download from google drive to local machine
     if(config.download):
-        tqdm.write("Downloading Data...")
-        config.downloader.download_folder(config.google_drive_dir, config.tiff_dir)
+        config.downloader.download_files(config.google_drive_dir, config.tiff_dir, config.exported_files)
 
 def parse():
     base_parser = argparse.ArgumentParser(add_help=False)

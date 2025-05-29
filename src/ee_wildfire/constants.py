@@ -38,7 +38,7 @@ HOME = Path.home()
 
 DEFAULT_DATA_DIR = HOME / "ee_wildfire_data"
 
-DEFAULT_TIFF_DIR = DEFAULT_DATA_DIR / "tiff" / str(MAX_YEAR)
+DEFAULT_TIFF_DIR = DEFAULT_DATA_DIR / "tiff"
 
 DEFAULT_OAUTH_DIR = DEFAULT_DATA_DIR / "OAuth" / "credentials.json"
 

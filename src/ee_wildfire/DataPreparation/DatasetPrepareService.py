@@ -15,9 +15,10 @@ if root_dir not in sys.path:
 from DataPreparation.satellites.FirePred import FirePred
 
 class DatasetPrepareService:
-    def __init__(self, location, config):
+    def __init__(self, location, config, user_config):
         """Class that handles downloading data associated with the given location and time period from Google Earth Engine."""
         self.config = config
+        self.user_config = user_config
         self.location = location
         self.rectangular_size = self.config.get('rectangular_size')
         self.latitude = self.config.get(self.location).get('latitude')
@@ -52,6 +53,7 @@ class DatasetPrepareService:
         """Export the given images to Google Drive using geemap."""
         folder = DEFAULT_GOOGLE_DRIVE_DIR
         filename = f"{self.location}/{index}"
+        base_filename = f"Image_Export_{self.location}_{index}"
 
         img = image_collection.max().toFloat()
         
@@ -59,7 +61,7 @@ class DatasetPrepareService:
         try:
             geemap.ee_export_image_to_drive(
                 image=img,
-                description=f'Image_Export_{self.location}_{index}',
+                description=base_filename,
                 folder=folder,
                 region=self.geometry.toGeoJSON()['coordinates'],
                 scale=self.scale_dict.get("FirePred"),
@@ -67,8 +69,10 @@ class DatasetPrepareService:
                 maxPixels=1e13
             )
             # tqdm.write(f"Successfully queed export for {filename}")
+            self.user_config.exported_files.append(f"{base_filename}.tif")
+
         except Exception as e:
-            tqdm.write(f"Exprt failed for {filename}: {str(e)}")
+            tqdm.write(f"Export failed for {filename}: {str(e)}")
             raise
         
     def extract_dataset_from_gee_to_drive(self, utm_zone:str, n_buffer_days:int=0):

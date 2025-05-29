@@ -27,6 +27,7 @@ class UserConfig:
             # default config
             self._load_default_config(INTERNAL_USER_CONFIG_DIR)
 
+        self.exported_files = []
         self._authenticate()
 
     def __str__(self):
@@ -62,7 +63,7 @@ class UserConfig:
         self.credentials = self.data_dir/ "OAuth" / "credentials.json"
         self.year = str(self.start_date.year)
         self.min_size = DEFAULT_MIN_SIZE
-        self.tiff_dir = self.data_dir / "tiff" / self.year
+        self.tiff_dir = self.data_dir / "tiff"
         self.download = False
         self.export = False
         # TODO: do i need this? we generate the geodata frame everytime the program is called
@@ -82,7 +83,7 @@ class UserConfig:
         self.project_id = config_data['project_id']
         self.data_dir = Path(config_data['data_dir']).expanduser()
         self.year = str(self.start_date.year)
-        self.tiff_dir = self.data_dir / "tiff" / self.year
+        self.tiff_dir = self.data_dir / "tiff"
         self.credentials = self.data_dir / "OAuth" / "credentials.json"
         self.download = config_data['download']
         self.export = config_data['export']

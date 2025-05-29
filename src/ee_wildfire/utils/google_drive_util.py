@@ -24,7 +24,7 @@ from tqdm import tqdm
 #     new_tiff_path.mkdir(parents=True, exist_ok=True)
 #     config_data['output'] = str(new_tiff_path) + "/"
 
-def export_data(yaml_path):
+def export_data(yaml_path, user_config):
     
     # fp = FirePred()
     config = load_fire_config(yaml_path)
@@ -46,7 +46,7 @@ def export_data(yaml_path):
         # print(f"Current Location: {location}")
         desc_fire = location
 
-        dataset_pre = DatasetPrepareService(location=location, config=config)
+        dataset_pre = DatasetPrepareService(location=location, config=config, user_config=user_config)
 
         try:
             # print(f"Trying to export {location} to Google Drive")
