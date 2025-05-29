@@ -1,12 +1,13 @@
 from ee import ee_exception
-from ee.featurecollection import Filter, FeatureCollection
+from ee.filter import Filter
+from ee.geometry import Geometry
+from ee.featurecollection import FeatureCollection
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Polygon
 from tqdm import tqdm
 
 
-# Define the geometry for contiguous USA
 usa_coords = [
     [-125.1803892906456, 35.26328285844432],
     [-117.08916345892665, 33.2311514593429],
@@ -46,7 +47,7 @@ usa_coords = [
 
 def create_usa_geometry():
     """Create an Earth Engine geometry object for the contiguous USA."""
-    return ee.Geometry.Polygon([usa_coords])
+    return Geometry.Polygon([usa_coords])
 
 def compute_area(feature):
     """Compute the area of a feature and set it as a property."""
