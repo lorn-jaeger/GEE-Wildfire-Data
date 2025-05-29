@@ -168,8 +168,6 @@ def get_final_fires(config):
     """
     year = config.year
     min_size = config.min_size
-    start_date = time_to_milli(config.start_date)
-    end_date = time_to_milli(config.end_date)
     region = create_usa_geometry()
     date_range = pd.date_range(start=config.start_date, end=config.end_date, freq='W')
     collection_name = 'JRC/GWIS/GlobFire/v2/FinalPerimeters'
@@ -177,11 +175,13 @@ def get_final_fires(config):
     
     
     for week in tqdm(date_range, desc=collection_name):
+        start_ms = time_to_milli(week)
+        end_ms = time_to_milli(week + pd.Timedelta(weeks=1))
 
         try:
             polygons = (FeatureCollection(collection_name)
-                       .filter(Filter.gt('IDate', start_date))
-                       .filter(Filter.lt('IDate', end_date))
+                       .filter(Filter.gt('IDate', start_ms))
+                       .filter(Filter.lt('IDate', end_ms))
                        .filterBounds(region))
             
             polygons = polygons.map(compute_area)
