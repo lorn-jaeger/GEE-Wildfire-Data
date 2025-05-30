@@ -5,7 +5,6 @@ import yaml
 import os
 
 from ee_wildfire.utils.yaml_utils import get_full_yaml_path
-from ee_wildfire.utils.geojson_utils import get_full_geojson_path
 
 def create_fire_config_globfire(config):
     output_path = get_full_yaml_path(config)
