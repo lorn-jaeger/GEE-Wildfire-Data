@@ -14,7 +14,7 @@ def validate_yaml_path(yaml_path):
     return os.path.exists(yaml_path)
 
 def get_full_yaml_path(config):
-    config_dir = ROOT / "config" / f"us_fire_{config.start_date.year}_1e7.yml"
+    config_dir = ROOT / "config" / f"us_fire_{config.start_date.year}_1e{str(int(config.min_size)).count('0')}.yml"
     return config_dir
 
 def load_yaml_config(yaml_path):

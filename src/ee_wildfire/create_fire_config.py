@@ -8,6 +8,7 @@ from ee_wildfire.utils.yaml_utils import get_full_yaml_path
 
 def create_fire_config_globfire(config):
     output_path = get_full_yaml_path(config)
+    print(output_path)
     year = config.start_date.year
     # geojson_path = get_full_geojson_path(config)
     # FIX: not saving geojson, just pull value from get_globfire.py
@@ -54,7 +55,6 @@ def create_fire_config_globfire(config):
             'end': end_date.date()
         }
     # Ensure the directory exists
-    # FIX: path validation should be handed by UserConfig
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     with open(output_path, 'w') as f:
