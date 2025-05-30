@@ -121,6 +121,8 @@ drive_dir: EarthEngine_WildfireSpreadTS_2021
 download: false
 export: false
 min_size: 10000000.0
+max_size: 1000000000.0
+
 ```
 
 To finish configuration you will need to use the `-config` command line argument.
@@ -128,7 +130,7 @@ To finish configuration you will need to use the `-config` command line argument
 ## Command-Line Interface (CLI)
 | Argument | Parameters | Description |
 | -------- |-- |------------|
-| `-config` | 'PATH`| Loads a YAML config file located at PATH. This will overload any other command-line arguments|
+| `-config` | `PATH`| Loads a YAML config file located at PATH. This will overload any other command-line arguments.|
 | `-show-config`| None | Prints current config to command line. |
 | `-export` | None | Export data from Google Earth Engine to Google Drive. |
 | `-download`| None | Downloads data from Google Drive to your local machine. |
