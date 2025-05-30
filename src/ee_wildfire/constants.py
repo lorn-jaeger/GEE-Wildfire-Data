@@ -19,7 +19,7 @@ INTERNAL_USER_CONFIG_DIR = ROOT / "UserConfig" /"user_config.yml"
 
 # =========== Needed Constants ===========
 
-VERSION = "2025.1.5"
+VERSION = "2025.1.6"
 
 CRS_CODE = "32610"
 
