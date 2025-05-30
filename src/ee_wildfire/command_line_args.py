@@ -5,7 +5,7 @@ this file will handle all the command line argument parsing.
 """
 
 import argparse
-from ee_wildfire.constants import COMMAND_ARGS, VERSION
+from ee_wildfire.constants import COMMAND_ARGS, VERSION, INTERNAL_USER_CONFIG_DIR
 from ee_wildfire.create_fire_config import create_fire_config_globfire
 from ee_wildfire.utils.yaml_utils import  get_full_yaml_path
 from ee_wildfire.utils.google_drive_util import export_data
@@ -77,7 +77,7 @@ def parse() -> UserConfig:
     config.change_configuration_from_yaml(outside_user_config_path)
     config.change_bool_from_args(args)
 
-    if(args.show_config):
+    if(args.show_config or (args.config != INTERNAL_USER_CONFIG_DIR)):
         tqdm.write(str(config))
 
     return config
