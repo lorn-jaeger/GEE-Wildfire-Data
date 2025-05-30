@@ -32,6 +32,7 @@ def export_data(yaml_path, user_config):
             dataset_pre.extract_dataset_from_gee_to_drive(CRS_CODE , n_buffer_days=4)
         #FIX: This exception needs to be more specific
         except Exception as e:
+            # print(f"Failed on {location}: {str(e)}")
             failed_fire_bar.update(1)
             failed_locations.append(location)
             continue
