@@ -9,7 +9,7 @@ from ee_wildfire.utils.geojson_utils import get_full_geojson_path
 
 def create_fire_config_globfire(config):
     output_path = get_full_yaml_path(config)
-    year = config.year
+    year = config.start_date.year
     # geojson_path = get_full_geojson_path(config)
     # FIX: not saving geojson, just pull value from get_globfire.py
 

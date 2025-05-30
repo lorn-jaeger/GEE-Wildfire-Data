@@ -20,8 +20,8 @@ class DriveDownloader:
         
     def _get_drive_service(self):
         creds = None
-        if os.path.exists('token.json'):
-            creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+        if os.path.exists(AUTH_TOKEN_PATH):
+            creds = Credentials.from_authorized_user_file(AUTH_TOKEN_PATH, SCOPES)
         
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
@@ -31,7 +31,7 @@ class DriveDownloader:
                     self.creds, SCOPES)
                 creds = flow.run_local_server(port=0)
             
-            with open('token.json', 'w') as token:
+            with open(AUTH_TOKEN_PATH, 'w') as token:
                 token.write(creds.to_json())
         
         return build('drive', 'v3', credentials=creds)

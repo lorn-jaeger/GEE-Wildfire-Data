@@ -1,3 +1,4 @@
+from csv import Error
 from ee import ee_exception
 from ee.filter import Filter
 from ee.geometry import Geometry
@@ -105,7 +106,7 @@ def get_daily_fires(config):
         region (ee.Geometry, optional): Region to filter fires
     """
 
-    year = config.year
+    year = config.start_date.year
     min_size = config.min_size
     region = create_usa_geometry()
     date_range = pd.date_range(start=config.start_date, end=config.end_date, freq='W')
@@ -158,7 +159,7 @@ def get_final_fires(config):
         min_size (float): Minimum fire size in square meters
         region (ee.Geometry, optional): Region to filter fires
     """
-    year = config.year
+    year = config.start_date.year
     min_size = config.min_size
     region = create_usa_geometry()
     date_range = pd.date_range(start=config.start_date, end=config.end_date, freq='W')
@@ -218,7 +219,7 @@ def get_combined_fires(config):
     # Handle missing data
     # FIX: gets currupted right here, bad way to deal with errors
     if daily_gdf is None and final_gdf is None:
-        return None, None, None
+        raise Error(f"No fires found to export. Try adjusting time frame and min size.")
     
     # Ensure we have dataframes to work with
     if daily_gdf is None:
@@ -260,7 +261,7 @@ def get_combined_fires(config):
             combined_data.append(final_fire)
     
     if not combined_data:
-        return None, None, None
+        raise Error(f"No fires found to export. Try adjusting time frame and min size.")
     
     # Combine all data
     combined_gdf = pd.concat(combined_data, ignore_index=True)
