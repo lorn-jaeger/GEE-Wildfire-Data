@@ -101,30 +101,39 @@ pip install -e .
 ```
 
 # Configuration
+This program uses a YAML file for user configuration.
 
 Template for configuration:
 
 ```yaml
-project_id: YOUR PROJECT ID # google cloud api project id for earth engine
-data_dir: ~/ee_wildfire_data/ # Directory to store all the data for this program.
-year: '2021' # year to batch
-month: '1'
-min_size: 10_000_000 # minimum size of fire image
-download: false # flag to download data?
-export: false # flag to export data?
-force_new_geojson: false # some times when attempting to export large amounts of data it fails and corrupts the geojson param file. This regenerates it.
+# NEEDED
+# These items are necessary to function.
+project_id: YOUR PROJECT ID
+credentials: ~/ee_wildfire_data/OAuth/credentials.json
+
+# OPTIONAL
+# These items have default values if not provided in YAML file.
+data_dir: ~/ee_wildfire_data
+start_date: 2021-01-01 00:00:00
+end_date: 2021-04-20 00:00:00
+tiff_dir: ~/ee_wildfire_data/tiff/2021
+drive_dir: EarthEngine_WildfireSpreadTS_2021
+download: false
+export: false
+min_size: 10000000.0
+max_size: 1000000000.0
+
 ```
 
 To finish configuration you will need to use the `-config` command line argument.
 
 ## Command-Line Interface (CLI)
-| Argument | Description |
-| -------- | ------------|
-| `-config PATH`| Loads a YAML config file located at PATH.|
-| `-show-config` | Prints current config to command line. |
-| `-export` | Export data from Google Earth Engine to Google Drive. |
-| `-download` | Downloads data from Google Drive to your local machine. |
-| `-force-new-geojson` | Forces the creation of new geojson fire parameters. |
+| Argument | Parameters | Description |
+| -------- |-- |------------|
+| `-config` | `PATH`| Loads a YAML config file located at PATH. This will overload any other command-line arguments.|
+| `-show-config`| None | Prints current config to command line. |
+| `-export` | None | Export data from Google Earth Engine to Google Drive. |
+| `-download`| None | Downloads data from Google Drive to your local machine. |
 
 
 ###  Basic Usage
@@ -134,7 +143,7 @@ ee-wildfire -config /path/to/some/config.yml -show-config
 ```
 
 ```bash
-ee-wildfire -force-new-geojson -export -download
+ee-wildfire -export -download
 ```
 
 # Acknowledgements

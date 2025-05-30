@@ -5,18 +5,49 @@ this file will handle all the command line argument parsing.
 """
 
 import argparse
-import os
-from ee_wildfire.constants import *
-from ee import Authenticate #type: ignore
-from ee import Initialize
+from ee_wildfire.constants import COMMAND_ARGS, VERSION, INTERNAL_USER_CONFIG_DIR
 from ee_wildfire.create_fire_config import create_fire_config_globfire
-from ee_wildfire.utils.yaml_utils import load_yaml_config, save_yaml_config, get_full_yaml_path
-from ee_wildfire.utils.geojson_utils import generate_geojson, get_full_geojson_path
+from ee_wildfire.utils.yaml_utils import  get_full_yaml_path
 from ee_wildfire.utils.google_drive_util import export_data
-from ee_wildfire.drive_downloader import DriveDownloader
 from ee_wildfire.UserConfig.UserConfig import UserConfig
 
-def parse():
+from tqdm import tqdm
+
+def run(config: UserConfig) -> None:
+    """
+    Core pipeline logic for exporting and downloading wildfire data.
+    
+    Args:
+        config (UserConfig): Fully initialized user configuration.
+    """
+    if(config.export or config.download):
+        # generate geodata frame
+        tqdm.write("Generating GeoDataFrame...")
+        config.get_geodataframe()
+
+        # generate the YAML output config
+        tqdm.write("Generating Fire Configuration...")
+        create_fire_config_globfire(config)
+
+    if((not config.export) and config.download):
+        config.downloader.download_folder(config.google_drive_dir, config.tiff_dir)
+
+    # export data from earth engine to google drive
+    if(config.export):
+        tqdm.write("Processing Data...")
+        export_data(yaml_path=get_full_yaml_path(config), user_config=config)
+
+    # download from google drive to local machine
+    if(config.download):
+        config.downloader.download_files(config.google_drive_dir, config.tiff_dir, config.exported_files)
+
+def parse() -> UserConfig:
+    """
+    Parses command-line arguments and initializes user config.
+
+    Returns:
+        UserConfig: A fully initialized user configuration.
+    """
     base_parser = argparse.ArgumentParser(add_help=False)
     for cmd in COMMAND_ARGS.keys():
         _type, _default, _action, _help = COMMAND_ARGS[cmd]
@@ -43,40 +74,18 @@ def parse():
     outside_user_config_path = args.config
 
     config = UserConfig(yaml_path=outside_user_config_path)
-    config.change_configuration_from_yaml(args.config)
+    config.change_configuration_from_yaml(outside_user_config_path)
     config.change_bool_from_args(args)
 
-    if(args.show_config):
-        print(config)
+    if(args.show_config or (args.config != INTERNAL_USER_CONFIG_DIR)):
+        tqdm.write(str(config))
 
-    full_geojson_path = get_full_geojson_path(config)
-    geojson_exist = os.path.exists(full_geojson_path)
-    if(not geojson_exist or config.force_new_geojson):
+    return config
 
-        if(config.force_new_geojson):
-            print(f"Forcing the generation of new Geojson...")
+def main():
+    config = parse()
+    print(config)
 
-        elif(not geojson_exist):
-            print(f"Geojson at '{full_geojson_path}' does not exist. Generating Geojson...")
-
-
-        generate_geojson(config)
-
-            # TODO: split batch into smaller chunks
-
-    #TODO: check if geojson is corrupted, if so regen
-
-    # generate the YAML output config
-    print("Generating fire configuration...")
-    create_fire_config_globfire(config)
-
-
-    if(config.export):
-        print("Exporting data...")
-        export_data(get_full_yaml_path(config))
-
-    if(config.download):
-        print("Downloading data...")
-        config.downloader.download_folder(config.google_drive_dir, config.tiff_dir)
-
+if __name__ == "__main__":
+    main()
 

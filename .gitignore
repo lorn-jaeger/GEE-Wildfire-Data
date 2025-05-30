@@ -1,5 +1,5 @@
 data/
-token.json
+auth_token.json
 credentials.json
 venv/
 src/*.egg-info
@@ -10,7 +10,9 @@ build/
 __pycache__/
 **/__pycache__/
 
+*.yml
+
 **/*.egg-info
 
 docs/meeting_notes/
-src/ee_wildfire/user_config.yml
+src/ee_wildfire/config

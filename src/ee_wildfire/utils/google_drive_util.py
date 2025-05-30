@@ -4,32 +4,34 @@ google_drive_util.py
 helper funcitons to help handle google drive api calls.
 """
 
+from ee_wildfire.UserConfig.UserConfig import UserConfig
 from pathlib import Path
+
 from ee_wildfire.utils.yaml_utils import load_fire_config
 from ee_wildfire.constants import CRS_CODE
 from ee_wildfire.DataPreparation.DatasetPrepareService import DatasetPrepareService
 from tqdm import tqdm
 
-def sync(config_data):
-    sync_drive_path_with_year(config_data)
-    sync_tiff_output_with_year(config_data)
-                              
-def sync_drive_path_with_year(config_data):
-    drive_path = f"EarthEngine_WildfireSpreadTS_{config_data['year']}"
-    config_data['drive_dir'] = drive_path
+from typing import Union
 
-def sync_tiff_output_with_year(config_data):
-    parent_tiff_path = Path(config_data['output']).parent
-    new_tiff_path = parent_tiff_path / config_data['year']
-    new_tiff_path.mkdir(parents=True, exist_ok=True)
-    config_data['output'] = str(new_tiff_path) + "/"
 
-def export_data(yaml_path):
+def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
+    """
+    Export satellite data from Google Earth Engine to Google Drive for multiple fire locations.
+
+    This function reads a YAML configuration file specifying multiple fire areas, prepares
+    datasets for each location using Earth Engine, and attempts to export the images to
+    the user's Google Drive. It tracks and reports any failures encountered during the export process.
+
+    Args:
+        yaml_path (Union[Path,str]): Path to the YAML configuration file containing fire locations and parameters.
+        user_config (UserConfig): An instance of UserConfig containing user credentials and settings.
+
+    Returns:
+        bool: True if execution completed (regardless of success/failure for individual locations).
+    """
     
-    # fp = FirePred()
     config = load_fire_config(yaml_path)
-    # print(f"[LOG] from export_data, yaml path: {yaml_path}")
-    # print(f"[LOG] from export_data, config: {config}")
     fire_names = list(config.keys())
     for non_fire_key in ["output_bucket", "rectangular_size", "year"]:
         fire_names.remove(non_fire_key)
@@ -37,26 +39,32 @@ def export_data(yaml_path):
 
     # Track any failures
     failed_locations = []
+    progress_bar = tqdm(locations, desc="Fires processed")
+    failed_fire_bar = tqdm(total=len(locations), desc="Number of failed locations", leave=False)
 
     # Process each location
-    for location in tqdm(locations):
-        print(f"\nFailed locations so far: {failed_locations}")
-        print(f"Current Location: {location}")
+    for location in progress_bar:
 
-        dataset_pre = DatasetPrepareService(location=location, config=config)
+        dataset_pre = DatasetPrepareService(location=location, config=config, user_config=user_config)
 
         try:
-            print(f"Trying to export {location} to Google Drive")
             dataset_pre.extract_dataset_from_gee_to_drive(CRS_CODE , n_buffer_days=4)
+        #FIX: This exception needs to be more specific
         except Exception as e:
-            print(f"Failed on {location}: {str(e)}")
+            # print(f"Failed on {location}: {str(e)}")
+            failed_fire_bar.update(1)
             failed_locations.append(location)
             continue
+
+    failed_fire_bar.close()
 
     if failed_locations:
         print("\nFailed locations:")
         for loc in failed_locations:
             print(f"- {loc}")
     else:
-        print("\nAll locations processed successfully!")
+        tqdm.write("\nAll locations processed successfully!")
+
+
+    return True
 
