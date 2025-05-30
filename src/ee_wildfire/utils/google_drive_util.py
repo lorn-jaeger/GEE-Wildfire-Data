@@ -63,7 +63,7 @@ def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
         for loc in failed_locations:
             print(f"- {loc}")
     else:
-        print("\nAll locations processed successfully!")
+        tqdm.write("\nAll locations processed successfully!")
 
 
     return True

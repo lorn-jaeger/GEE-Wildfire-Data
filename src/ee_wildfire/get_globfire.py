@@ -1,4 +1,3 @@
-from csv import Error
 from ee import ee_exception
 from ee.filter import Filter
 from ee.geometry import Geometry
@@ -263,7 +262,7 @@ def get_combined_fires(config):
             combined_data.append(final_fire)
     
     if not combined_data:
-        raise Error(f"No fires found to export. Try adjusting time frame and min size.")
+        raise Exception(f"No fires found to export. Try adjusting time frame and min size.")
     
     # Combine all data
     combined_gdf = pd.concat(combined_data, ignore_index=True)

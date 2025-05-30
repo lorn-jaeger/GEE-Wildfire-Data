@@ -34,7 +34,7 @@ def run(config: UserConfig) -> None:
 
     # export data from earth engine to google drive
     if(config.export):
-        tqdm.write("Exporting Data...")
+        tqdm.write("Processing Data...")
         export_data(yaml_path=get_full_yaml_path(config), user_config=config)
 
     # download from google drive to local machine

@@ -1,4 +1,5 @@
 import os
+import shutil
 import time
 import io
 
@@ -12,7 +13,7 @@ from ee_wildfire.constants import *
 
 from pathlib import Path
 from tqdm import tqdm
-from typing import Union, Any
+from typing import Union
 
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
@@ -111,11 +112,9 @@ class DriveDownloader:
 
     def download_files(self, drive_folder_path: str, local_path: Path, expected_files: list):
         folder_id = self._get_folder_id(drive_folder_path)
-        total_files = len(expected_files)
-        missing_bar = tqdm(total=total_files, desc="Waiting for files", unit="file")
-        seen_files = set()
+        time_now = datetime.now()
 
-        missing_bar.update(0)
+        # tqdm.write(f"Waiting on exports, this may take a while...")
         while True:
             results = self.service.files().list(
                 q=f"'{folder_id}' in parents and mimeType='image/tiff' and trashed=false",
@@ -126,27 +125,29 @@ class DriveDownloader:
             files = results.get("files", [])
             found_names = {f['name'] for f in files}
             current_missing = set(expected_files) - found_names
-            newly_found = seen_files - current_missing
-
-            if newly_found:
-                missing_bar.update(len(newly_found) - missing_bar.n)
-
-            seen_files = current_missing
+            term_width = shutil.get_terminal_size((80, 20)).columns  # fallback if unknown
+            prog_bar = tqdm.format_meter(
+                n=len(found_names),
+                total=len(expected_files),
+                elapsed=(datetime.now() - time_now).total_seconds(),
+                prefix="Export progress",
+                ncols=term_width,
+                unit='file'
+            )
+            tqdm.write(prog_bar, end="\r")
 
             if not current_missing:
-                missing_bar.close()
-                tqdm.write("All files found! Downloading...")
+                tqdm.write("All files found!")
                 break
 
             else:
-                missing_bar.set_description(f"Waiting ({len(current_missing)} missing)")
-                time.sleep(5)
+                time.sleep(10)
 
 
         # Build a dict for easy access
         file_map = {f['name']: f for f in files if f['name'] in expected_files}
 
-        for fname in expected_files:
+        for fname in tqdm(expected_files, desc="Download progress", unit='file'):
             file = file_map[fname]
             request = self.service.files().get_media(fileId=file['id'])
             file_path = os.path.join(local_path, fname)
@@ -154,18 +155,12 @@ class DriveDownloader:
             fh = io.FileIO(file_path, 'wb')
             downloader = MediaIoBaseDownload(fh, request)
 
-            file_size = int(file.get('size', 0))
-
-            with tqdm(total=file_size, unit='B', unit_scale=True, desc=f"Downloading {fname}") as pbar:
-                done = False
-                while not done:
-                    status, done = downloader.next_chunk()
-                    if status:
-                        pbar.update(int(status.resumable_progress) - pbar.n)
+            done = False
+            while not done:
+                _, done = downloader.next_chunk()
 
 def main():
     from ee_wildfire.UserConfig.UserConfig import UserConfig
-    from ee_wildfire.command_line_args import run
     uf = UserConfig()
     exported_files = [
         "Image_Export_fire_24844724_2021-01-12.tif",
