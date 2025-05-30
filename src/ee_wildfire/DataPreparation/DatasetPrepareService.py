@@ -1,11 +1,13 @@
 import datetime
 import ee
+from ee import Geometry, ImageCollection # type: ignore
 import geemap
 from tqdm import tqdm
 import sys
 from pathlib import Path
 import time
 from ee_wildfire.constants import DEFAULT_GOOGLE_DRIVE_DIR
+from ee_wildfire.UserConfig.UserConfig import UserConfig
 
 # Add the parent directory to the Python path to enable imports
 root_dir = str(Path(__file__).parent.parent)
@@ -15,8 +17,32 @@ if root_dir not in sys.path:
 from DataPreparation.satellites.FirePred import FirePred
 
 class DatasetPrepareService:
-    def __init__(self, location, config, user_config):
-        """Class that handles downloading data associated with the given location and time period from Google Earth Engine."""
+    """
+    Service class to handle downloading and preparing geospatial datasets
+    for a specified location and time period using Google Earth Engine (GEE).
+
+    Attributes:
+        config (dict): Configuration dictionary with geospatial and temporal parameters.
+        user_config (UserConfig): User-specific configuration object.
+        location (str): Location key to extract coordinates and time range from the config.
+        rectangular_size (float): Half-width/height of the square area to extract, in degrees.
+        latitude (float): Latitude of the location.
+        longitude (float): Longitude of the location.
+        start_time (str): Start date for data extraction.
+        end_time (str): End date for data extraction.
+        total_tasks (int): Counter for total GEE export tasks submitted.
+        geometry (Geometry.Rectangle): Rectangular geometry used for data extraction.
+        scale_dict (dict): Mapping of dataset names to their spatial resolution in meters.
+    """
+    def __init__(self, location: str, config: dict, user_config: UserConfig) -> None:
+        """
+        Initializes the DatasetPrepareService with geospatial parameters and user configuration.
+
+        Args:
+            location (str): Key used to reference a location's config entry.
+            config (dict): Dictionary containing configuration for multiple locations.
+            user_config (UserConfig): Object containing user-specific settings.
+        """
         self.config = config
         self.user_config = user_config
         self.location = location
@@ -29,14 +55,24 @@ class DatasetPrepareService:
 
         # Set the area to extract as an image
         self.rectangular_size = self.config.get('rectangular_size')
-        self.geometry = ee.Geometry.Rectangle(
+        self.geometry = Geometry.Rectangle(
             [self.longitude - self.rectangular_size, self.latitude - self.rectangular_size,
              self.longitude + self.rectangular_size, self.latitude + self.rectangular_size])
 
         self.scale_dict = {"FirePred": 375}
         
-    def prepare_daily_image(self, date_of_interest:str, time_stamp_start:str="00:00", time_stamp_end:str="23:59"):
-        """Prepare daily image from GEE."""
+    def prepare_daily_image(self, date_of_interest:str, time_stamp_start:str="00:00", time_stamp_end:str="23:59") -> ImageCollection:
+        """
+        Prepare a daily image from Google Earth Engine (GEE) for a specified date and time range.
+
+        Args:
+            date_of_interest (str): Date in 'YYYY-MM-DD' format.
+            time_stamp_start (str, optional): Start time in 'HH:MM' format. Defaults to "00:00".
+            time_stamp_end (str, optional): End time in 'HH:MM' format. Defaults to "23:59".
+
+        Returns:
+            ImageCollection: GEE image collection for the given date and time range.
+        """
         self.total_tasks += 1
         if self.total_tasks > 2500:
             active_tasks = str(ee.batch.Task.list()).count('READY')
@@ -49,8 +85,16 @@ class DatasetPrepareService:
                                                                self.geometry)
         return img_collection
 
-    def download_image_to_drive(self, image_collection, index:str, utm_zone:str):
-        """Export the given images to Google Drive using geemap."""
+    def download_image_to_drive(self, image_collection: ImageCollection, index:str, utm_zone:str) -> None:
+        """
+        Export a single image from the given image collection to Google Drive.
+
+        Args:
+            image_collection (ImageCollection): Earth Engine image collection to export.
+            index (str): Identifier (typically date) for naming the exported file.
+            utm_zone (str): EPSG code for UTM projection to use for export.
+        """
+
         folder = DEFAULT_GOOGLE_DRIVE_DIR
         filename = f"{self.location}/{index}"
         base_filename = f"Image_Export_{self.location}_{index}"
@@ -75,9 +119,15 @@ class DatasetPrepareService:
             tqdm.write(f"Export failed for {filename}: {str(e)}")
             raise
         
-    def extract_dataset_from_gee_to_drive(self, utm_zone:str, n_buffer_days:int=0):
-        """Iterate over the time period and download the data for each day to Google Drive."""
+    def extract_dataset_from_gee_to_drive(self, utm_zone:str, n_buffer_days:int=0) -> None:
+        """
+        Extracts daily image datasets from GEE and exports them to Google Drive
+        over the configured date range and optional buffer.
 
+        Args:
+            utm_zone (str): EPSG code for UTM projection to use for image export.
+            n_buffer_days (int, optional): Number of days to buffer before and after the time period. Defaults to 0.
+        """
         buffer_days = datetime.timedelta(days=n_buffer_days)
         time_dif = self.end_time - self.start_time + 2 * buffer_days + datetime.timedelta(days=1)
         day_bar = tqdm(range(time_dif.days), desc=f"Days for {self.location}", leave=False)

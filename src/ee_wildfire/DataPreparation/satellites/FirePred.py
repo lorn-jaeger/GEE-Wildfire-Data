@@ -39,7 +39,7 @@ class FirePred:
         # VIIRS vegetation index, needed updating to new dataset
         self.viirs_veg_idx = ImageCollection("NASA/VIIRS/002/VNP13A1")
 
-    def compute_daily_features(self, start_time:str, end_time:str, geometry:Geometry):
+    def compute_daily_features(self, start_time:str, end_time:str, geometry:Geometry) -> ImageCollection:
         """_summary_ Compute the daily features in Google Earth Engine.
 
         Args:

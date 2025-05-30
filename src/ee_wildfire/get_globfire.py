@@ -108,6 +108,7 @@ def get_daily_fires(config):
 
     year = config.start_date.year
     min_size = config.min_size
+    max_size = config.max_size
     region = create_usa_geometry()
     date_range = pd.date_range(start=config.start_date, end=config.end_date, freq='W')
     all_gdfs = []
@@ -124,7 +125,7 @@ def get_daily_fires(config):
             polygons = polygons.map(compute_area)
             polygons = (polygons
                        .filter(Filter.gte('area', min_size))
-                       .filter(Filter.lt('area', 1e20))
+                       .filter(Filter.lt('area', max_size))
                        .filter(Filter.gte('IDate', start_ms))
                        .filter(Filter.lt('IDate', end_ms)))
 
@@ -161,6 +162,7 @@ def get_final_fires(config):
     """
     year = config.start_date.year
     min_size = config.min_size
+    max_size = config.max_size
     region = create_usa_geometry()
     date_range = pd.date_range(start=config.start_date, end=config.end_date, freq='W')
     collection_name = 'JRC/GWIS/GlobFire/v2/FinalPerimeters'
@@ -180,7 +182,7 @@ def get_final_fires(config):
             polygons = polygons.map(compute_area)
             polygons = (polygons
                        .filter(Filter.gt('area', min_size))
-                       .filter(Filter.lt('area', 1e20)))
+                       .filter(Filter.lt('area', max_size)))
             
             polygons = polygons.map(compute_centroid)
             

@@ -4,13 +4,32 @@ google_drive_util.py
 helper funcitons to help handle google drive api calls.
 """
 
+from ee_wildfire.UserConfig.UserConfig import UserConfig
+from pathlib import Path
+
 from ee_wildfire.utils.yaml_utils import load_fire_config
 from ee_wildfire.constants import CRS_CODE
 from ee_wildfire.DataPreparation.DatasetPrepareService import DatasetPrepareService
 from tqdm import tqdm
 
+from typing import Union
 
-def export_data(yaml_path, user_config):
+
+def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
+    """
+    Export satellite data from Google Earth Engine to Google Drive for multiple fire locations.
+
+    This function reads a YAML configuration file specifying multiple fire areas, prepares
+    datasets for each location using Earth Engine, and attempts to export the images to
+    the user's Google Drive. It tracks and reports any failures encountered during the export process.
+
+    Args:
+        yaml_path (Union[Path,str]): Path to the YAML configuration file containing fire locations and parameters.
+        user_config (UserConfig): An instance of UserConfig containing user credentials and settings.
+
+    Returns:
+        bool: True if execution completed (regardless of success/failure for individual locations).
+    """
     
     config = load_fire_config(yaml_path)
     fire_names = list(config.keys())

@@ -5,14 +5,21 @@ this file will handle all the command line argument parsing.
 """
 
 import argparse
-from ee_wildfire.constants import *
+from ee_wildfire.constants import COMMAND_ARGS, VERSION
 from ee_wildfire.create_fire_config import create_fire_config_globfire
-from ee_wildfire.utils.yaml_utils import load_yaml_config, save_yaml_config, get_full_yaml_path
+from ee_wildfire.utils.yaml_utils import  get_full_yaml_path
 from ee_wildfire.utils.google_drive_util import export_data
 from ee_wildfire.UserConfig.UserConfig import UserConfig
+
 from tqdm import tqdm
 
-def run(config):
+def run(config: UserConfig) -> None:
+    """
+    Core pipeline logic for exporting and downloading wildfire data.
+    
+    Args:
+        config (UserConfig): Fully initialized user configuration.
+    """
     if(config.export or config.download):
         # generate geodata frame
         tqdm.write("Generating GeoDataFrame...")
@@ -34,7 +41,13 @@ def run(config):
     if(config.download):
         config.downloader.download_files(config.google_drive_dir, config.tiff_dir, config.exported_files)
 
-def parse():
+def parse() -> UserConfig:
+    """
+    Parses command-line arguments and initializes user config.
+
+    Returns:
+        UserConfig: A fully initialized user configuration.
+    """
     base_parser = argparse.ArgumentParser(add_help=False)
     for cmd in COMMAND_ARGS.keys():
         _type, _default, _action, _help = COMMAND_ARGS[cmd]
@@ -67,10 +80,11 @@ def parse():
     if(args.show_config):
         tqdm.write(str(config))
 
-    run(config)
+    return config
 
 def main():
-    parse()
+    config = parse()
+    print(config)
 
 if __name__ == "__main__":
     main()

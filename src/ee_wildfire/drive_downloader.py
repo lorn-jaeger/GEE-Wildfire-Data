@@ -1,20 +1,31 @@
 import os
 import time
+import io
+
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
-import io
-from ee_wildfire import constants
+
 from ee_wildfire.constants import *
+
 from pathlib import Path
 from tqdm import tqdm
+from typing import Union, Any
 
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
 class DriveDownloader:
-    def __init__(self, credentials):
+    """
+    Handles downloading files from Google Drive using OAuth credentials.
+    Supports folder and individual file downloads.
+    """
+    def __init__(self, credentials:Union[Path,str]):
+        """
+        Args:
+            credentials_path: Path to the OAuth credentials JSON file.
+        """
         self.creds = credentials
         self.service = self._get_drive_service()
         
@@ -36,8 +47,10 @@ class DriveDownloader:
         
         return build('drive', 'v3', credentials=creds)
 
-    def _get_folder_id(self, folder_path: str):
-        """Get folder ID by traversing the path."""
+    def _get_folder_id(self, folder_path: str) -> str:
+        """
+        Traverse Google Drive folders to retrieve the folder ID.
+        """
         parts = folder_path.strip('/').split('/')
         parent_id = 'root'
         
@@ -133,17 +146,6 @@ class DriveDownloader:
         # Build a dict for easy access
         file_map = {f['name']: f for f in files if f['name'] in expected_files}
 
-        # for f in files:
-        #     if f['name'] in expected_files:
-        #         request = self.service.files().get_media(fileId=f['id'])
-        #         file_path = os.path.join(local_path, f['name'])
-        #
-        #         with open(file_path, 'wb') as fh:
-        #             downloader = MediaIoBaseDownload(fh, request)
-        #             done = False
-        #             while not done:
-        #                 status, done = downloader.next_chunk()
-        #                 tqdm.write(f"Downloading {f['name']}: {int(status.progress() * 100)}%")
         for fname in expected_files:
             file = file_map[fname]
             request = self.service.files().get_media(fileId=file['id'])
@@ -169,7 +171,7 @@ def main():
         "Image_Export_fire_24844724_2021-01-12.tif",
         "Image_Export_fire_24844724_2021-01-26.tif",
     ]
-    print(uf.downloader.download_files(constants.DEFAULT_GOOGLE_DRIVE_DIR, constants.DEFAULT_TIFF_DIR, exported_files))
+    print(uf.downloader.download_files(DEFAULT_GOOGLE_DRIVE_DIR, DEFAULT_TIFF_DIR, exported_files))
 
 
 if __name__ == '__main__':
