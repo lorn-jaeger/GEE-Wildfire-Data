@@ -6,8 +6,10 @@ from tqdm import tqdm
 import sys
 from pathlib import Path
 import time
-from ee_wildfire.constants import DEFAULT_GOOGLE_DRIVE_DIR
+
 from ee_wildfire.UserConfig.UserConfig import UserConfig
+from ee_wildfire.export_queue import CircleQueue
+
 
 # Add the parent directory to the Python path to enable imports
 root_dir = str(Path(__file__).parent.parent)
@@ -45,6 +47,7 @@ class DatasetPrepareService:
         """
         self.config = config
         self.user_config = user_config
+        self.export_queue = CircleQueue(user_config)
         self.location = location
         self.rectangular_size = self.config.get('rectangular_size')
         self.latitude = self.config.get(self.location).get('latitude')
@@ -60,6 +63,7 @@ class DatasetPrepareService:
              self.longitude + self.rectangular_size, self.latitude + self.rectangular_size])
 
         self.scale_dict = {"FirePred": 375}
+
         
     def prepare_daily_image(self, date_of_interest:str, time_stamp_start:str="00:00", time_stamp_end:str="23:59") -> ImageCollection:
         """
@@ -95,11 +99,15 @@ class DatasetPrepareService:
             utm_zone (str): EPSG code for UTM projection to use for export.
         """
 
-        folder = DEFAULT_GOOGLE_DRIVE_DIR
+        folder = self.user_config.google_drive_dir
         filename = f"{self.location}/{index}"
         base_filename = f"Image_Export_{self.location}_{index}"
 
         img = image_collection.max().toFloat()
+
+        # Wait until there is space in the export queue
+        while (self.export_queue.isFull()):
+            self.export_queue.refreshExports()
         
         # Use geemap's export function
         try:
@@ -112,7 +120,9 @@ class DatasetPrepareService:
                 crs=f'EPSG:{utm_zone}',
                 maxPixels=1e13
             )
-            # tqdm.write(f"Successfully queed export for {filename}")
+
+            # add item to export queue
+            self.export_queue.enqueue(f"{base_filename}.tif")
             self.user_config.exported_files.append(f"{base_filename}.tif")
 
         except Exception as e:
@@ -139,7 +149,7 @@ class DatasetPrepareService:
             try:
                 img_collection = self.prepare_daily_image(date_of_interest=date_of_interest)
                 # wait to avoid rate limiting
-                time.sleep(1)
+                # time.sleep(1)
 
                 n_images = len(img_collection.getInfo().get("features"))
                 if n_images > 1:
