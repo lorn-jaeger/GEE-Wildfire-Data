@@ -9,7 +9,7 @@ from ee_wildfire.globfire import get_fires
 from ee import Authenticate #type: ignore
 from ee import Initialize
 
-import os
+import os, sys
 
 from typing import Union, Dict, Any
 
@@ -71,9 +71,23 @@ class UserConfig:
         """
         Authenticate with Google Earth Engine and initialize the DriveDownloader.
         """
-        Authenticate()
-        Initialize(project=self.project_id)
-        self.downloader = DriveDownloader(self.credentials)
+        try:
+            Authenticate()
+            Initialize(project=self.project_id)
+            self.downloader = DriveDownloader(self.credentials)
+
+        except Exception as e:
+            print("\n Google Earth Engine authentication failed.")
+            print(f"🔍 Error: {str(e)}")
+
+            print("\n Suggested fixes:")
+            print("1. Make sure you're logged into a Google account with Earth Engine access.")
+            print("2. Run `earthengine authenticate` in the terminal to manually authenticate.")
+            print("3. Check that your internet connection is active and not blocking access to Earth Engine.")
+            print("4. If you're using a service account, verify your credentials and permissions.")
+            print("5. Ensure your project ID is correct and the account has access to it.")
+
+            sys.exit(1)  # or raise a RuntimeError if you want traceback info
 
     def _validate_paths(self) -> None:
         """
