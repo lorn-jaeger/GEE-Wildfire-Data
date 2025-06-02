@@ -114,14 +114,14 @@ def process(config, collection, year, week):
     if gdf.empty or ('IDate' not in gdf.columns) or (not daily and 'FDate' not in gdf.columns):
         return gpd.GeoDataFrame(columns=['Id', 'date', 'end_date', 'area', 'lat', 'lon', 'source', 'geometry'], crs="EPSG:4326")
     
-    gdf['date'] = pd.to_numeric(pd.to_datetime(gdf['IDate'], unit='ms'))
-    gdf['end_date'] = pd.to_numeric(pd.to_datetime(gdf['IDate' if daily else 'FDate'], unit='ms'))
+    gdf['IDate'] = pd.to_numeric(pd.to_datetime(gdf['IDate'], unit='ms'))
+    gdf['FDate'] = pd.to_numeric(pd.to_datetime(gdf['IDate' if daily else 'FDate'], unit='ms'))
     gdf['source'] = 'daily' if daily else 'final'
     
     return gdf
 
 
-def get_gdfs(config):
+def get_gdf(config):
     years = sorted(set(pd.date_range(start=config.start_date, end=config.end_date, freq='D').year))
 
     collections = [
@@ -140,22 +140,19 @@ def get_gdfs(config):
                gdf = process(config, collection, year, week)
                gdfs.append(gdf)
 
+
     gdfs = [gdf for gdf in gdfs if not gdf.empty]
 
-    return gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs=gdfs[0].crs).sort_values(['Id', 'date'])
-
-
-def get_fires(config):
-    gdf = get_gdfs(config)
+    gdf = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs=gdfs[0].crs).sort_values(['Id', 'date'])
 
     gdf['Id'] = gdf['Id'].astype(str)
     gdf['area'] = pd.to_numeric(gdf['area'], errors='coerce')
-    gdf['IDate'] = pd.to_datetime(gdf['date'], errors='coerce')
-    gdf['FDate'] = pd.to_datetime(gdf['end_date'], errors='coerce')
+    gdf['IDate'] = pd.to_datetime(gdf['IDate'], errors='coerce')
+    gdf['FDate'] = pd.to_datetime(gdf['FDate'], errors='coerce')
     gdf['lat'] = pd.to_numeric(gdf['lat'], errors='coerce')
     gdf['lon'] = pd.to_numeric(gdf['lon'], errors='coerce')
 
-    gdf = gdf.dropna(subset=['Id', 'date', 'end_date'])
+    gdf = gdf.dropna(subset=['Id', 'date', 'end_date', 'lat', 'lon'])
 
     gdf = gdf.groupby('Id').agg({
         'IDate': 'first',
@@ -166,7 +163,76 @@ def get_fires(config):
     }).reset_index()   
 
     return gdf
-               
+
+def check_query(config):
+    query = pd.Dataframe([{
+        "start_date" : config.start_date,
+        "end_date" : config.end_date,
+        "min_size" : config.min_size
+    }])
+
+    queries = pd.read_csv("cache/query_cache.csv")
+
+    exists = ((queries == query.iloc[0]).all(axis=1)).any()
+
+    if not exists:
+        queries = pd.concat([queries, query], ignore_index=True)
+        queries.to_csv("path", index=False)
+
+    return exists
+        
+def get_cached_gdf(config):
+    gdf = gpd.read_file("path to file")
+
+    return gdf[
+        (gdf["IDate"] >= config.start_date) & 
+        (gdf["FDate"] <= config.end_date) &
+        (gdf["area"] >= config.min_size)
+    ]
+
+
+def cache_gdf(config, gdf):
+    cache = gpd.read_file("path to file")
+
+    cache = cache.set_index("Id", drop=False)
+    gdf = gdf.set_index("Id", drop=False)
+
+    cache = cache.combine_first(gdf)
+    cache.update(gdf)
+
+    cache = cache.reset_index(drop=True)
+    cache.to_file("this is a path")
+
+    
+def get_fires(config):
+    # might have a problem if this fails after writing a query to the query cache
+    refresh_cache = config.force_fires or not check_query(config)
+    if refresh_cache:
+        gdf = get_gdf(config)
+        cache_gdf(config, gdf)
+    elif not refresh_cache:
+        gdf = get_cached_gdf(config)
+
+    return gdf
+
+
+
+
+
+    
+
+
+    
+
+
+
+
+
+
+
+
+
+
 
 
 
