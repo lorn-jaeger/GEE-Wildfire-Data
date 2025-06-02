@@ -5,7 +5,6 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Polygon
 from tqdm import tqdm
-from ee_wildfire.get_globfire import ee_featurecollection_to_gdf
 
 usa_coords = [
     [-125.1803892906456, 35.26328285844432],
@@ -138,8 +137,10 @@ def get_gdfs(config):
             end = min(pd.Timestamp(f"{year}-12-31"), config.end_date)
             dates = pd.date_range(start=start, end=end, freq='W')
             for week in tqdm(dates, desc=collection):
-               gfd = process(config, collection, year, week)
-               gdfs.append(gfd)
+               gdf = process(config, collection, year, week)
+               gdfs.append(gdf)
+
+    gdfs = [gdf for gdf in gdfs if not gdf.empty]
 
     return gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs=gdfs[0].crs).sort_values(['Id', 'date'])
 
@@ -165,13 +166,10 @@ def get_fires(config):
     }).reset_index()   
 
     return gdf
-                
+               
 
-def main():
-    pass
 
-if __name__ == '__main__':
-    main()
+
 
 
             

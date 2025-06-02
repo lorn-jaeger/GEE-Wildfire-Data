@@ -6,6 +6,8 @@ src/*.egg-info
 <<<<<<< HEAD
 dist/
 build/
+.idea/
+token.json
 
 __pycache__/
 **/__pycache__/
