@@ -121,7 +121,9 @@ def process(config, collection, year, week):
     return gdf
 
 
-def get_gdf(config):
+
+
+def get_fires(config):
     years = sorted(set(pd.date_range(start=config.start_date, end=config.end_date, freq='D').year))
 
     collections = [
@@ -165,6 +167,7 @@ def get_gdf(config):
     return gdf
 
 def check_query(config):
+    print("Checking globfire query cache...")
     query = pd.Dataframe([{
         "start_date" : config.start_date,
         "end_date" : config.end_date,
@@ -182,16 +185,18 @@ def check_query(config):
     return exists
         
 def get_cached_gdf(config):
+    print("retrieving cached fire data...")
     gdf = gpd.read_file("path to file")
 
     return gdf[
-        (gdf["IDate"] >= config.start_date) & 
-        (gdf["FDate"] <= config.end_date) &
+        (gdf["idate"] >= config.start_date) & 
+        (gdf["fdate"] <= config.end_date) &
         (gdf["area"] >= config.min_size)
     ]
 
 
 def cache_gdf(config, gdf):
+    print("Caching fire data...")
     cache = gpd.read_file("path to file")
 
     cache = cache.set_index("Id", drop=False)
@@ -204,17 +209,18 @@ def cache_gdf(config, gdf):
     cache.to_file("this is a path")
 
     
-def get_fires(config):
-    # might have a problem if this fails after writing a query to the query cache
-    refresh_cache = config.force_fires or not check_query(config)
-    if refresh_cache:
-        gdf = get_gdf(config)
-        cache_gdf(config, gdf)
-    elif not refresh_cache:
-        gdf = get_cached_gdf(config)
-
-    return gdf
-
+# def get_fires(config):
+#     # might have a problem if this fails after writing a query to the query cache
+#     refresh_cache = config.force_fires or not check_query(config)
+#     if refresh_cache:
+#         gdf = get_gdf(config)
+#
+#         cache_gdf(config, gdf)
+#     elif not refresh_cache:
+#         gdf = get_cached_gdf(config)
+#
+#     return gdf
+#
 
 
 
