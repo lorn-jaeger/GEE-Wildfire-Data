@@ -110,6 +110,17 @@ class DriveDownloader:
             tqdm.write(f"Error downloading folder: {str(e)}")
             raise
 
+    def check_file_in_drive(self, drive_folder_path:str, file_to_check: str) -> bool:
+        folder_id = self._get_folder_id(drive_folder_path)
+        results = self.service.files().list(
+            q=f"'{folder_id}' in parents and mimeType='image/tiff' and trashed=false",
+            spaces="drive",
+            fields="files(id, name)"
+        ).execute()
+        files = results.get("files",[])
+        found_files = {f['name'] for f in files}
+        return file_to_check in found_files 
+
     def download_files(self, drive_folder_path: str, local_path: Path, expected_files: list):
         folder_id = self._get_folder_id(drive_folder_path)
         time_now = datetime.now()

@@ -14,7 +14,6 @@ from tqdm import tqdm
 
 from typing import Union
 
-
 def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
     """
     Export satellite data from Google Earth Engine to Google Drive for multiple fire locations.
@@ -52,6 +51,7 @@ def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
         #FIX: This exception needs to be more specific
         except Exception as e:
             # print(f"Failed on {location}: {str(e)}")
+            tqdm.write(f"Failed on {location}: {str(e)}")
             failed_fire_bar.update(1)
             failed_locations.append(location)
             continue
@@ -67,4 +67,7 @@ def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
 
 
     return True
+
+
+
 
