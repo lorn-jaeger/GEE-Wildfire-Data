@@ -5,7 +5,6 @@ from ee.geometry import Geometry
 from ee.featurecollection import FeatureCollection
 import pandas as pd
 import geopandas as gpd
-import os
 from shapely.geometry import Polygon
 from tqdm import tqdm
 from datetime import datetime, timedelta
@@ -105,6 +104,29 @@ def get_gdfs(config):
                 gdfs.append(gfd)
 
     return gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs=gdfs[0].crs).sort_values(['Id', 'date'])
+
+
+def get_fires(config):
+    gdf = get_gdfs(config)
+
+    gdf['Id'] = gdf['Id'].astype(str)
+    gdf['area'] = pd.to_numeric(gdf['area'], errors='coerce')
+    gdf['date'] = pd.to_datetime(gdf['date'], errors='coerce')
+    gdf['end_date'] = pd.to_datetime(gdf['end_date'], errors='coerce')
+    gdf['lat'] = pd.to_numeric(gdf['lat'], errors='coerce')
+    gdf['lon'] = pd.to_numeric(gdf['lon'], errors='coerce')
+
+    gdf = gdf.dropna(subset=['Id', 'date', 'end_date'])
+
+    gdf = gdf.groupby('Id').agg({
+        'date': 'first',
+        'end_date': 'last',
+        'area': 'max',
+        'lat': 'first',
+        'lon': 'first'
+    }).reset_index()   
+
+    return gdf
 
 
 def create_fire_config_globfire(user_config) -> None:
