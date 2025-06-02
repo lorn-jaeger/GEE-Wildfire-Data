@@ -157,8 +157,8 @@ def get_fires(config):
     gdf = gdf.dropna(subset=['Id', 'date', 'end_date'])
 
     gdf = gdf.groupby('Id').agg({
-        'date': 'first',
-        'end_date': 'last',
+        'IDate': 'first',
+        'FDate': 'last',
         'area': 'max',
         'lat': 'first',
         'lon': 'first'
