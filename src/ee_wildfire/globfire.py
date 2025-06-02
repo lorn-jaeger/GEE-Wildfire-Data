@@ -1,11 +1,14 @@
 from ee import ee_exception
 from ee.filter import Filter
+import yaml
 from ee.geometry import Geometry
 from ee.featurecollection import FeatureCollection
 import pandas as pd
 import geopandas as gpd
+import os
 from shapely.geometry import Polygon
 from tqdm import tqdm
+from datetime import datetime, timedelta
 from ee_wildfire.get_globfire import ee_featurecollection_to_gdf
 from get_globfire import usa_coords, time_to_milli, compute_centroid, compute_area, create_usa_geometry, analyze_fires
 from shapely.geometry import shape
@@ -88,7 +91,7 @@ def get_gdfs(config):
     collections = [
     'JRC/GWIS/GlobFire/v2/FinalPerimeters',
     'JRC/GWIS/GlobFire/v2/DailyPerimeters'
-    ]
+    ] 
 
     gdfs = []
 
@@ -103,10 +106,53 @@ def get_gdfs(config):
 
     return gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs=gdfs[0].crs).sort_values(['Id', 'date'])
 
-def get_fires(config):
-    pass
 
-    
+def create_fire_config_globfire(user_config) -> None:
+    output_path = get_full_yaml_path(user_config)
+    year = user_config.start_date.year
+
+    gdf = user_config.geodataframe
+    gdf['IDate'] = pd.to_datetime(gdf['IDate'], unit='ms')
+    gdf['FDate'] = pd.to_datetime(gdf['FDate'], format='mixed')
+
+    gdf = gdf[gdf['IDate'].dt.year == int(year)]
+    first_occurrences = gdf.sort_values('IDate').groupby('Id').first() #type: ignore
+    last_occurrences = gdf.sort_values('IDate').groupby('Id').last() #type: ignore
+
+    config = {
+        'output_bucket': 'firespreadprediction',
+        'rectangular_size': 0.5, 'year': year }
+
+    # ensures that datetime objects are dumped as YYYY-MM-DD
+    class DateSafeYAMLDumper(yaml.SafeDumper):
+        def represent_data(self, data):
+            if isinstance(data, datetime):
+                return self.represent_scalar('tag:yaml.org,2002:timestamp', data.strftime('%Y-%m-%d'))
+            return super().represent_data(data)
+
+    # Populate fire entries
+    for idx in first_occurrences.index:
+        first = first_occurrences.loc[idx]
+        last = last_occurrences.loc[idx]
+
+        # no final date, just pulls last inital date
+        end_date = last['FDate'] if pd.notna(last['FDate']) else last['IDate']
+        # 4 day buffer before and after ignition/containment
+        start_date = first['IDate'] - timedelta(days=4)
+        end_date = end_date + timedelta(days=4)
+
+        config[f'fire_{idx}'] = {
+            'latitude': float(first['lat']),
+            'longitude': float(first['lon']),
+            'start': start_date.date(),
+            'end': end_date.date()
+        }
+    # Ensure the directory exists
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    with open(output_path, 'w') as f:
+        yaml.dump(config, f, Dumper=DateSafeYAMLDumper, default_flow_style=False, sort_keys=False)
+   
                 
 
 def main():
