@@ -165,25 +165,12 @@ def get_fires(config):
     }).reset_index()   
 
     return gdf
-                
 
 def main():
     pass
 
 if __name__ == '__main__':
     main()
-
-
-            
-
-            
-
-        
-        
-
-
-
-    
 
 
 

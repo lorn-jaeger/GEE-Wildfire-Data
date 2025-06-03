@@ -3,32 +3,36 @@ import shutil
 import time
 import io
 
+from datetime import datetime
+
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.errors import HttpError
 
-from ee_wildfire.constants import *
+from ee_wildfire.constants import SCOPES, AUTH_TOKEN_PATH
 
 from pathlib import Path
 from tqdm import tqdm
 from typing import Union
 
-SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
+# SCOPES = ['https://www.googleapis.com/auth/drive']
 
 class DriveDownloader:
     """
     Handles downloading files from Google Drive using OAuth credentials.
     Supports folder and individual file downloads.
     """
-    def __init__(self, credentials:Union[Path,str]):
+    def __init__(self, credentials:Union[Path,str], google_drive_dir:str):
         """
         Args:
             credentials_path: Path to the OAuth credentials JSON file.
         """
         self.creds = credentials
         self.service = self._get_drive_service()
+        self.folderID = self._get_folder_id(google_drive_dir)
         
     def _get_drive_service(self):
         creds = None
@@ -90,7 +94,6 @@ class DriveDownloader:
                 if not page_token:
                     break
             
-            #FIX: Check if this includes the last file name exported. If userconfig recently_exported=True
             tqdm.write(f"Found {len(files)} files")
             
             for file in tqdm(files, desc="Downloading files"):
@@ -110,8 +113,8 @@ class DriveDownloader:
             tqdm.write(f"Error downloading folder: {str(e)}")
             raise
 
-    def check_file_in_drive(self, drive_folder_path:str, file_to_check: str) -> bool:
-        folder_id = self._get_folder_id(drive_folder_path)
+    def get_files_in_drive(self):
+        folder_id = self.folderID
         results = self.service.files().list(
             q=f"'{folder_id}' in parents and mimeType='image/tiff' and trashed=false",
             spaces="drive",
@@ -119,22 +122,25 @@ class DriveDownloader:
         ).execute()
         files = results.get("files",[])
         found_files = {f['name'] for f in files}
-        return file_to_check in found_files 
+        return found_files, files
 
-    def download_files(self, drive_folder_path: str, local_path: Path, expected_files: list):
-        folder_id = self._get_folder_id(drive_folder_path)
+
+    def download_files(self, local_path: Path, expected_files: list):
+        # folder_id = self._get_folder_id(drive_folder_path)
+        # folder_id = self.folderID
         time_now = datetime.now()
 
         # tqdm.write(f"Waiting on exports, this may take a while...")
         while True:
-            results = self.service.files().list(
-                q=f"'{folder_id}' in parents and mimeType='image/tiff' and trashed=false",
-                spaces="drive",
-                fields="files(id, name)"
-            ).execute()
-
-            files = results.get("files", [])
-            found_names = {f['name'] for f in files}
+            found_names, files = self.get_files_in_drive()
+            # results = self.service.files().list(
+            #     q=f"'{folder_id}' in parents and mimeType='image/tiff' and trashed=false",
+            #     spaces="drive",
+            #     fields="files(id, name)"
+            # ).execute()
+            #
+            # files = results.get("files", [])
+            # found_names = {f['name'] for f in files}
             current_missing = set(expected_files) - found_names
             term_width = shutil.get_terminal_size((80, 20)).columns  # fallback if unknown
             prog_bar = tqdm.format_meter(
@@ -170,14 +176,42 @@ class DriveDownloader:
             while not done:
                 _, done = downloader.next_chunk()
 
+    # FIX: This requires permissions that are not provided by the scope of drive.readonly
+    # in order for this to work you must either; use full scope and have google not verify the app or to tie a service account to the program.
+    def purge_data(self):
+        try:
+            while True:
+                _, files = self.get_files_in_drive()
+
+                for f in files:
+                    try:
+                        self.service.files().delete(fileId=f['id']).execute()
+                        print(f"Deleted: {f['name']}")
+
+                    except HttpError as error:
+                        print(f"Failed to delete {f['name']}: {error}")
+
+                if len(files) == 0:
+                    break
+
+
+
+        except HttpError as e:
+            print(f"An error occured: {e}")
+            raise
+
+
+
+
 def main():
     from ee_wildfire.UserConfig.UserConfig import UserConfig
     uf = UserConfig()
     exported_files = [
-        "Image_Export_fire_24844724_2021-01-12.tif",
-        "Image_Export_fire_24844724_2021-01-26.tif",
+        "Image_Export_fire_24845541_2021-01-08.tif",
+        "Image_Export_fire_24845541_2021-01-06.tif",
     ]
-    print(uf.downloader.download_files(DEFAULT_GOOGLE_DRIVE_DIR, DEFAULT_TIFF_DIR, exported_files))
+    # print(uf.downloader.download_files(DEFAULT_TIFF_DIR, exported_files))
+    # uf.downloader.purge_data()
 
 
 if __name__ == '__main__':

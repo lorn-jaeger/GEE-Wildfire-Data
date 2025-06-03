@@ -107,6 +107,7 @@ class DatasetPrepareService:
 
         # Wait until there is space in the export queue
         while (self.export_queue.isFull()):
+            tqdm.write(f"Export queue full, waiting for space.")
             self.export_queue.refreshExports()
         
         # Use geemap's export function

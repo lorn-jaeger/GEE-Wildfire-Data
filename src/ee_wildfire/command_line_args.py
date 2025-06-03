@@ -20,6 +20,8 @@ def run(config: UserConfig) -> None:
     Args:
         config (UserConfig): Fully initialized user configuration.
     """
+    # pre-perge google drive if true
+
     if(config.export or config.download):
         # generate geodata frame
         tqdm.write("Generating GeoDataFrame...")
@@ -39,7 +41,9 @@ def run(config: UserConfig) -> None:
 
     # download from google drive to local machine
     if(config.download):
-        config.downloader.download_files(config.google_drive_dir, config.tiff_dir, config.exported_files)
+        config.downloader.download_files(config.tiff_dir, config.exported_files)
+
+    # post-purge google drive if true
 
 def parse() -> UserConfig:
     """
@@ -71,11 +75,11 @@ def parse() -> UserConfig:
 
     args, _ = base_parser.parse_known_args()
 
+
     outside_user_config_path = args.config
 
     config = UserConfig(yaml_path=outside_user_config_path)
-    config.change_configuration_from_yaml(outside_user_config_path)
-    config.change_bool_from_args(args)
+    config.change_configuration_from_args(args)
 
     if(args.show_config or (args.config != INTERNAL_USER_CONFIG_DIR)):
         tqdm.write(str(config))

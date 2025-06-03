@@ -106,19 +106,9 @@ class CircleQueue:
 
     def refreshExports(self):
 
-        # item = self.queueList[self.front]
-        # if(self.userConfig.downloader.check_file_in_drive(
-        #     drive_folder_path=self.userConfig.google_drive_dir,
-        #     file_to_check=item
-        # )):
-        #     self.dequeue()
-        # tqdm.write(str(self.queueList))
-
         for item in self.queueList:
-            if(self.userConfig.downloader.check_file_in_drive(
-                drive_folder_path=self.userConfig.google_drive_dir,
-                file_to_check=item
-            )):
+            files, _ = self.userConfig.downloader.get_files_in_drive()
+            if item in files:
                 self.dequeueItem(item)
 
 

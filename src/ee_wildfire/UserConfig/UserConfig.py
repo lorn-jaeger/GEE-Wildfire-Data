@@ -16,12 +16,12 @@ from typing import Union, Dict, Any
 
 default_values: Dict[str, Any] = {
     "project_id": DEFAULT_PROJECT_ID,
+    "credentials":DEFAULT_OAUTH_DIR,
     "start_date": DEFAULT_START_DATE,
     "end_date": DEFAULT_END_DATE,
     "google_drive_dir": DEFAULT_GOOGLE_DRIVE_DIR,
     "min_size": DEFAULT_MIN_SIZE,
     "max_size": DEFAULT_MAX_SIZE,
-    "credentials":DEFAULT_OAUTH_DIR,
     "data_dir": DEFAULT_DATA_DIR,
     "tiff_dir": DEFAULT_TIFF_DIR,
     "export": False,
@@ -74,7 +74,7 @@ class UserConfig:
         try:
             Authenticate()
             Initialize(project=self.project_id)
-            self.downloader = DriveDownloader(self.credentials)
+            self.downloader = DriveDownloader(self.credentials, self.google_drive_dir)
 
         except Exception as e:
             print("\n Google Earth Engine authentication failed.")
@@ -96,6 +96,7 @@ class UserConfig:
             FileNotFoundError: If credentials file does not exist.
         """
         if not os.path.exists(self.credentials):
+            # TODO: verbose error is needed here
             raise FileNotFoundError(f"{self.credentials} not found!")
 
         self._try_make_path(self.data_dir)
@@ -181,7 +182,7 @@ class UserConfig:
 
         save_yaml_config(self.__dict__, INTERNAL_USER_CONFIG_DIR)
 
-    def change_bool_from_args(self, args: Any) -> None:
+    def change_configuration_from_args(self, args: Any) -> None:
         """
         Update internal boolean flags (`export`, `download`) from parsed CLI arguments.
 
@@ -192,20 +193,20 @@ class UserConfig:
         internal_config = args.config == INTERNAL_USER_CONFIG_DIR
         for key in namespace:
             val = getattr(args,key)
-            if(internal_config):
+            if(internal_config and (val is not None)):
+                setattr(self, key, val)
 
-                if (key == "export"):
-                    self.export = val
+        self._validate_paths()
+        self._validate_time()
+        save_yaml_config(self.__dict__, INTERNAL_USER_CONFIG_DIR)
 
-                if (key == "download"):
-                    self.download = val
 
 
 
 def main():
     outside_config_path = HOME / "NRML" / "outside_config.yml"
     uf = UserConfig(outside_config_path)
-    print(getattr(uf, "downloader"))
+    uf.save_config_to_yaml()
 
 if __name__ == "__main__":
     main()
