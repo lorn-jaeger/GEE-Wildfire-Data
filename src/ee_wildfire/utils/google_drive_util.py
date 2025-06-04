@@ -3,6 +3,7 @@ google_drive_util.py
 
 helper funcitons to help handle google drive api calls.
 """
+import ee
 
 from ee_wildfire.UserConfig.UserConfig import UserConfig
 from pathlib import Path
@@ -13,6 +14,11 @@ from ee_wildfire.DataPreparation.DatasetPrepareService import DatasetPrepareServ
 from tqdm import tqdm
 
 from typing import Union
+
+def get_number_items_in_export_queue():
+    tasks = ee.data.getTaskList()
+    active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
+    return len(active_tasks)
 
 def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
     """
@@ -68,6 +74,13 @@ def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
 
     return True
 
+def main():
+    uf = UserConfig()
+    print(get_number_items_in_export_queue())
+    pass
+
+if __name__ == "__main__":
+    main()
 
 
 

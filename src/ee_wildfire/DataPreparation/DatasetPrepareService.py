@@ -2,6 +2,7 @@ import datetime
 import ee
 from ee import Geometry, ImageCollection # type: ignore
 import geemap
+from googleapiclient.http import HttpError
 from tqdm import tqdm
 import sys
 from pathlib import Path
@@ -9,6 +10,7 @@ import time
 
 from ee_wildfire.UserConfig.UserConfig import UserConfig
 from ee_wildfire.export_queue import CircleQueue
+from ee_wildfire.constants import EXPORT_QUEUE_SIZE
 
 
 # Add the parent directory to the Python path to enable imports
@@ -106,9 +108,10 @@ class DatasetPrepareService:
         img = image_collection.max().toFloat()
 
         # Wait until there is space in the export queue
-        while (self.export_queue.isFull()):
-            tqdm.write(f"Export queue full, waiting for space.")
-            self.export_queue.refreshExports()
+        # while (self.export_queue.isFull()):
+        #     tqdm.write(f"Export queue full, waiting for space.")
+        #     self.export_queue.refreshExports()
+
         
         # Use geemap's export function
         try:
@@ -123,12 +126,17 @@ class DatasetPrepareService:
             )
 
             # add item to export queue
-            self.export_queue.enqueue(f"{base_filename}.tif")
+            # self.export_queue.enqueue(f"{base_filename}.tif")
             self.user_config.exported_files.append(f"{base_filename}.tif")
 
+        # except HttpError as e:
+        #     tqdm.write(f"Export failed for {filename}: {str(e)}")
+        #     self.user_config.failed_exports.append(f"{base_filename}.tif")
+        #     wait_for_gee_queue_space()
         except Exception as e:
-            tqdm.write(f"Export failed for {filename}: {str(e)}")
-            raise
+            # tqdm.write(f"Export failed for {filename}: {str(e)}")
+            self.user_config.failed_exports.append(f"{base_filename}.tif")
+            wait_for_gee_queue_space()
         
     def extract_dataset_from_gee_to_drive(self, utm_zone:str, n_buffer_days:int=0) -> None:
         """
@@ -162,4 +170,34 @@ class DatasetPrepareService:
             except Exception as e:
                 tqdm.write(f"Failed pocessing {date_of_interest}: {str(e)}")
                 raise
+
+def wait_for_gee_queue_space():
+    pbar = tqdm(total=3050, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} Tasks", dynamic_ncols=True, desc="Google Earth Export Queue Status")
+
+    while True:
+        tasks = ee.data.getTaskList()
+        active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
+
+        # update progress bar
+        pbar.n = len(active_tasks)
+        pbar.refresh()
+
+        if len(active_tasks) < EXPORT_QUEUE_SIZE:
+            break
+
+        time.sleep(10)
+
+    pbar.close()
+
+def main():
+    from ee_wildfire.UserConfig.UserConfig import UserConfig
+    uf = UserConfig()
+    # wait_for_gee_queue_space()
+    tasks = ee.data.getTaskList()
+    active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
+
+    print(len(active_tasks))
+
+if __name__ == "__main__":
+    main()
 

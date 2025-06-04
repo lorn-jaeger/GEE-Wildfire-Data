@@ -17,6 +17,7 @@ AUTH_TOKEN_PATH = ROOT / "UserConfig" / "auth_token.json"
 
 INTERNAL_USER_CONFIG_DIR = ROOT / "UserConfig" /"user_config.yml"
 
+
 # =========== Needed Constants ===========
 
 VERSION = "2025.1.6"
@@ -27,7 +28,7 @@ CRS_CODE = "32610"
 
 DATE_FORMAT = "%Y-%m-%d"
 
-EXPORT_QUEUE_SIZE = 2900
+EXPORT_QUEUE_SIZE = 2000
 
 MIN_YEAR = 2001
 
@@ -95,26 +96,29 @@ DEFAULT_DATA_DIR = HOME / "ee_wildfire_data"
 
 DEFAULT_TIFF_DIR = DEFAULT_DATA_DIR / "tiff"
 
+DEFAULT_HDF5_DIR = DEFAULT_DATA_DIR / "hdf5"
+
 DEFAULT_OAUTH_DIR = DEFAULT_DATA_DIR / "OAuth" / "credentials.json"
 
 DEFAULT_GOOGLE_DRIVE_DIR = "EarthEngine_WildfireSpreadTS"
+
 
 # =========== Command Line Arguments ===========
 
 COMMAND_ARGS = {
     #"NAME":                (type,  default,                    action,         help)
-    "-version":             (None,  None,                       "version",      "Show current version"),
-    "-config":              (Path,  INTERNAL_USER_CONFIG_DIR,   "store",        "Path to JSON config file"),
-    "-export":              (None,  False,                      "store_true",   "Export to drive."),
-    "-download":            (None,  False,                      "store_true",   "Download from drive."),
-    "-show-config":         (None,  False,                      "store_true",   "Show user configuration."),
-    "-project-id":          (str,   None,                       "store",        "Change Google Earth project ID"),
-    "-credentials":         (Path,  None,                       "store",        "Path to Google Authetication .json"),
-    "-data-dir":            (Path,  None,                       "store",        "Path to output data directory."),
-    "-tiff-dir":            (Path,  None,                       "store",        "Path where downloaded tiff files go."),
-    "-google-drive-dir":    (str,   None,                       "store",        "Google Drive folder for exporting."),
-    "-min-size":            (int,   None,                       "store",        "Minimum size of fire area."),
-    "-max-size":            (int,   None,                       "store",        "Maximum size of fire area."),
+    "--version":             (None,  None,                       "version",      "Show current version"),
+    "--config":              (Path,  INTERNAL_USER_CONFIG_DIR,   "store",        "Path to JSON config file"),
+    "--export":              (None,  False,                      "store_true",   "Export to drive."),
+    "--download":            (None,  False,                      "store_true",   "Download from drive."),
+    "--show-config":         (None,  False,                      "store_true",   "Show user configuration."),
+    "--project-id":          (str,   None,                       "store",        "Change Google Earth project ID"),
+    "--credentials":         (Path,  None,                       "store",        "Path to Google Authetication .json"),
+    "--data-dir":            (Path,  None,                       "store",        "Path to output data directory."),
+    "--tiff-dir":            (Path,  None,                       "store",        "Path where downloaded tiff files go."),
+    "--google-drive-dir":    (str,   None,                       "store",        "Google Drive folder for exporting."),
+    "--min-size":            (int,   None,                       "store",        "Minimum size of fire area."),
+    "--max-size":            (int,   None,                       "store",        "Maximum size of fire area."),
     #"-purge-before":        (None,  False,                      "store_true",   "Purge data from google drive before exporting"),
     #"-purge-after":         (None,  False,                      "store_true",   "Purge data from google drive after downloading"),
 

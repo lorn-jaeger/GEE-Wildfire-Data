@@ -2,6 +2,7 @@ import os
 import shutil
 import time
 import io
+import ee
 
 from datetime import datetime
 
@@ -126,21 +127,10 @@ class DriveDownloader:
 
 
     def download_files(self, local_path: Path, expected_files: list):
-        # folder_id = self._get_folder_id(drive_folder_path)
-        # folder_id = self.folderID
         time_now = datetime.now()
 
-        # tqdm.write(f"Waiting on exports, this may take a while...")
         while True:
             found_names, files = self.get_files_in_drive()
-            # results = self.service.files().list(
-            #     q=f"'{folder_id}' in parents and mimeType='image/tiff' and trashed=false",
-            #     spaces="drive",
-            #     fields="files(id, name)"
-            # ).execute()
-            #
-            # files = results.get("files", [])
-            # found_names = {f['name'] for f in files}
             current_missing = set(expected_files) - found_names
             term_width = shutil.get_terminal_size((80, 20)).columns  # fallback if unknown
             prog_bar = tqdm.format_meter(
@@ -200,18 +190,26 @@ class DriveDownloader:
             print(f"An error occured: {e}")
             raise
 
+    def check_export_completion(self):
+        tasks = ee.data.getTaskList()
+        active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
+
+        print(len(active_tasks))
+        pass
+
 
 
 
 def main():
     from ee_wildfire.UserConfig.UserConfig import UserConfig
     uf = UserConfig()
-    exported_files = [
-        "Image_Export_fire_24845541_2021-01-08.tif",
-        "Image_Export_fire_24845541_2021-01-06.tif",
-    ]
+    # exported_files = [
+    #     "Image_Export_fire_24845541_2021-01-08.tif",
+    #     "Image_Export_fire_24845541_2021-01-06.tif",
+    # ]
     # print(uf.downloader.download_files(DEFAULT_TIFF_DIR, exported_files))
     # uf.downloader.purge_data()
+    uf.downloader.check_export_completion()
 
 
 if __name__ == '__main__':
