@@ -127,23 +127,36 @@ max_size: 1000000000.0
 
 To finish configuration you will need to use the `-config` command line argument.
 
+
 ## Command-Line Interface (CLI)
+
+You can also edit configuration on the fly with command line arguments:
+
 | Argument | Parameters | Description |
 | -------- |-- |------------|
-| `-config` | `PATH`| Loads a YAML config file located at PATH. This will overload any other command-line arguments.|
-| `-show-config`| None | Prints current config to command line. |
-| `-export` | None | Export data from Google Earth Engine to Google Drive. |
-| `-download`| None | Downloads data from Google Drive to your local machine. |
+| `--config` | `PATH`| Loads a YAML config file located at PATH. This will overload any other command-line arguments.|
+| `--version` | None | Prints current program version|
+| `--show-config`| None | Prints current config to command line. |
+| `--export` | None | Export data from Google Earth Engine to Google Drive. |
+| `--download`| None | Downloads data from Google Drive to your local machine. |
+| `--project-id` | `str` | The name of your google earth project id |
+| `--credentials` | `PATH`| The path to your credentials.json from google cloud OAuth2.0 |
+| `--data-dir` | `PATH`| The path to your local machine's output data directory |
+| `--tiff-dir` | `PATH`| The path to your local machine's output data directory, but specifically for tif files. |
+| `--google-drive-dir` | `str`| The name of your google drive directory for file exporting. |
+| `--min-size` | `float` | The mimimum size of fire to detect. |
+| `--max-size` | `float` | The maximum size of fire to detect. |
+
 
 
 ###  Basic Usage
 
 ```bash
-ee-wildfire -config /path/to/some/config.yml -show-config
+ee-wildfire --config /path/to/some/config.yml
 ```
 
 ```bash
-ee-wildfire -export -download
+ee-wildfire --project-id PROJECT_ID --credentials PATH_TO_CREDS --export --download --min-size 10
 ```
 
 # Acknowledgements
