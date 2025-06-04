@@ -105,6 +105,7 @@ DEFAULT_GOOGLE_DRIVE_DIR = "EarthEngine_WildfireSpreadTS"
 
 # =========== Command Line Arguments ===========
 
+# most default options are located in UserConfig.py
 COMMAND_ARGS = {
     #"NAME":                (type,  default,                    action,         help)
     "--version":             (None,  None,                       "version",      "Show current version"),
