@@ -3,7 +3,7 @@ google_drive_util.py
 
 helper funcitons to help handle google drive api calls.
 """
-import ee
+from ee.data import getTaskList
 
 from ee_wildfire.UserConfig.UserConfig import UserConfig
 from ee_wildfire.UserInterface import ConsoleUI
@@ -16,13 +16,12 @@ from ee_wildfire.DataPreparation.DatasetPrepareService import DatasetPrepareServ
 from typing import Union
 
 def get_number_items_in_export_queue():
-    tasks = ee.data.getTaskList()
+    # tasks = ee.data.getTaskList()
+    tasks = getTaskList()
     active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
     return len(active_tasks)
 
 def process_locations(locations, user_config, fire_config):
-    ConsoleUI.add_bar(key="processed", total=len(locations), desc="Fires processed")
-    ConsoleUI.add_bar(key="failed", total=len(locations), desc="Number of failed locations")
     failed_locations = []
 
     # Process each location
@@ -41,8 +40,6 @@ def process_locations(locations, user_config, fire_config):
 
         ConsoleUI.update_bar(key="processed")
 
-    ConsoleUI.close_bar(key="processed")
-    ConsoleUI.close_bar(key="failed")
     return failed_locations
 
 def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
@@ -67,6 +64,8 @@ def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
         fire_names.remove(non_fire_key)
     locations = fire_names
 
+    ConsoleUI.add_bar(key="processed", total=len(locations), desc="Fires processed")
+    ConsoleUI.add_bar(key="failed", total=len(locations), desc="Number of failed locations")
     failed_locations = process_locations(locations, user_config, config)
 
     # NOTE: This is where I should retry failed locations
@@ -74,8 +73,17 @@ def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
         ConsoleUI.print("Failed locations:")
         for loc in failed_locations:
             ConsoleUI.print(f"- {loc}")
+
+        if(user_config.retry_failed):
+            ConsoleUI.print("Retrying failed locations")
+            process_locations(failed_locations, user_config, config)
+
     else:
         ConsoleUI.print("All locations processed successfully!")
+
+    ConsoleUI.close_bar(key="export")
+    ConsoleUI.close_bar(key="processed")
+    ConsoleUI.close_bar(key="failed")
 
 
     return True

@@ -106,6 +106,8 @@ DEFAULT_GOOGLE_DRIVE_DIR = "EarthEngine_WildfireSpreadTS"
 # =========== Command Line Arguments ===========
 
 # most default options are located in UserConfig.py
+# For now this only suppots double flags --. double flags are also removed in YAML file
+# single - between words are swapped for _ in YAML file
 COMMAND_ARGS = {
     #"NAME":                (type,  default,                    action,         help)
     "--version":             (None,  None,                       "version",      "Show current version"),
@@ -120,6 +122,7 @@ COMMAND_ARGS = {
     "--google-drive-dir":    (str,   None,                       "store",        "Google Drive folder for exporting."),
     "--min-size":            (int,   None,                       "store",        "Minimum size of fire area."),
     "--max-size":            (int,   None,                       "store",        "Maximum size of fire area."),
+    "--retry-failed":        (None,  False,                      "store_true",   "Retry failed locations."),
     #"-purge-before":        (None,  False,                      "store_true",   "Purge data from google drive before exporting"),
     #"-purge-after":         (None,  False,                      "store_true",   "Purge data from google drive after downloading"),
 
