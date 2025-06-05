@@ -123,16 +123,18 @@ def get_final_fires(config, collection, week):
     final['FDate'] = pd.to_datetime(final['FDate'], unit='ms')
     final = final[['Id', 'IDate', 'FDate', 'area']]
 
-    collection = 'JRC/GWIS/GlobFire/v2/DailyPerimeters/2021'
+    years = sorted(set(pd.date_range(start=start, end=config.end, freq='D').year))
+    for year in years:
+        collection = f"JRC/GWIS/GlobFire/v2/DailyPerimeters/{year}"
 
-    fc = (
-        FeatureCollection(collection)
-        .filterBounds(region)
-        .filter(Filter.inList('Id', final['Id'].tolist()))
-        .map(compute_centroid)
-    )
+        fc = (
+            FeatureCollection(collection)
+            .filterBounds(region)
+            .filter(Filter.inList('Id', final['Id'].tolist()))
+            .map(compute_centroid)
+        )
 
-    daily = ee_featurecollection_to_gdf(fc)
+        daily = ee_featurecollection_to_gdf(fc)
 
     daily['IDate'] = pd.to_datetime(daily['IDate'], unit='ms')
     daily = daily[['Id', 'IDate', 'lat', 'lon']]
@@ -144,9 +146,6 @@ def get_final_fires(config, collection, week):
     fires['IDate'] = fires['IDate_x']
     fires = fires[['Id', 'IDate', 'FDate', 'lat', 'lon', 'area']].reset_index(drop=True)
     
-    from IPython import embed
-    embed()
-
     return fires
 
 def get_origins(config, gdfs):
