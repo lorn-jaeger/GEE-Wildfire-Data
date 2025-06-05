@@ -107,8 +107,7 @@ def get_final_fires(config, collection, week):
     min_size = config.min_size
     region = create_usa_geometry()
     
-    # get a final fire with an Idate in this week
-    geojson = (
+    fc = (
         FeatureCollection(collection)
         .filterBounds(region)
         .map(compute_area)
@@ -118,19 +117,37 @@ def get_final_fires(config, collection, week):
         .filter(Filter.lt('IDate', end))
     )
     
-    gdf = ee_featurecollection_to_gdf(geojson)
+    final = ee_featurecollection_to_gdf(fc)
 
-    gdf['IDate'] = pd.to_datetime(gdf['IDate'], unit='ms')
-    gdf['FDate'] = pd.to_datetime(gdf['FDate'], unit='ms')
+    final['IDate'] = pd.to_datetime(final['IDate'], unit='ms')
+    final['FDate'] = pd.to_datetime(final['FDate'], unit='ms')
+    final = final[['Id', 'IDate', 'FDate', 'area']]
 
-    gdf = gdf['Id', 'IDate', 'FDate'].unique().dropna()
+    collection = 'JRC/GWIS/GlobFire/v2/DailyPerimeters/2021'
 
+    fc = (
+        FeatureCollection(collection)
+        .filterBounds(region)
+        .filter(Filter.inList('Id', final['Id'].tolist()))
+        .map(compute_centroid)
+    )
 
+    daily = ee_featurecollection_to_gdf(fc)
 
+    daily['IDate'] = pd.to_datetime(daily['IDate'], unit='ms')
+    daily = daily[['Id', 'IDate', 'lat', 'lon']]
 
+    fires = final.merge(daily, on=['Id'], how='left')
+    fires['timedelta'] = (fires['IDate_x'] - fires['IDate_y']).abs()
+    fires = fires.sort_values("timedelta").drop_duplicates(subset=['Id'])
+    fires = fires[fires['timedelta'] <= pd.Timedelta(hours=24)]
+    fires['IDate'] = fires['IDate_x']
+    fires = fires[['Id', 'IDate', 'FDate', 'lat', 'lon', 'area']].reset_index(drop=True)
+    
+    from IPython import embed
+    embed()
 
-
-    return gdf
+    return fires
 
 def get_origins(config, gdfs):
     pass
