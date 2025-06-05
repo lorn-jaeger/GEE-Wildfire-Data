@@ -179,6 +179,7 @@ def wait_for_gee_queue_space():
         ConsoleUI.set_bar_position(key="export_queue",value=len(active_tasks))
 
         if len(active_tasks) < EXPORT_QUEUE_SIZE/2:
+            ConsoleUI.change_bar_desc(key="export_queue", desc="Google Earth export queue")
             break
         else:
             ConsoleUI.change_bar_desc(key="export_queue", desc="Google Earth export queue full, waiting...")
