@@ -1,6 +1,7 @@
 
 
 
+from ee_wildfire.UserInterface import ConsoleUI
 from ee_wildfire.utils.yaml_utils import load_yaml_config, save_yaml_config
 from ee_wildfire.constants import *
 from ee_wildfire.drive_downloader import DriveDownloader
@@ -183,7 +184,7 @@ class UserConfig:
 
             setattr(self, key ,config_data[key])
 
-        save_yaml_config(self.__dict__, INTERNAL_USER_CONFIG_DIR)
+        self.save_to_internal_config_file()
 
     def change_configuration_from_args(self, args: Any) -> None:
         """
@@ -201,6 +202,9 @@ class UserConfig:
 
         self._validate_paths()
         self._validate_time()
+        self.save_to_internal_config_file()
+
+    def save_to_internal_config_file(self):
         save_yaml_config(self.__dict__, INTERNAL_USER_CONFIG_DIR)
 
 

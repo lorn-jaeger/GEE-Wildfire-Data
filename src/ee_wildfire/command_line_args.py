@@ -10,10 +10,12 @@ from ee_wildfire.create_fire_config import create_fire_config_globfire
 from ee_wildfire.utils.yaml_utils import  get_full_yaml_path
 from ee_wildfire.utils.google_drive_util import export_data
 from ee_wildfire.UserConfig.UserConfig import UserConfig
+from ee_wildfire.UserInterface import ConsoleUI
 
 from tqdm import tqdm
 
 def run(config: UserConfig) -> None:
+    # TODO: update docs
     """
     Core pipeline logic for exporting and downloading wildfire data.
     
@@ -31,6 +33,9 @@ def run(config: UserConfig) -> None:
         tqdm.write("Generating Fire Configuration...")
         create_fire_config_globfire(config)
 
+
+    ConsoleUI.close_all_bars()
+
     if((not config.export) and config.download):
         config.downloader.download_folder(config.google_drive_dir, config.tiff_dir)
 
@@ -38,6 +43,8 @@ def run(config: UserConfig) -> None:
     if(config.export):
         tqdm.write("Processing Data...")
         export_data(yaml_path=get_full_yaml_path(config), user_config=config)
+
+    ConsoleUI.close_all_bars()
 
     # download from google drive to local machine
     if(config.download):
@@ -87,6 +94,7 @@ def parse() -> UserConfig:
     return config
 
 def main():
+    ui = ConsoleUI()
     config = parse()
     print(config)
 

@@ -10,6 +10,7 @@ from geopandas import GeoDataFrame
 from ee_wildfire.constants import ROOT
 from ee_wildfire.drive_downloader import DriveDownloader
 from ee_wildfire.constants import *
+from datetime import datetime
 
 from typing import Any, Dict, Union
 
@@ -29,7 +30,7 @@ def load_yaml_config(yaml_path: Union[Path,str]) -> Dict:
 
 def save_yaml_config(config_data: Dict[str, Any], yaml_path: Union[Path,str]) -> None:
 
-    accepted_types = [int, float, bool, str]
+    accepted_types = [int, float, bool, str, datetime]
 
     transform_types = [PosixPath, Path]
 

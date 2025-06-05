@@ -2,8 +2,8 @@ import datetime
 import ee
 from ee import Geometry, ImageCollection # type: ignore
 import geemap
-from googleapiclient.http import HttpError
-from tqdm import tqdm
+# from tqdm import tqdm
+from ee_wildfire.UserInterface import ConsoleUI
 import sys
 from pathlib import Path
 import time
@@ -105,11 +105,6 @@ class DatasetPrepareService:
 
         img = image_collection.max().toFloat()
 
-        # Wait until there is space in the export queue
-        # while (self.export_queue.isFull()):
-        #     tqdm.write(f"Export queue full, waiting for space.")
-        #     self.export_queue.refreshExports()
-
         
         # Use geemap's export function
         try:
@@ -124,17 +119,13 @@ class DatasetPrepareService:
             )
 
             # add item to export queue
-            # self.export_queue.enqueue(f"{base_filename}.tif")
             self.user_config.exported_files.append(f"{base_filename}.tif")
 
-        # except HttpError as e:
-        #     tqdm.write(f"Export failed for {filename}: {str(e)}")
-        #     self.user_config.failed_exports.append(f"{base_filename}.tif")
-        #     wait_for_gee_queue_space()
         except Exception as e:
             # tqdm.write(f"Export failed for {filename}: {str(e)}")
             self.user_config.failed_exports.append(f"{base_filename}.tif")
             wait_for_gee_queue_space()
+
         
     def extract_dataset_from_gee_to_drive(self, utm_zone:str, n_buffer_days:int=0) -> None:
         """
@@ -147,9 +138,10 @@ class DatasetPrepareService:
         """
         buffer_days = datetime.timedelta(days=n_buffer_days)
         time_dif = self.end_time - self.start_time + 2 * buffer_days + datetime.timedelta(days=1)
-        day_bar = tqdm(range(time_dif.days), desc=f"Days for {self.location}", leave=False)
+        desc = f"Days for {self.location}"
+        ConsoleUI.add_bar(key="export",total=time_dif.days,desc=desc )
 
-        for i in day_bar:
+        for i in range(time_dif.days):
             date_of_interest = str(self.start_time - buffer_days + datetime.timedelta(days=i))
             # tqdm.write(f"Processing date: {date_of_interest}")
 
@@ -169,32 +161,35 @@ class DatasetPrepareService:
                 tqdm.write(f"Failed pocessing {date_of_interest}: {str(e)}")
                 raise
 
+            ConsoleUI.update_bar(key="export")
+        ConsoleUI.close_bar(key="export")
+
 def wait_for_gee_queue_space():
-    pbar = tqdm(total=3050, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} Tasks", dynamic_ncols=True, desc="Google Earth Export Queue Status")
+    ConsoleUI.add_bar("export_queue",total=EXPORT_QUEUE_SIZE, desc="Google Earth export queue")
 
     while True:
         tasks = ee.data.getTaskList()
         active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
 
         # update progress bar
-        pbar.n = len(active_tasks)
-        pbar.refresh()
+        ConsoleUI.update_bar(key="export_queue", n=len(active_tasks))
 
-        if len(active_tasks) < EXPORT_QUEUE_SIZE:
+        if len(active_tasks) < EXPORT_QUEUE_SIZE/2:
             break
+        else:
+            ConsoleUI.change_bar_desc(key="export_queue", desc="Google Earth export queue full, waiting...")
 
-        time.sleep(1)
+        time.sleep(60)
 
-    pbar.close()
 
 def main():
     from ee_wildfire.UserConfig.UserConfig import UserConfig
     uf = UserConfig()
-    # wait_for_gee_queue_space()
-    tasks = ee.data.getTaskList()
-    active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
-
-    print(len(active_tasks))
+    wait_for_gee_queue_space()
+    # tasks = ee.data.getTaskList()
+    # active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
+    #
+    # print(len(active_tasks))
 
 if __name__ == "__main__":
     main()

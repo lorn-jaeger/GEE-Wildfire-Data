@@ -1,10 +1,8 @@
 import os
-import shutil
 import time
 import io
 import ee
 
-from datetime import datetime
 
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -13,13 +11,13 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 from googleapiclient.errors import HttpError
 
+from ee_wildfire.UserInterface import ConsoleUI
 from ee_wildfire.constants import SCOPES, AUTH_TOKEN_PATH
 
 from pathlib import Path
 from tqdm import tqdm
 from typing import Union
 
-# SCOPES = ['https://www.googleapis.com/auth/drive']
 
 class DriveDownloader:
     """
@@ -95,9 +93,10 @@ class DriveDownloader:
                 if not page_token:
                     break
             
-            tqdm.write(f"Found {len(files)} files")
+            ConsoleUI.print(f"Found {len(files)} files")
             
-            for file in tqdm(files, desc="Downloading files"):
+            ConsoleUI.add_bar(key="download", total=len(files), desc="Downloading files")
+            for file in files:
                 request = self.service.files().get_media(fileId=file['id'])
                 fh = io.BytesIO()
                 downloader = MediaIoBaseDownload(fh, request)
@@ -109,9 +108,11 @@ class DriveDownloader:
                 output_path = output_dir / file['name']
                 with open(output_path, 'wb') as f:
                     f.write(fh.getvalue())
+
+                ConsoleUI.update_bar("download")
                     
         except Exception as e:
-            tqdm.write(f"Error downloading folder: {str(e)}")
+            ConsoleUI.print(f"Error downloading folder: {str(e)}")
             raise
 
     def get_files_in_drive(self):
@@ -127,24 +128,18 @@ class DriveDownloader:
 
 
     def download_files(self, local_path: Path, expected_files: list):
-        time_now = datetime.now()
-
+        ConsoleUI.add_bar(key="download",total=len(expected_files), desc="Export progress")
         while True:
             found_names, files = self.get_files_in_drive()
             current_missing = set(expected_files) - found_names
-            term_width = shutil.get_terminal_size((80, 20)).columns  # fallback if unknown
-            prog_bar = tqdm.format_meter(
-                n=len(found_names),
-                total=len(expected_files),
-                elapsed=(datetime.now() - time_now).total_seconds(),
-                prefix="Export progress",
-                ncols=term_width,
-                unit='file'
-            )
-            tqdm.write(prog_bar, end="\r")
+
+            # FIX: Bar is not updating correctly here
+            # ConsoleUI.print(f"{len(expected_files)-len(current_missing)} : {len(expected_files)}")
+            # ConsoleUI.update_bar(key="download",n=(len(expected_files)-len(current_missing)))
+            ConsoleUI.set_bar_position(key="download", value=(len(expected_files) - len(current_missing)))
 
             if not current_missing:
-                tqdm.write("All files found!")
+                ConsoleUI.print("All files found!")
                 break
 
             else:
@@ -154,7 +149,8 @@ class DriveDownloader:
         # Build a dict for easy access
         file_map = {f['name']: f for f in files if f['name'] in expected_files}
 
-        for fname in tqdm(expected_files, desc="Download progress", unit='file'):
+        ConsoleUI.add_bar(key="download", total=len(expected_files), desc="Download progress")
+        for fname in expected_files:
             file = file_map[fname]
             request = self.service.files().get_media(fileId=file['id'])
             file_path = os.path.join(local_path, fname)
@@ -165,6 +161,10 @@ class DriveDownloader:
             done = False
             while not done:
                 _, done = downloader.next_chunk()
+
+            ConsoleUI.update_bar(key="download")
+
+        ConsoleUI.close_bar(key="download")
 
     # FIX: This requires permissions that are not provided by the scope of drive.readonly
     # in order for this to work you must either; use full scope and have google not verify the app or to tie a service account to the program.
@@ -189,13 +189,6 @@ class DriveDownloader:
         except HttpError as e:
             print(f"An error occured: {e}")
             raise
-
-    def check_export_completion(self):
-        tasks = ee.data.getTaskList()
-        active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
-
-        print(len(active_tasks))
-        pass
 
 
 

@@ -7,6 +7,8 @@ import geopandas as gpd
 from shapely.geometry import Polygon
 from tqdm import tqdm
 
+from ee_wildfire.UserInterface import ConsoleUI
+
 
 usa_coords = [
     [-125.1803892906456, 35.26328285844432],
@@ -113,7 +115,8 @@ def get_daily_fires(config):
     all_gdfs = []
     collection_name = f'JRC/GWIS/GlobFire/v2/DailyPerimeters/{year}'
 
-    for week in tqdm(date_range, desc=collection_name):
+    ConsoleUI.add_bar(key="globfire", total=len(date_range), desc=collection_name)
+    for week in date_range:
         start_ms = time_to_milli(week)
         end_ms = time_to_milli(week + pd.Timedelta(weeks=1))
     
@@ -147,6 +150,7 @@ def get_daily_fires(config):
         except ee_exception.EEException as e:
             print(f"Error accessing daily collection for {year}: {str(e)}")
             return None
+        ConsoleUI.update_bar("globfire")
 
     return gpd.GeoDataFrame(pd.concat(all_gdfs, ignore_index=True), crs=all_gdfs[0].crs)
 
@@ -168,7 +172,8 @@ def get_final_fires(config):
     all_gdfs = []
     
     
-    for week in tqdm(date_range, desc=collection_name):
+    ConsoleUI.add_bar(key="globfire", total=len(date_range), desc=collection_name)
+    for week in date_range:
         start_ms = time_to_milli(week)
         end_ms = time_to_milli(week + pd.Timedelta(weeks=1))
 
@@ -199,6 +204,8 @@ def get_final_fires(config):
             print(f"Error accessing final perimeters for {year}: {str(e)}")
             return None
 
+        ConsoleUI.update_bar("globfire")
+
     return gpd.GeoDataFrame(pd.concat(all_gdfs, ignore_index=True), crs=all_gdfs[0].crs)
 
 # region default to USA
@@ -216,6 +223,7 @@ def get_combined_fires(config):
     """
     daily_gdf = get_daily_fires(config)
     final_gdf = get_final_fires(config)
+    ConsoleUI.close_bar("globfire")
     
     # Handle missing data
     # FIX: gets currupted right here, bad way to deal with errors

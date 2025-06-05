@@ -114,8 +114,8 @@ def process(config, collection, year, week):
     if gdf.empty or ('IDate' not in gdf.columns) or (not daily and 'FDate' not in gdf.columns):
         return gpd.GeoDataFrame(columns=['Id', 'date', 'end_date', 'area', 'lat', 'lon', 'source', 'geometry'], crs="EPSG:4326")
     
-    gdf['IDate'] = pd.to_numeric(pd.to_datetime(gdf['IDate'], unit='ms'))
-    gdf['FDate'] = pd.to_numeric(pd.to_datetime(gdf['IDate' if daily else 'FDate'], unit='ms'))
+    gdf['IDate'] = pd.to_numeric(pd.to_datetime(gdf['IDate'], unit='ms', errors='coerce')).dropna()
+    gdf['FDate'] = pd.to_numeric(pd.to_datetime(gdf['IDate' if daily else 'FDate'], unit='ms', errors='coerce')).dropna()
     gdf['source'] = 'daily' if daily else 'final'
     
     return gdf
