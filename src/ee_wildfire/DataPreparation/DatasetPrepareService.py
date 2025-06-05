@@ -2,7 +2,6 @@ import datetime
 import ee
 from ee import Geometry, ImageCollection # type: ignore
 import geemap
-# from tqdm import tqdm
 from ee_wildfire.UserInterface import ConsoleUI
 import sys
 from pathlib import Path
@@ -122,7 +121,7 @@ class DatasetPrepareService:
             self.user_config.exported_files.append(f"{base_filename}.tif")
 
         except Exception as e:
-            # tqdm.write(f"Export failed for {filename}: {str(e)}")
+            # ConsoleUI.print(f"Export failed for {filename}: {str(e)}")
             self.user_config.failed_exports.append(f"{base_filename}.tif")
             wait_for_gee_queue_space()
 

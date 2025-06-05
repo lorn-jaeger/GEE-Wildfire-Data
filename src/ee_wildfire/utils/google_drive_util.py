@@ -20,6 +20,31 @@ def get_number_items_in_export_queue():
     active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
     return len(active_tasks)
 
+def process_locations(locations, user_config, fire_config):
+    ConsoleUI.add_bar(key="processed", total=len(locations), desc="Fires processed")
+    ConsoleUI.add_bar(key="failed", total=len(locations), desc="Number of failed locations")
+    failed_locations = []
+
+    # Process each location
+    for location in locations:
+
+        dataset_pre = DatasetPrepareService(location=location, config=fire_config, user_config=user_config)
+
+        try:
+            dataset_pre.extract_dataset_from_gee_to_drive(CRS_CODE , n_buffer_days=4)
+        #FIX: This exception needs to be more specific
+        except Exception as e:
+            ConsoleUI.update_bar(key="failed")
+            ConsoleUI.print(f"Failed on {location}: {str(e)}")
+            failed_locations.append(location)
+            continue
+
+        ConsoleUI.update_bar(key="processed")
+
+    ConsoleUI.close_bar(key="processed")
+    ConsoleUI.close_bar(key="failed")
+    return failed_locations
+
 def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
     """
     Export satellite data from Google Earth Engine to Google Drive for multiple fire locations.
@@ -42,31 +67,9 @@ def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
         fire_names.remove(non_fire_key)
     locations = fire_names
 
-    # Track any failures
-    failed_locations = []
+    failed_locations = process_locations(locations, user_config, config)
 
-    ConsoleUI.add_bar(key="processed", total=len(locations), desc="Fires processed")
-    ConsoleUI.add_bar(key="failed", total=len(locations), desc="Number of failed locations")
-
-    # Process each location
-    for location in locations:
-
-        dataset_pre = DatasetPrepareService(location=location, config=config, user_config=user_config)
-
-        try:
-            dataset_pre.extract_dataset_from_gee_to_drive(CRS_CODE , n_buffer_days=4)
-        #FIX: This exception needs to be more specific
-        except Exception as e:
-            ConsoleUI.update_bar(key="failed")
-            ConsoleUI.print(f"Failed on {location}: {str(e)}")
-            failed_locations.append(location)
-            continue
-
-        ConsoleUI.update_bar(key="processed")
-
-    ConsoleUI.close_bar(key="processed")
-    ConsoleUI.close_bar(key="failed")
-
+    # NOTE: This is where I should retry failed locations
     if failed_locations:
         ConsoleUI.print("Failed locations:")
         for loc in failed_locations:

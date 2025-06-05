@@ -34,7 +34,6 @@ def run(config: UserConfig) -> None:
         create_fire_config_globfire(config)
 
 
-    ConsoleUI.close_all_bars()
 
     if((not config.export) and config.download):
         config.downloader.download_folder(config.google_drive_dir, config.tiff_dir)
@@ -44,12 +43,12 @@ def run(config: UserConfig) -> None:
         tqdm.write("Processing Data...")
         export_data(yaml_path=get_full_yaml_path(config), user_config=config)
 
-    ConsoleUI.close_all_bars()
 
     # download from google drive to local machine
     if(config.download):
         config.downloader.download_files(config.tiff_dir, config.exported_files)
 
+    ConsoleUI.close_all_bars()
     # post-purge google drive if true
 
 def parse() -> UserConfig:
