@@ -9,7 +9,6 @@ from pathlib import Path
 import time
 
 from ee_wildfire.UserConfig.UserConfig import UserConfig
-from ee_wildfire.export_queue import CircleQueue
 from ee_wildfire.constants import EXPORT_QUEUE_SIZE
 
 
@@ -185,7 +184,7 @@ def wait_for_gee_queue_space():
         if len(active_tasks) < EXPORT_QUEUE_SIZE:
             break
 
-        time.sleep(10)
+        time.sleep(1)
 
     pbar.close()
 
