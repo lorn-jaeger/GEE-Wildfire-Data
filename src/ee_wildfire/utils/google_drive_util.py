@@ -68,11 +68,11 @@ def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
     ConsoleUI.close_bar(key="failed")
 
     if failed_locations:
-        ConsoleUI.print("\nFailed locations:")
+        ConsoleUI.print("Failed locations:")
         for loc in failed_locations:
             ConsoleUI.print(f"- {loc}")
     else:
-        ConsoleUI.print("\nAll locations processed successfully!")
+        ConsoleUI.print("All locations processed successfully!")
 
 
     return True
