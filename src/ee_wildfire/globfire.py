@@ -1,3 +1,20 @@
+"""
+globfire.py
+
+A quick note describing the process for getting fires and some of the choices 
+made as well as some helpful information about the globfire dataset. 
+
+The dataset is divided into two parts; Daily Fires and Final Fires. Daily fires
+has the geometry, area, and date of each fire for each day it burned. Final 
+fires has the final geometry, start date, end date, and final area of each
+fire. 
+
+Our goal is to produce a list of fires with their initial latitude and 
+longitude as well as their start and end date.
+
+# TODO: Fill this out
+"""
+
 from ee.filter import Filter
 from ee.geometry import Geometry
 from ee.featurecollection import FeatureCollection
@@ -60,7 +77,7 @@ def compute_centroid(feature):
 
 def ee_featurecollection_to_gdf(fc):
     features = fc.getInfo()['features']
-    
+
     geometries = []
     properties = []
     
@@ -83,19 +100,14 @@ def ee_featurecollection_to_gdf(fc):
     
     return gdf
 
-def process(config, collection, year, week):
-    daily = "Daily" in collection
-    if daily:
-        collection += "/" + str(year)
-
-    
+def get_final_fires(config, collection, week):
     start = int(week.timestamp() * 1000)
     end = int((week + pd.Timedelta(weeks=1)).timestamp() * 1000)
 
-
     min_size = config.min_size
     region = create_usa_geometry()
-
+    
+    # get a final fire with an Idate in this week
     geojson = (
         FeatureCollection(collection)
         .filterBounds(region)
@@ -104,68 +116,122 @@ def process(config, collection, year, week):
         .filter(Filter.lt('area', 1e20))
         .filter(Filter.gte('IDate', start))
         .filter(Filter.lt('IDate', end))
-        .map(compute_centroid)
     )
     
     gdf = ee_featurecollection_to_gdf(geojson)
 
-    # just return an empty dataframe if the data columns are malformed
-    # this will just do nothing when concatenated later
-    if gdf.empty or ('IDate' not in gdf.columns) or (not daily and 'FDate' not in gdf.columns):
-        return gpd.GeoDataFrame(columns=['Id', 'date', 'end_date', 'area', 'lat', 'lon', 'source', 'geometry'], crs="EPSG:4326")
-    
-    gdf['IDate'] = pd.to_numeric(pd.to_datetime(gdf['IDate'], unit='ms'))
-    gdf['FDate'] = pd.to_numeric(pd.to_datetime(gdf['IDate' if daily else 'FDate'], unit='ms'))
-    gdf['source'] = 'daily' if daily else 'final'
-    
+    gdf['IDate'] = pd.to_datetime(gdf['IDate'], unit='ms')
+    gdf['FDate'] = pd.to_datetime(gdf['FDate'], unit='ms')
+
+    gdf = gdf['Id', 'IDate', 'FDate'].unique().dropna()
+
+
+
+
+
+
     return gdf
 
-
-
+def get_origins(config, gdfs):
+    pass
 
 def get_fires(config):
-    years = sorted(set(pd.date_range(start=config.start_date, end=config.end_date, freq='D').year))
 
-    collections = [
-    'JRC/GWIS/GlobFire/v2/FinalPerimeters',
-    'JRC/GWIS/GlobFire/v2/DailyPerimeters'
-    ] 
+    collection = 'JRC/GWIS/GlobFire/v2/FinalPerimeters'
 
     gdfs = []
 
-    for collection in collections:
-        for year in years:
-            start = max(pd.Timestamp(f"{year}-01-01"), config.start_date)
-            end = min(pd.Timestamp(f"{year}-12-31"), config.end_date)
-            dates = pd.date_range(start=start, end=end, freq='W')
-            for week in tqdm(dates, desc=collection):
-               gdf = process(config, collection, year, week)
-               gdfs.append(gdf)
+    dates = pd.date_range(start=config.start_date, end=config.end_date, freq='W')
+    for week in tqdm(dates, desc=collection):
+        gdf = get_final_fires(config, collection, week)
+        gdfs.append(gdf)
+
+    return 
 
 
-    gdfs = [gdf for gdf in gdfs if not gdf.empty]
 
-    gdf = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs=gdfs[0].crs).sort_values(['Id', 'date'])
+# def process(config, collection, year, week):
+#     daily = "Daily" in collection
+#     if daily:
+#         collection += "/" + str(year)
+#
+#     start = int(week.timestamp() * 1000)
+#     end = int((week + pd.Timedelta(weeks=1)).timestamp() * 1000)
+#
+#     min_size = config.min_size
+#     region = create_usa_geometry()
+#
+#     geojson = (
+#         FeatureCollection(collection)
+#         .filterBounds(region)
+#         .map(compute_area)
+#         .filter(Filter.gte('area', min_size))
+#         .filter(Filter.lt('area', 1e20))
+#         .filter(Filter.gte('IDate', start))
+#         .filter(Filter.lt('IDate', end))
+#         .map(compute_centroid)
+#     )
+#
+#     gdf = ee_featurecollection_to_gdf(geojson)
+#
+#     if gdf.empty:
+#         return pd.DataFrame(columns=pd.Index(['IDate', 'FDate', 'source', 'geometry', 'Id', 'area', 'longitude', 'latitude']))
+#
+#     gdf['IDate'] = pd.to_numeric(pd.to_datetime(gdf['IDate'], unit='ms'))
+#
+#     if daily:
+#         gdf['FDate'] = pd.NA
+#     else:
+#         gdf['FDate'] = pd.to_numeric(pd.to_datetime(gdf['FDate'], unit='ms'))
+#
+#     gdf['source'] = 'daily' if daily else 'final'
+#
+#     return gdf
+#
 
-    gdf['Id'] = gdf['Id'].astype(str)
-    gdf['area'] = pd.to_numeric(gdf['area'], errors='coerce')
-    gdf['IDate'] = pd.to_datetime(gdf['IDate'], errors='coerce')
-    gdf['FDate'] = pd.to_datetime(gdf['FDate'], errors='coerce')
-    gdf['lat'] = pd.to_numeric(gdf['lat'], errors='coerce')
-    gdf['lon'] = pd.to_numeric(gdf['lon'], errors='coerce')
-
-    gdf = gdf.dropna(subset=['Id', 'date', 'end_date', 'lat', 'lon'])
-
-    gdf = gdf.groupby('Id').agg({
-        'IDate': 'first',
-        'FDate': 'last',
-        'area': 'max',
-        'lat': 'first',
-        'lon': 'first'
-    }).reset_index()   
-
-    return gdf
-
+# def get_fires(config):
+#     years = sorted(set(pd.date_range(start=config.start_date, end=config.end_date, freq='D').year))
+#
+#     collections = [
+#     'JRC/GWIS/GlobFire/v2/FinalPerimeters',
+#     'JRC/GWIS/GlobFire/v2/DailyPerimeters'
+#     ] 
+#
+#     gdfs = []
+#
+#     for collection in collections:
+#         for year in years:
+#             start = max(pd.Timestamp(f"{year}-01-01"), config.start_date)
+#             end = min(pd.Timestamp(f"{year}-12-31"), config.end_date)
+#             dates = pd.date_range(start=start, end=end, freq='W')
+#             for week in tqdm(dates, desc=collection):
+#                 gdf = process(config, collection, year, week)
+#                 gdfs.append(gdf)
+#
+#
+#     gdfs = [gdf for gdf in gdfs if not gdf.empty]
+#
+#     gdf = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs=gdfs[0].crs).sort_values(['Id', 'IDate'])
+#
+#     gdf['Id'] = gdf['Id'].astype(str)
+#     gdf['area'] = pd.to_numeric(gdf['area'], errors='coerce')
+#     gdf['IDate'] = pd.to_datetime(gdf['IDate'], errors='coerce')
+#     gdf['FDate'] = pd.to_datetime(gdf['FDate'], errors='coerce')
+#     gdf['lat'] = pd.to_numeric(gdf['lat'], errors='coerce')
+#     gdf['lon'] = pd.to_numeric(gdf['lon'], errors='coerce')
+#
+#     gdf = gdf.dropna(subset=['Id', 'IDate', 'lat', 'lon'])
+#
+#     gdf = gdf.groupby('Id').agg({
+#         'IDate': 'first',
+#         'FDate': 'last',
+#         'area': 'max',
+#         'lat': 'first',
+#         'lon': 'first'
+#     }).reset_index()   
+#
+#     return gdf
+#
 def check_query(config):
     print("Checking globfire query cache...")
     query = pd.Dataframe([{
