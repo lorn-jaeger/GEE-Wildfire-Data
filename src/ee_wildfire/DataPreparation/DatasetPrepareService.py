@@ -48,7 +48,6 @@ class DatasetPrepareService:
         """
         self.config = config
         self.user_config = user_config
-        self.export_queue = CircleQueue(user_config)
         self.location = location
         self.rectangular_size = self.config.get('rectangular_size')
         self.latitude = self.config.get(self.location).get('latitude')
