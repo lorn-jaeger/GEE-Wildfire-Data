@@ -169,8 +169,14 @@ def wait_for_gee_queue_space():
         tasks = ee.data.getTaskList()
         active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
 
+        total = EXPORT_QUEUE_SIZE
+        if len(active_tasks) > total:
+            total = len(active_tasks)
+
         # update progress bar
-        ConsoleUI.update_bar(key="export_queue", n=len(active_tasks))
+        # ConsoleUI.update_bar(key="export_queue", n=len(active_tasks))
+        ConsoleUI.change_bar_total(key="export_queue",total=total)
+        ConsoleUI.set_bar_position(key="export_queue",value=len(active_tasks))
 
         if len(active_tasks) < EXPORT_QUEUE_SIZE/2:
             break
