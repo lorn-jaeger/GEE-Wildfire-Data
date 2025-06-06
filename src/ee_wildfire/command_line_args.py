@@ -90,17 +90,15 @@ def parse() -> UserConfig:
     args, _ = base_parser.parse_known_args()
 
 
-    outside_user_config_path = args.config
-
     ConsoleUI.set_verbose(args.verbose)
-    config = UserConfig(yaml_path=outside_user_config_path)
-    config.change_configuration_from_args(args)
 
+    config = UserConfig(yaml_path=args.config)
+
+    config.change_configuration_from_args(args)
     if(args.show_config or (args.config != INTERNAL_USER_CONFIG_DIR)):
         print(str(config))
 
-
-
+    config.authenticate()
     return config
 
 def main():

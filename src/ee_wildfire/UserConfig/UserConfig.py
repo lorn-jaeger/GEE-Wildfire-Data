@@ -51,7 +51,6 @@ class UserConfig:
         """
 
         self.change_configuration_from_yaml(yaml_path)
-        self._authenticate()
         self.exported_files = []
         self.failed_exports = []
 
@@ -71,18 +70,6 @@ class UserConfig:
 
         return output_string
 
-    def _authenticate(self) -> None:
-        """
-        Authenticate with Google Earth Engine and initialize the DriveDownloader.
-        """
-        self.auth = AuthManager(
-            auth_mode="service_account",
-            service_json=self.credentials,
-        )
-        self.auth.authenticate_earth_engine()
-        self.auth.authenticate_drive()
-        self.drive_service = self.auth.drive_service
-        self.project_id = self.auth.get_project_id()
 
     def _validate_paths(self) -> None:
         """
@@ -90,11 +77,21 @@ class UserConfig:
         Raises:
             FileNotFoundError: If credentials file does not exist.
         """
+
+        self.credentials = os.path.abspath(self.credentials)
+        self.data_dir = os.path.abspath(self.data_dir)
+        self.tiff_dir = os.path.abspath(self.tiff_dir)
+
+
         if not os.path.exists(self.credentials):
             # TODO: verbose error is needed here
-            raise FileNotFoundError(f"{self.credentials} not found!")
+            ConsoleUI.print(f"{self.credentials} not found!")
 
         # FIX: Sync tiff directory to data if data dir is not default
+        if (self.data_dir != os.path.abspath(DEFAULT_DATA_DIR)):
+            if(self.tiff_dir == os.path.abspath(DEFAULT_TIFF_DIR)):
+                self.tiff_dir = self.data_dir + '/tiff'
+
 
         self._try_make_path(self.data_dir)
         self._try_make_path(self.tiff_dir)
@@ -184,6 +181,19 @@ class UserConfig:
 #                               Public Methods
 # =========================================================================== #
 
+    def authenticate(self) -> None:
+        """
+        Authenticate with Google Earth Engine and initialize the DriveDownloader.
+        """
+        self.auth = AuthManager(
+            auth_mode="service_account",
+            service_json=self.credentials,
+        )
+        self.auth.authenticate_earth_engine()
+        self.auth.authenticate_drive()
+        self.drive_service = self.auth.drive_service
+        self.project_id = self.auth.get_project_id()
+
     def get_geodataframe(self) -> None:
         """
         Load the combined fire geodataframe and assign it to `self.geodataframe`.
@@ -226,10 +236,14 @@ class UserConfig:
         namespace = self._get_args_namespace()
         internal_config = args.config == INTERNAL_USER_CONFIG_DIR
         bool_names = self._get_bools()
+        defaults = self._get_default_values()
         for key in namespace:
             val = getattr(args,key)
 
             if(not hasattr(self, key)):
+                setattr(self,key,val)
+
+            if(defaults[key] != val):
                 setattr(self,key,val)
 
             if(bool_names and internal_config):
