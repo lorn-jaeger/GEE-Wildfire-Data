@@ -117,22 +117,21 @@ COMMAND_ARGS = {
     "--export":              (None,  False,                      "store_true",   "Export to drive."),
     "--download":            (None,  False,                      "store_true",   "Download from drive."),
     "--show-config":         (None,  False,                      "store_true",   "Show user configuration."),
-    "--project-id":          (str,   None,                       "store",        "Change Google Earth project ID"),
-    "--credentials":         (Path,  None,                       "store",        "Path to Google Authetication .json"),
-    "--data-dir":            (Path,  None,                       "store",        "Path to output data directory."),
-    "--tiff-dir":            (Path,  None,                       "store",        "Path where downloaded tiff files go."),
-    "--google-drive-dir":    (str,   None,                       "store",        "Google Drive folder for exporting."),
-    "--min-size":            (int,   None,                       "store",        "Minimum size of fire area."),
-    "--max-size":            (int,   None,                       "store",        "Maximum size of fire area."),
+    "--credentials":         (Path,  DEFAULT_OAUTH_DIR,          "store",        "Path to Google Authetication .json"),
+    "--data-dir":            (Path,  DEFAULT_DATA_DIR,           "store",        "Path to output data directory."),
+    "--tiff-dir":            (Path,  DEFAULT_TIFF_DIR,           "store",        "Path where downloaded tiff files go."),
+    "--google-drive-dir":    (str,   DEFAULT_GOOGLE_DRIVE_DIR,   "store",        "Google Drive folder for exporting."),
+    "--min-size":            (float,   DEFAULT_MIN_SIZE,           "store",        "Minimum size of fire area."),
+    "--max-size":            (float,   DEFAULT_MAX_SIZE,           "store",        "Maximum size of fire area."),
     "--retry-failed":        (None,  False,                      "store_true",   "Retry failed locations."),
     "--purge-before":        (None,  False,                      "store_true",   "Purge data from google drive before exporting"),
     "--purge-after":         (None,  False,                      "store_true",   "Purge data from google drive after downloading"),
-
+    "--start-date":          (datetime,  DEFAULT_START_DATE,     "store",        "Starting date for Earth Engine querry"),
+    "--end-date":            (datetime,  DEFAULT_END_DATE,       "store",        "Ending date for Earth Engine querry"),
 }
 
 def main():
-    print(DEFAULT_START_DATE)
-    print(DEFAULT_END_DATE)
+    print(COMMAND_ARGS)
 
 if __name__ == "__main__":
     main()

@@ -86,11 +86,12 @@ Template for configuration:
 ```yaml
 # NEEDED
 # These items are necessary to function.
-project_id: YOUR PROJECT ID
 credentials: ~/ee_wildfire_data/OAuth/credentials.json
 
 # OPTIONAL
 # These items have default values if not provided in YAML file.
+min_size: 10000000.0
+max_size: 1000000000.0
 data_dir: ~/ee_wildfire_data
 start_date: 2021-01-01 00:00:00
 end_date: 2021-04-20 00:00:00
@@ -98,8 +99,9 @@ tiff_dir: ~/ee_wildfire_data/tiff/2021
 google_drive_dir: GoogleEarthEngine
 download: false
 export: false
-min_size: 10000000.0
-max_size: 1000000000.0
+retry-failed: false
+
+
 
 ```
 
@@ -111,19 +113,23 @@ To finish configuration you will need to use the `-config` command line argument
 You can also edit configuration on the fly with command line arguments:
 
 | Argument | Parameters | Description |
-| -------- |-- |------------|
-| `--config` | `PATH`| Loads a YAML config file located at PATH. This will overload any other command-line arguments.|
-| `--version` | None | Prints current program version|
-| `--show-config`| None | Prints current config to command line. |
+| -------- |------------|-------------|
+| `--version` | None | Show current version. |
+| `--config` | `PATH` | Path to YAML config file. Overrides all other command-line arguments. |
 | `--export` | None | Export data from Google Earth Engine to Google Drive. |
-| `--download`| None | Downloads data from Google Drive to your local machine. |
-| `--project-id` | `str` | The name of your google earth project id |
-| `--credentials` | `PATH`| The path to your credentials.json from google cloud OAuth2.0 |
-| `--data-dir` | `PATH`| The path to your local machine's output data directory |
-| `--tiff-dir` | `PATH`| The path to your local machine's output data directory, but specifically for tif files. |
-| `--google-drive-dir` | `str`| The name of your google drive directory for file exporting. |
-| `--min-size` | `float` | The mimimum size of fire to detect. |
-| `--max-size` | `float` | The maximum size of fire to detect. |
+| `--download` | None | Download data from Google Drive to your local machine. |
+| `--show-config` | None | Show user configuration. |
+| `--credentials` | `PATH` | Path to Google authentication `.json` service account file. |
+| `--data-dir` | `PATH` | Path to output data directory on your local machine. |
+| `--tiff-dir` | `PATH` | Path where downloaded `.tif` files are stored. |
+| `--google-drive-dir` | `str` | Name of your Google Drive folder for exporting. |
+| `--min-size` | `float` | Minimum size of fire area to detect (in hectares). |
+| `--max-size` | `float` | Maximum size of fire area to detect (in hectares). |
+| `--retry-failed` | None | Retry failed Earth Engine locations. |
+| `--purge-before` | None | Purge files from Google Drive before exporting new data. |
+| `--purge-after` | None | Purge files from Google Drive after downloading. |
+| `--start-date` | `datetime` | Starting date for Earth Engine query (e.g., `2020-01-01`). |
+| `--end-date` | `datetime` | Ending date for Earth Engine query (e.g., `2020-12-31`). |
 
 
 

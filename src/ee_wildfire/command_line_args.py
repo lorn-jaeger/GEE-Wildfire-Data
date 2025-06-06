@@ -75,7 +75,7 @@ def parse() -> UserConfig:
                                      default=_default,
                                      action=_action,
                                      help=_help)
-        elif(cmd != "-version"):
+        elif(cmd != "--version"):
             base_parser.add_argument(cmd,
                                      default=_default,
                                      action=_action,

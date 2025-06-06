@@ -32,7 +32,6 @@ def save_yaml_config(config_data: Dict[str, Any], yaml_path: Union[Path,str]) ->
 
     transform_types = [PosixPath, Path]
 
-
     config_data_fixed = {}
 
     if not validate_yaml_path(yaml_path):
@@ -46,6 +45,9 @@ def save_yaml_config(config_data: Dict[str, Any], yaml_path: Union[Path,str]) ->
 
         if type_check in transform_types:
             config_data_fixed[key] = str(config_data[key])
+
+        if type_check is None:
+            config_data_fixed[key] = False
 
 
     with open(yaml_path, 'w') as f:
