@@ -26,9 +26,6 @@ default_values: Dict[str, Any] = {
     "max_size": DEFAULT_MAX_SIZE,
     "data_dir": DEFAULT_DATA_DIR,
     "tiff_dir": DEFAULT_TIFF_DIR,
-    "export": False,
-    "download": False,
-    "retry-failed": False,
 }
 
 class UserConfig:

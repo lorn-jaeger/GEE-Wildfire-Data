@@ -115,9 +115,6 @@ class DriveDownloader:
             found_names, files = self.get_files_in_drive()
             current_missing = set(expected_files) - found_names
 
-            # FIX: Bar is not updating correctly here
-            # ConsoleUI.print(f"{len(expected_files)-len(current_missing)} : {len(expected_files)}")
-            # ConsoleUI.update_bar(key="download",n=(len(expected_files)-len(current_missing)))
             ConsoleUI.set_bar_position(key="download", value=(len(expected_files) - len(current_missing)))
 
             if not current_missing:
@@ -148,29 +145,30 @@ class DriveDownloader:
 
         ConsoleUI.close_bar(key="download")
 
-    # FIX: This requires permissions that are not provided by the scope of drive.readonly
-    # in order for this to work you must either; use full scope and have google not verify the app or to tie a service account to the program.
     def purge_data(self):
         try:
             while True:
                 _, files = self.get_files_in_drive()
+                ConsoleUI.add_bar(key="purge", total=len(files), desc="Purge progress")
+                ConsoleUI.print(f"found {len(files)} files")
 
                 for f in files:
                     try:
                         self.service.files().delete(fileId=f['id']).execute()
-                        print(f"Deleted: {f['name']}")
 
                     except HttpError as error:
-                        print(f"Failed to delete {f['name']}: {error}")
+                        ConsoleUI.print(f"Failed to delete {f['name']}: {error}")
+
+                    ConsoleUI.update_bar(key="purge")
 
                 if len(files) == 0:
                     break
 
-
-
         except HttpError as e:
-            print(f"An error occured: {e}")
+            ConsoleUI.print(f"An error occured: {e}")
             raise
+
+        ConsoleUI.close_bar(key="purge")
 
 
 
@@ -180,6 +178,7 @@ def main():
     outside_config_path = HOME / "NRML" / "outside_config.yml"
     uf = UserConfig(outside_config_path)
     dn = DriveDownloader(uf)
+    dn.purge_data()
     
 
 

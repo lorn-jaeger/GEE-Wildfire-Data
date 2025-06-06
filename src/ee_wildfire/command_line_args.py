@@ -23,8 +23,10 @@ def run(config: UserConfig) -> None:
     Args:
         config (UserConfig): Fully initialized user configuration.
     """
-    # pre-perge google drive if true
     downloader = DriveDownloader(config)
+
+    if(config.purge_before):
+        downloader.purge_data()
 
     if(config.export or config.download):
         # generate geodata frame
@@ -52,8 +54,10 @@ def run(config: UserConfig) -> None:
         # config.downloader.download_files(config.tiff_dir, config.exported_files)
         downloader.download_files()
 
+    if(config.purge_after):
+        downloader.purge_data()
+
     ConsoleUI.close_all_bars()
-    # post-purge google drive if true
 
 def parse() -> UserConfig:
     """

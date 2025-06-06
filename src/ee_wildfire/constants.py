@@ -125,8 +125,8 @@ COMMAND_ARGS = {
     "--min-size":            (int,   None,                       "store",        "Minimum size of fire area."),
     "--max-size":            (int,   None,                       "store",        "Maximum size of fire area."),
     "--retry-failed":        (None,  False,                      "store_true",   "Retry failed locations."),
-    #"-purge-before":        (None,  False,                      "store_true",   "Purge data from google drive before exporting"),
-    #"-purge-after":         (None,  False,                      "store_true",   "Purge data from google drive after downloading"),
+    "--purge-before":        (None,  False,                      "store_true",   "Purge data from google drive before exporting"),
+    "--purge-after":         (None,  False,                      "store_true",   "Purge data from google drive after downloading"),
 
 }
 
