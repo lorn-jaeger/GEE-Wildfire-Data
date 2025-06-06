@@ -20,7 +20,6 @@ from ee.geometry import Geometry
 from ee.featurecollection import FeatureCollection
 import pandas as pd
 import geopandas as gpd
-from shapely.geometry import Polygon
 from tqdm import tqdm
 
 usa_coords = [
@@ -75,56 +74,24 @@ def compute_centroid(feature):
     })
 
 def ee_featurecollection_to_gdf(fc):
-    features = fc.getInfo()['features']
+    return gpd.GeoDataFrame([f['properties'] for f in fc.getInfo()['features']])
 
-    geometries = []
-    properties = []
-    
-    for feature in features:
-        geom = feature['geometry']
-        if geom['type'] == 'Polygon':
-            geometry = Polygon(geom['coordinates'][0])
-        else:
-            continue
-            
-        geometries.append(geometry)
-        properties.append(feature['properties'])
-
-    df = pd.DataFrame(properties)
-    gdf = gpd.GeoDataFrame(df, geometry=geometries, crs="EPSG:4326")
-
-    if 'area' in gdf.columns:
-        gdf['area'] = pd.to_numeric(gdf['area'])
-    
-    return gdf
-
-def get_final_fires(config, collection, week):
-    start = int(week.timestamp() * 1000)
-    end = int((week + pd.Timedelta(weeks=1)).timestamp() * 1000)
-
-    min_size = config.min_size
-    region = create_usa_geometry()
-   
+def get_final_fires(config, collection, start, end, region):
     fc = (
-        FeatureCollection(collection)
-        .filterBounds(region)
-        .map(compute_area)
-        .filter(Filter.gte('area', min_size))
-        .filter(Filter.lt('area', 1e20))
-        .filter(Filter.gte('IDate', start))
-        .filter(Filter.lt('IDate', end))
-    )
-    
+            FeatureCollection(collection)
+            .filterBounds(region)
+            .map(compute_area)
+            .filter(Filter.gte('area', config.min_size))
+            .filter(Filter.lt('area', 1e20))
+            .filter(Filter.gte('IDate', start))
+            .filter(Filter.lt('IDate', end))
+        )
+        
     final = ee_featurecollection_to_gdf(fc)
 
-    if final.empty:
-        return final
+    return final
 
-    final = final.dropna(subset=['Id', 'IDate', 'FDate'])
-    final['IDate'] = pd.to_datetime(final['IDate'], unit='ms')
-    final['FDate'] = pd.to_datetime(final['FDate'], unit='ms')
-    final = final[['Id', 'IDate', 'FDate', 'area']]
-    
+def get_daily_fires(config, collection, start, end, region, final):
     years = sorted(set(pd.date_range(
         start=final['IDate'].min(),
         end=final['FDate'].max(),
@@ -144,10 +111,31 @@ def get_final_fires(config, collection, week):
         )
 
         gdf = ee_featurecollection_to_gdf(fc)
+
         if not gdf.empty:
             daily.append(gdf)
 
     daily = gpd.GeoDataFrame(pd.concat(daily, ignore_index=True))
+
+    return daily
+
+
+def get_fire_gdf(config, collection, week):
+    start = int(week.timestamp() * 1000)
+    end = int((week + pd.Timedelta(days=1)).timestamp() * 1000)
+    region = create_usa_geometry()
+
+    final = get_final_fires(config, collection, start, end, region)
+   
+    if final.empty:
+        return final
+
+    final = final.dropna(subset=['Id', 'IDate', 'FDate'])
+    final['IDate'] = pd.to_datetime(final['IDate'], unit='ms')
+    final['FDate'] = pd.to_datetime(final['FDate'], unit='ms')
+    final = final[['Id', 'IDate', 'FDate', 'area']]
+    
+    daily = get_daily_fires(config, collection, start, end, region, final)
 
     if daily.empty:
         return daily
@@ -165,14 +153,13 @@ def get_final_fires(config, collection, week):
     return fires
 
 def get_fires(config):
-
     collection = 'JRC/GWIS/GlobFire/v2/FinalPerimeters'
 
     gdfs = []
 
-    dates = pd.date_range(start=config.start_date, end=config.end_date, freq='W')
-    for week in tqdm(dates):
-        gdf = get_final_fires(config, collection, week)
+    dates = pd.date_range(start=config.start_date, end=config.end_date, freq='D')
+    for day in tqdm(dates):
+        gdf = get_fire_gdf(config, collection, day)
         if not gdf.empty:
             gdfs.append(gdf)
 
@@ -226,7 +213,7 @@ def get_fires(config):
 #     # might have a problem if this fails after writing a query to the query cache
 #     refresh_cache = config.force_fires or not check_query(config)
 #     if refresh_cache:
-#         gdf = get_gdf(config)
+#         gdf = get_fire_gdf(config)
 #
 #         cache_gdf(config, gdf)
 #     elif not refresh_cache:
@@ -234,9 +221,9 @@ def get_fires(config):
 #
 #     return gdf
 #
-
-
-
+#
+#
+#
 
     
 
