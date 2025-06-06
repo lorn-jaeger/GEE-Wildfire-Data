@@ -11,6 +11,7 @@ from ee_wildfire.utils.yaml_utils import  get_full_yaml_path
 from ee_wildfire.utils.google_drive_util import export_data
 from ee_wildfire.UserConfig.UserConfig import UserConfig
 from ee_wildfire.UserInterface import ConsoleUI
+from ee_wildfire.drive_downloader import DriveDownloader
 
 from tqdm import tqdm
 
@@ -23,6 +24,7 @@ def run(config: UserConfig) -> None:
         config (UserConfig): Fully initialized user configuration.
     """
     # pre-perge google drive if true
+    downloader = DriveDownloader(config)
 
     if(config.export or config.download):
         # generate geodata frame
@@ -36,7 +38,8 @@ def run(config: UserConfig) -> None:
 
 
     if((not config.export) and config.download):
-        config.downloader.download_folder(config.google_drive_dir, config.tiff_dir)
+        # config.downloader.download_folder(config.google_drive_dir, config.tiff_dir)
+        downloader.download_folder()
 
     # export data from earth engine to google drive
     if(config.export):
@@ -46,7 +49,8 @@ def run(config: UserConfig) -> None:
 
     # download from google drive to local machine
     if(config.download):
-        config.downloader.download_files(config.tiff_dir, config.exported_files)
+        # config.downloader.download_files(config.tiff_dir, config.exported_files)
+        downloader.download_files()
 
     ConsoleUI.close_all_bars()
     # post-purge google drive if true

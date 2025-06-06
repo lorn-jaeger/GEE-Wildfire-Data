@@ -4,9 +4,9 @@
 from ee_wildfire.UserInterface import ConsoleUI
 from ee_wildfire.utils.yaml_utils import load_yaml_config, save_yaml_config
 from ee_wildfire.constants import *
-from ee_wildfire.drive_downloader import DriveDownloader
 from ee_wildfire.globfire import get_fires
 from ee_wildfire.get_globfire import get_combined_fires
+from ee_wildfire.UserConfig.authentication import AuthManager
 
 from ee import Authenticate #type: ignore
 from ee import Initialize
@@ -28,6 +28,7 @@ default_values: Dict[str, Any] = {
     "tiff_dir": DEFAULT_TIFF_DIR,
     "export": False,
     "download": False,
+    "retry-failed": False,
 }
 
 class UserConfig:
@@ -74,23 +75,31 @@ class UserConfig:
         """
         Authenticate with Google Earth Engine and initialize the DriveDownloader.
         """
-        try:
-            Authenticate()
-            Initialize(project=self.project_id)
-            self.downloader = DriveDownloader(self.credentials, self.google_drive_dir)
+        self.auth = AuthManager(
+            auth_mode="service_account",
+            service_json=self.credentials,
+        )
 
-        except Exception as e:
-            print("\n Google Earth Engine authentication failed.")
-            print(f"🔍 Error: {str(e)}")
-
-            print("\n Suggested fixes:")
-            print("1. Make sure you're logged into a Google account with Earth Engine access.")
-            print("2. Run `earthengine authenticate` in the terminal to manually authenticate.")
-            print("3. Check that your internet connection is active and not blocking access to Earth Engine.")
-            print("4. If you're using a service account, verify your credentials and permissions.")
-            print("5. Ensure your project ID is correct and the account has access to it.")
-
-            sys.exit(1)  # or raise a RuntimeError if you want traceback info
+        self.auth.authenticate_earth_engine()
+        self.auth.authenticate_drive()
+        self.drive_service = self.auth.drive_service
+        # try:
+        #     Authenticate()
+        #     Initialize(project=self.project_id)
+        #     self.downloader = DriveDownloader(self.credentials, self.google_drive_dir)
+        #
+        # except Exception as e:
+        #     print("\n Google Earth Engine authentication failed.")
+        #     print(f"🔍 Error: {str(e)}")
+        #
+        #     print("\n Suggested fixes:")
+        #     print("1. Make sure you're logged into a Google account with Earth Engine access.")
+        #     print("2. Run `earthengine authenticate` in the terminal to manually authenticate.")
+        #     print("3. Check that your internet connection is active and not blocking access to Earth Engine.")
+        #     print("4. If you're using a service account, verify your credentials and permissions.")
+        #     print("5. Ensure your project ID is correct and the account has access to it.")
+        #
+        #     sys.exit(1)  # or raise a RuntimeError if you want traceback info
 
     def _validate_paths(self) -> None:
         """
@@ -166,8 +175,8 @@ class UserConfig:
         """
         Load the combined fire geodataframe and assign it to `self.geodataframe`.
         """
-        #self.geodataframe = get_fires(self)
-        self.geodataframe = get_combined_fires(self)
+        self.geodataframe = get_fires(self)
+        # self.geodataframe = get_combined_fires(self)
 
     def change_configuration_from_yaml(self, yaml_path: Union[Path,str]) -> None:
         """
@@ -213,7 +222,7 @@ class UserConfig:
 def main():
     outside_config_path = HOME / "NRML" / "outside_config.yml"
     uf = UserConfig(outside_config_path)
-    uf.save_config_to_yaml()
+    print(uf)
 
 if __name__ == "__main__":
     main()

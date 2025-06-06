@@ -1,22 +1,22 @@
 import os
 import time
 import io
-import ee
+# import ee
 
 
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-from googleapiclient.discovery import build
+# from google.oauth2.credentials import Credentials
+# from google_auth_oauthlib.flow import InstalledAppFlow
+# from google.auth.transport.requests import Request
+# from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 from googleapiclient.errors import HttpError
 
+from ee_wildfire.UserConfig.UserConfig import UserConfig
 from ee_wildfire.UserInterface import ConsoleUI
-from ee_wildfire.constants import SCOPES, AUTH_TOKEN_PATH
+# from ee_wildfire.constants import SCOPES, AUTH_TOKEN_PATH
 
 from pathlib import Path
-from tqdm import tqdm
-from typing import Union
+# from typing import Union
 
 
 class DriveDownloader:
@@ -24,55 +24,35 @@ class DriveDownloader:
     Handles downloading files from Google Drive using OAuth credentials.
     Supports folder and individual file downloads.
     """
-    def __init__(self, credentials:Union[Path,str], google_drive_dir:str):
+    def __init__(self, config: UserConfig):
         """
         Args:
             credentials_path: Path to the OAuth credentials JSON file.
         """
-        self.creds = credentials
-        self.service = self._get_drive_service()
-        self.folderID = self._get_folder_id(google_drive_dir)
+        self.config = config
+        # self.creds = credentials
+        self.service = config.drive_service
+        self.folderID = self.get_folder_id()
         
-    def _get_drive_service(self):
-        creds = None
-        if os.path.exists(AUTH_TOKEN_PATH):
-            creds = Credentials.from_authorized_user_file(AUTH_TOKEN_PATH, SCOPES)
-        
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    self.creds, SCOPES)
-                creds = flow.run_local_server(port=0)
-            
-            with open(AUTH_TOKEN_PATH, 'w') as token:
-                token.write(creds.to_json())
-        
-        return build('drive', 'v3', credentials=creds)
+    def get_folder_id(self):
+        service = self.service
+        folder_name = self.config.google_drive_dir
+        response = service.files().list(
+            q=f"mimeType='application/vnd.google-apps.folder' and name='{folder_name}' and trashed=false",
+            spaces='drive',
+            fields='files(id, name)',
+            pageSize=1
+        ).execute()
+        folders = response.get('files', [])
+        if not folders:
+            raise Exception(f"No folder found with name: {folder_name}")
+        return folders[0]['id']
 
-    def _get_folder_id(self, folder_path: str) -> str:
-        """
-        Traverse Google Drive folders to retrieve the folder ID.
-        """
-        parts = folder_path.strip('/').split('/')
-        parent_id = 'root'
-        
-        for part in parts:
-            query = f"name='{part}' and '{parent_id}' in parents and mimeType='application/vnd.google-apps.folder'"
-            results = self.service.files().list(q=query, spaces='drive').execute()
-            items = results.get('files', [])
-            
-            if not items:
-                raise ValueError(f"Folder '{part}' not found in path '{folder_path}'")
-            parent_id = items[0]['id']
-            
-        return parent_id
-
-    def download_folder(self, drive_folder_path: str, local_path: str):
+    def download_folder(self):
         """Download all files from the specified Drive folder."""
+        folder_id = self.folderID
+        local_path = self.config.tiff_dir
         try:
-            folder_id = self._get_folder_id(drive_folder_path)
             # TODO: Check if I even need do the path stuff. It should be handled by UserConfig.py
             output_dir = Path(local_path)
             output_dir.mkdir(parents=True, exist_ok=True)
@@ -127,7 +107,9 @@ class DriveDownloader:
         return found_files, files
 
 
-    def download_files(self, local_path: Path, expected_files: list):
+    def download_files(self):
+        local_path = self.config.tiff_dir
+        expected_files = self.config.exported_files
         ConsoleUI.add_bar(key="download",total=len(expected_files), desc="Export progress")
         while True:
             found_names, files = self.get_files_in_drive()
@@ -194,15 +176,11 @@ class DriveDownloader:
 
 
 def main():
-    from ee_wildfire.UserConfig.UserConfig import UserConfig
-    uf = UserConfig()
-    # exported_files = [
-    #     "Image_Export_fire_24845541_2021-01-08.tif",
-    #     "Image_Export_fire_24845541_2021-01-06.tif",
-    # ]
-    # print(uf.downloader.download_files(DEFAULT_TIFF_DIR, exported_files))
-    # uf.downloader.purge_data()
-    uf.downloader.check_export_completion()
+    from ee_wildfire.constants import HOME
+    outside_config_path = HOME / "NRML" / "outside_config.yml"
+    uf = UserConfig(outside_config_path)
+    dn = DriveDownloader(uf)
+    
 
 
 if __name__ == '__main__':

@@ -21,6 +21,12 @@ def get_number_items_in_export_queue():
     active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
     return len(active_tasks)
 
+def get_number_items_in_google_drive():
+    pass
+
+def get_number_items_in_local_directory():
+    pass
+
 def process_locations(locations, user_config, fire_config):
     failed_locations = []
 

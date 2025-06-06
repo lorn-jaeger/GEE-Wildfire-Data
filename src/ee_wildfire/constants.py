@@ -22,13 +22,15 @@ INTERNAL_USER_CONFIG_DIR = ROOT / "UserConfig" /"user_config.yml"
 
 VERSION = "2025.1.6"
 
-SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
+# SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
+
+SCOPES = ['https://www.googleapis.com/auth/drive']
 
 CRS_CODE = "32610"
 
 DATE_FORMAT = "%Y-%m-%d"
 
-EXPORT_QUEUE_SIZE = 3050
+EXPORT_QUEUE_SIZE = 3000
 
 MIN_YEAR = 2001
 
@@ -100,7 +102,7 @@ DEFAULT_HDF5_DIR = DEFAULT_DATA_DIR / "hdf5"
 
 DEFAULT_OAUTH_DIR = DEFAULT_DATA_DIR / "OAuth" / "credentials.json"
 
-DEFAULT_GOOGLE_DRIVE_DIR = "EarthEngine_WildfireSpreadTS"
+DEFAULT_GOOGLE_DRIVE_DIR = "GoogleEarthEngine"
 
 
 # =========== Command Line Arguments ===========
