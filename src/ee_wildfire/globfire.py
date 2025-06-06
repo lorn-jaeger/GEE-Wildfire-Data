@@ -20,6 +20,7 @@ from ee.geometry import Geometry
 from ee.featurecollection import FeatureCollection
 import pandas as pd
 import geopandas as gpd
+import os
 from tqdm import tqdm
 
 usa_coords = [
@@ -115,7 +116,7 @@ def get_daily_fires(region, row):
             daily.append(gdf)
 
     if not daily:
-        return gpd.GeoDataframe((columns=['Id', 'IDate', 'lat', 'lon']) # type: ignore
+        return gpd.GeoDataframe(columns=['Id', 'IDate', 'lat', 'lon']) # type: ignore
 
     daily = gpd.GeoDataFrame(pd.concat(daily, ignore_index=True))
 
@@ -181,5 +182,21 @@ def get_fires(config):
 
     return fires
 
+def save_fires(config):
+    print("Caching fire query...")
+    output_dir = os.path.join(config.data_dir, "gdfs")
+    os.makedirs(output_dir, exist_ok=True)
+    filename = f"{config.start_date}_{config.end_date}_{config.min_size}_FIRES"
+
+    output_path = os.path.join(output_dir, filename)
+    config.geodataframe.to_file(output_path)
+
+def load_fires(config):
+    print("Loading from fire cache...")
+    input_dir = os.path.join(config.data_dir, "gdfs")
+    filename = f"{config.start_date}_{config.end_date}_{config.min_size}_FIRES"
+
+    input_path = os.path.join(input_dir, filename)
+    config.geodataframe = gpd.read_file(input_path)
 
 

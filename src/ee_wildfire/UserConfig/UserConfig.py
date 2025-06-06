@@ -5,7 +5,7 @@ from ee_wildfire.UserInterface import ConsoleUI
 from ee_wildfire.utils.yaml_utils import load_yaml_config, save_yaml_config
 from ee_wildfire.constants import *
 from ee_wildfire.drive_downloader import DriveDownloader
-from ee_wildfire.globfire import get_fires
+from ee_wildfire.globfire import get_fires, load_fires, save_fires
 from ee_wildfire.get_globfire import get_combined_fires
 
 from ee import Authenticate #type: ignore
@@ -166,8 +166,11 @@ class UserConfig:
         """
         Load the combined fire geodataframe and assign it to `self.geodataframe`.
         """
-        self.geodataframe = get_fires(self)
-        #self.geodataframe = get_combined_fires(self)
+        try:
+           load_fires(self.config) 
+        except:
+            self.geodataframe = get_fires(self)
+            save_fires(self.config)
 
     def change_configuration_from_yaml(self, yaml_path: Union[Path,str]) -> None:
         """
