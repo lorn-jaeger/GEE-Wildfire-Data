@@ -12,7 +12,7 @@ fire.
 Our goal is to produce a list of fires with their initial latitude and 
 longitude as well as their start and end date.
 
-# TODO: Fill this out
+
 """
 
 from ee.filter import Filter
@@ -102,7 +102,6 @@ def get_daily_fires(region, row):
 
     for year in years:
         collection = f"JRC/GWIS/GlobFire/v2/DailyPerimeters/{year}"
-
         fc = (
             FeatureCollection(collection)
             .filterBounds(region)
@@ -114,6 +113,9 @@ def get_daily_fires(region, row):
 
         if not gdf.empty:
             daily.append(gdf)
+
+    if not daily:
+        return gpd.GeoDataframe((columns=['Id', 'IDate', 'lat', 'lon']) # type: ignore
 
     daily = gpd.GeoDataFrame(pd.concat(daily, ignore_index=True))
 
@@ -135,6 +137,7 @@ def get_initial_coordinates(row, region):
             return pd.Series({'lat': pd.NA, 'lon': pd.NA})
 
     return pd.Series({'lat': gdf['lat'].iloc[0], 'lon': gdf['lon'].iloc[0]})
+
 
 def format_gdf(fires):
     fires = fires.dropna(subset=['Id', 'IDate', 'FDate'])
@@ -177,130 +180,6 @@ def get_fires(config):
     fires = fires.dropna()
 
     return fires
-
-
-  
-
-    # daily = get_daily_fires(config, collection, start, end, region, final)
-    #
-    # if daily.empty:
-    #     return daily
-    #
-    # daily['IDate'] = pd.to_datetime(daily['IDate'], unit='ms')
-    # daily = daily[['Id', 'IDate', 'lat', 'lon']]
-    #
-    # fires = final.merge(daily, on=['Id'], how='left')
-    # fires['timedelta'] = (fires['IDate_x'] - fires['IDate_y']).abs()
-    # fires = fires.sort_values("timedelta").drop_duplicates(subset=['Id'])
-    # fires = fires[fires['timedelta'] <= pd.Timedelta(hours=24)]
-    # fires['IDate'] = fires['IDate_x']
-    # fires = fires[['Id', 'IDate', 'FDate', 'lat', 'lon', 'area']].reset_index(drop=True)
-    #
-# def get_daily_fires(config, collection, start, end, region, final):
-#     years = sorted(set(pd.date_range(
-#         start=final['IDate'].min(),
-#         end=final['FDate'].max(),
-#         freq='D'
-#     ).year))
-#
-#     daily = []
-#
-#     for year in years:
-#         collection = f"JRC/GWIS/GlobFire/v2/DailyPerimeters/{year}"
-#
-#         fc = (
-#             FeatureCollection(collection)
-#             .filterBounds(region)
-#             .filter(Filter.inList('Id', final['Id'].tolist()))
-#             .map(compute_centroid)
-#         )
-#
-#         gdf = ee_featurecollection_to_gdf(fc)
-#
-#         if not gdf.empty:
-#             daily.append(gdf)
-#
-#     daily = gpd.GeoDataFrame(pd.concat(daily, ignore_index=True))
-#
-#     return daily
-#
-
-# def check_query(config):
-#     print("Checking globfire query cache...")
-#     query = pd.Dataframe([{
-#         "start_date" : config.start_date,
-#         "end_date" : config.end_date,
-#         "min_size" : config.min_size
-#     }])
-#
-#     queries = pd.read_csv("cache/query_cache.csv")
-#
-#     exists = ((queries == query.iloc[0]).all(axis=1)).any()
-#
-#     if not exists:
-#         queries = pd.concat([queries, query], ignore_index=True)
-#         queries.to_csv("path", index=False)
-#
-#     return exists
-#
-# def get_cached_gdf(config):
-#     print("retrieving cached fire data...")
-#     gdf = gpd.read_file("path to file")
-#
-#     return gdf[
-#         (gdf["idate"] >= config.start_date) & 
-#         (gdf["fdate"] <= config.end_date) &
-#         (gdf["area"] >= config.min_size)
-#     ]
-#
-#
-# def cache_gdf(config, gdf):
-#     print("Caching fire data...")
-#     cache = gpd.read_file("path to file")
-#
-#     cache = cache.set_index("Id", drop=False)
-#     gdf = gdf.set_index("Id", drop=False)
-#
-#     cache = cache.combine_first(gdf)
-#     cache.update(gdf)
-#
-#     cache = cache.reset_index(drop=True)
-#     cache.to_file("this is a path")
-#
-#
-# def get_fires(config):
-#     # might have a problem if this fails after writing a query to the query cache
-#     refresh_cache = config.force_fires or not check_query(config)
-#     if refresh_cache:
-#         gdf = get_fire_gdf(config)
-#
-#         cache_gdf(config, gdf)
-#     elif not refresh_cache:
-#         gdf = get_cached_gdf(config)
-#
-#     return gdf
-#
-#
-#
-#
-
-    
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
