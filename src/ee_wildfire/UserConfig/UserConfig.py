@@ -226,15 +226,13 @@ class UserConfig:
         namespace = self._get_args_namespace()
         internal_config = args.config == INTERNAL_USER_CONFIG_DIR
         bool_names = self._get_bools()
-        defaults = self._get_default_values()
-        # print(bool_names)
         for key in namespace:
             val = getattr(args,key)
 
             if(not hasattr(self, key)):
                 setattr(self,key,val)
 
-            if(bool_names):
+            if(bool_names and internal_config):
                 if key in bool_names:
                     setattr(self,key,val)
 

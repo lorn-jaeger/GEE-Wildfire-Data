@@ -13,7 +13,7 @@ from ee_wildfire.UserConfig.UserConfig import UserConfig
 from ee_wildfire.UserInterface import ConsoleUI
 from ee_wildfire.drive_downloader import DriveDownloader
 
-from tqdm import tqdm
+# from tqdm import tqdm
 
 def run(config: UserConfig) -> None:
     # TODO: update docs
@@ -28,13 +28,13 @@ def run(config: UserConfig) -> None:
     if(config.purge_before):
         downloader.purge_data()
 
-    if(config.export or config.download):
+    if(config.export):
         # generate geodata frame
-        tqdm.write("Generating GeoDataFrame...")
+        ConsoleUI.print("Generating GeoDataFrame...")
         config.get_geodataframe()
 
         # generate the YAML output config
-        tqdm.write("Generating Fire Configuration...")
+        ConsoleUI.print("Generating Fire Configuration...")
         create_fire_config_globfire(config)
 
 
@@ -45,7 +45,7 @@ def run(config: UserConfig) -> None:
 
     # export data from earth engine to google drive
     if(config.export):
-        tqdm.write("Processing Data...")
+        ConsoleUI.print("Processing Data...")
         export_data(yaml_path=get_full_yaml_path(config), user_config=config)
 
 
@@ -96,7 +96,10 @@ def parse() -> UserConfig:
     config.change_configuration_from_args(args)
 
     if(args.show_config or (args.config != INTERNAL_USER_CONFIG_DIR)):
-        tqdm.write(str(config))
+        ConsoleUI.print(str(config))
+
+    ConsoleUI.set_verbose(args.verbose)
+
 
     return config
 

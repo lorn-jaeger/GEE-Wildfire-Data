@@ -23,6 +23,8 @@ import geopandas as gpd
 from shapely.geometry import Polygon
 from tqdm import tqdm
 
+from ee_wildfire.UserInterface import ConsoleUI
+
 usa_coords = [
     [-125.1803892906456, 35.26328285844432],
     [-117.08916345892665, 33.2311514593429],
@@ -171,10 +173,12 @@ def get_fires(config):
     gdfs = []
 
     dates = pd.date_range(start=config.start_date, end=config.end_date, freq='W')
-    for week in tqdm(dates):
+    ConsoleUI.add_bar(key="globfire", total=len(dates), desc=collection)
+    for week in dates:
         gdf = get_final_fires(config, collection, week)
         if not gdf.empty:
             gdfs.append(gdf)
+        ConsoleUI.update_bar(key="globfire")
 
     return gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True))
 

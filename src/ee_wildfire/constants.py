@@ -128,6 +128,7 @@ COMMAND_ARGS = {
     "--purge-after":         (None,  False,                      "store_true",   "Purge data from google drive after downloading"),
     "--start-date":          (datetime,  DEFAULT_START_DATE,     "store",        "Starting date for Earth Engine querry"),
     "--end-date":            (datetime,  DEFAULT_END_DATE,       "store",        "Ending date for Earth Engine querry"),
+    "--verbose":             (None,  False,                      "store_true",   "Verbose program output"),
 }
 
 def main():
