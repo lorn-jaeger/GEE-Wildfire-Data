@@ -223,7 +223,6 @@ def get_combined_fires(config):
     """
     daily_gdf = get_daily_fires(config)
     final_gdf = get_final_fires(config)
-    ConsoleUI.close_bar("globfire")
     
     # Handle missing data
     # FIX: gets currupted right here, bad way to deal with errors

@@ -1,22 +1,13 @@
 import os
 import time
 import io
-# import ee
-
-
-# from google.oauth2.credentials import Credentials
-# from google_auth_oauthlib.flow import InstalledAppFlow
-# from google.auth.transport.requests import Request
-# from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 from googleapiclient.errors import HttpError
 
 from ee_wildfire.UserConfig.UserConfig import UserConfig
 from ee_wildfire.UserInterface import ConsoleUI
-# from ee_wildfire.constants import SCOPES, AUTH_TOKEN_PATH
 
 from pathlib import Path
-# from typing import Union
 
 
 class DriveDownloader:
@@ -143,7 +134,6 @@ class DriveDownloader:
 
             ConsoleUI.update_bar(key="download")
 
-        ConsoleUI.close_bar(key="download")
 
     def purge_data(self):
         try:
@@ -168,7 +158,6 @@ class DriveDownloader:
             ConsoleUI.print(f"An error occured: {e}")
             raise
 
-        ConsoleUI.close_bar(key="purge")
 
 
 

@@ -87,11 +87,6 @@ def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
     else:
         ConsoleUI.print("All locations processed successfully!")
 
-    ConsoleUI.close_bar(key="export")
-    ConsoleUI.close_bar(key="export_queue")
-    ConsoleUI.close_bar(key="processed")
-    ConsoleUI.close_bar(key="failed")
-
     return True
 
 def main():

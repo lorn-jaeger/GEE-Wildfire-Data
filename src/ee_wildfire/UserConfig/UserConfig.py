@@ -5,33 +5,15 @@ from ee_wildfire.UserInterface import ConsoleUI
 from ee_wildfire.utils.yaml_utils import load_yaml_config, save_yaml_config
 from ee_wildfire.constants import *
 from ee_wildfire.globfire import get_fires
-from ee_wildfire.get_globfire import get_combined_fires
 from ee_wildfire.UserConfig.authentication import AuthManager
 
-from ee import Authenticate #type: ignore
-from ee import Initialize
 
-import os, sys
+import os
+import pprint
 
-from typing import Union, Dict, Any
+from typing import Union, Any
 
 
-# default_values: Dict[str, Any] = {
-#     "project_id": DEFAULT_PROJECT_ID,
-#     "credentials":DEFAULT_OAUTH_DIR,
-#     "start_date": DEFAULT_START_DATE,
-#     "end_date": DEFAULT_END_DATE,
-#     "google_drive_dir": DEFAULT_GOOGLE_DRIVE_DIR,
-#     "min_size": DEFAULT_MIN_SIZE,
-#     "max_size": DEFAULT_MAX_SIZE,
-#     "data_dir": DEFAULT_DATA_DIR,
-#     "tiff_dir": DEFAULT_TIFF_DIR,
-#     # "export": False,
-#     # "download": False,
-#     # "retry_failed": False,
-#     # "purge_before": False,
-#     # "purge_after": False,
-# }
 
 class UserConfig:
     """
@@ -57,19 +39,21 @@ class UserConfig:
 
 
     def __str__(self) -> str:
-        """
-        String representation of the configuration for display or debugging.
+        config_items = {
+            k: v
+            for k, v in self.__dict__.items()
+            if not k.startswith('_')
+        }
 
-        Returns:
-            str: Human-readable representation of the current config state.
-        """
-        output_string = ""
-        attrs = self.__dict__
-        for key in attrs:
-            output_string += f"{key}: {attrs[key]}\n"
+        # Optional: sort keys for readability
+        sorted_items = dict(sorted(config_items.items()))
 
-        return output_string
-
+        # Format nicely using pprint
+        return "\n".join([
+            "╭─ User Configuration ───────────────────────────────────────────────────────────────────",
+            *[f"│ {key:<20} : {pprint.pformat(value)}" for key, value in sorted_items.items()],
+            "╰────────────────────────────────────────────────────────────────────────────────────────"
+        ])
 
     def _validate_paths(self) -> None:
         """
@@ -87,7 +71,6 @@ class UserConfig:
             # TODO: verbose error is needed here
             ConsoleUI.print(f"{self.credentials} not found!")
 
-        # FIX: Sync tiff directory to data if data dir is not default
         if (self.data_dir != os.path.abspath(DEFAULT_DATA_DIR)):
             if(self.tiff_dir == os.path.abspath(DEFAULT_TIFF_DIR)):
                 self.tiff_dir = self.data_dir + '/tiff'

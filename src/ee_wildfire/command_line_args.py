@@ -98,7 +98,10 @@ def parse() -> UserConfig:
     if(args.show_config or (args.config != INTERNAL_USER_CONFIG_DIR)):
         print(str(config))
 
+    ConsoleUI.print("")
     config.authenticate()
+
+
     return config
 
 def main():

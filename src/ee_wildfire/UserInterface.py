@@ -1,44 +1,74 @@
 
 from tqdm import tqdm
 import logging
+import sys
+import shutil
+from colorama import Fore, Style
 
 class ConsoleUI:
     _bars = {}
     _verbose = True
+    _status_line_position = 0
+
+    @classmethod
+    def setup_logging(cls, log_file=None, level=logging.INFO):
+        """
+        Setup logging configuration for both console and optional log file.
+
+        Args:
+            log_file (str): Optional path to log file.
+            level (int): Logging level, e.g., logging.INFO or logging.DEBUG.
+        """
+        handlers = [logging.StreamHandler(sys.stdout)]
+
+        if log_file:
+            file_handler = logging.FileHandler(log_file, mode='w')
+            handlers.append(file_handler)
+
+        logging.basicConfig(
+            level=level,
+            format='[%(asctime)s] %(levelname)s - %(message)s',
+            handlers=handlers
+        )
 
     @classmethod
     def set_verbose(cls, verbose):
         cls._verbose = verbose
 
     @classmethod
-    def set_bar_position(cls, key: str, value: int):
-        """
-        Set the current progress of the tqdm bar identified by `name`.
+    def _get_bar_position(cls):
+        # Reserve line 0 for status; bars start at 1
+        return len(cls._bars) + 1
 
-        Args:
-            key(str): Identifier for the progress bar.
-            value (int): Current progress value to set.
-        """
+    @classmethod
+    def set_bar_position(cls, key: str, value: int):
         if key in cls._bars:
             bar = cls._bars[key]
             bar.n = value
             bar.refresh()
-        # else:
-        #     cls.log(f"[ConsoleUI] Warning: Tried to set position of non-existent bar '{name}'")
-
 
     @classmethod
-    def add_bar(cls, key, total, desc=""):
+    def add_bar(cls, key, total, desc="", colour="green"):
+        bar_format = "{desc:<80} | {bar:100} | {percentage:>6.2f}% | {n_fmt:>7}/{total_fmt:<7} items"
         if key in cls._bars:
             bar = cls._bars[key]
             bar.total = total
             bar.desc = desc
+            bar.colour=colour
             bar.n = 0
             bar.reset()
             bar.refresh()
         else:
-            cls._bars[key] = tqdm(total=total, desc=desc, position=len(cls._bars), leave=True)
-            
+            cls._bars[key] = tqdm(
+                total=total,
+                desc=desc,
+                position=cls._get_bar_position(),
+                leave=True,
+                file=sys.stdout,
+                colour=colour,
+                ascii=False,
+                bar_format=bar_format,
+            )
     @classmethod
     def change_bar_desc(cls, key, desc):
         if key in cls._bars.keys():
@@ -79,11 +109,25 @@ class ConsoleUI:
             bar.refresh()
 
     @classmethod
-    def print(cls, message, end="\n"):
+    def write(cls, message, end="\n"):
         if cls._verbose:
             tqdm.write(message, end=end)
 
     @classmethod
+    def print(cls, message):
+        """
+        Print a status line at the top (position 0) above all tqdm bars.
+        """
+        if not cls._verbose:
+            return
+
+        term_width = shutil.get_terminal_size((80, 20)).columns
+        padded = Fore.GREEN + f"[STATUS] {message}".ljust(term_width) + Style.RESET_ALL
+        tqdm.write(padded, end="\r")
+
+        # Flush to ensure immediate overwrite
+        sys.stdout.flush()
+
+    @classmethod
     def log(cls, message, level=logging.INFO):
-        if cls._verbose:
-            logging.log(level, message)
+        logging.log(level, message)

@@ -1,15 +1,10 @@
-import os
-
-from ee_wildfire.constants import AUTH_TOKEN_PATH, SCOPES
 from ee_wildfire.UserInterface import ConsoleUI
-
-import ee
-
-# import ee.ServiceAccountCredentials
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
+
 import json
+import ee
 
 
 class AuthManager:
@@ -39,16 +34,15 @@ class AuthManager:
                 scopes=SCOPES
             )
             self.drive_service = build('drive', 'v3', credentials=self.drive_creds)
-            ConsoleUI.print("✅ Google Drive authenticated successfully.")
-            # return self.drive_service
+            ConsoleUI.print("Google Drive authenticated successfully.")
         except FileNotFoundError:
-            ConsoleUI.print(f"❌ Could not find service account JSON at {self.service_json}")
+            ConsoleUI.print(f"Could not find service account JSON at {self.service_json}")
         except HttpError as error:
-            ConsoleUI.print(f"❌ An error occurred during Drive auth: {error}")
-        # return None
+            ConsoleUI.print(f"An error occurred during Drive auth: {error}")
+
 
     def get_project_id(self) -> str:
-        return self.ee_creds.project_id
+        return str(self.ee_creds.project_id)
 
 def main():
     am = AuthManager(
