@@ -107,13 +107,12 @@ class ConsoleUI:
     def close_bar(cls, key):
         if key in cls._bars:
             cls._bars[key].close()
-            del cls._bars[key]
 
     @classmethod
     def close_all_bars(cls):
         keys = cls._bars.keys()
         for key in keys:
-            cls.close_bar(key=key)
+            cls._bars[key].close()
 
     @classmethod
     def refresh_all(cls):
