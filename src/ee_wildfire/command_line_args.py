@@ -102,7 +102,7 @@ def parse() -> UserConfig:
 
     ConsoleUI.write(str(config))
 
-    ConsoleUI.print("")
+    ConsoleUI.write("")
 
     return config
 
