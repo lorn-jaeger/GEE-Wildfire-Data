@@ -38,6 +38,7 @@ class AuthManager:
             self.drive_service = build('drive', 'v3', credentials=self.drive_creds)
             ConsoleUI.print("Google Drive authenticated successfully.")
         except FileNotFoundError:
+            # FIX: Here is where i can prompt user for json file
             ConsoleUI.print(f"Could not find service account JSON at {self.service_json}", color="red")
         except HttpError as error:
             ConsoleUI.print(f"An error occurred during Drive auth: {error}", color="red")
