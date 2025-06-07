@@ -23,6 +23,7 @@ def run(config: UserConfig) -> None:
     Args:
         config (UserConfig): Fully initialized user configuration.
     """
+    config.authenticate()
     downloader = DriveDownloader(config)
 
     if(config.purge_before):
@@ -57,7 +58,6 @@ def run(config: UserConfig) -> None:
     if(config.purge_after):
         downloader.purge_data()
 
-    # ConsoleUI.close_all_bars()
 
 def parse() -> UserConfig:
     """
@@ -99,12 +99,10 @@ def parse() -> UserConfig:
     config = UserConfig(yaml_path=args.config)
 
     config.change_configuration_from_args(args)
-    if(not args.silent):
-        print(str(config))
+
+    ConsoleUI.write(str(config))
 
     ConsoleUI.print("")
-    config.authenticate()
-
 
     return config
 
