@@ -129,7 +129,7 @@ class UserConfig:
         """
         namespace = []
         for name in COMMAND_ARGS:
-            if(name != "--version"):
+            if(name not in ["--version", "--help"]):
                 fixed_name = self._fix_name(name)
                 namespace.append(fixed_name)
         return namespace
@@ -137,7 +137,7 @@ class UserConfig:
     def _get_default_values(self):
         values = {}
         for name in COMMAND_ARGS:
-            if(name != "--version"):
+            if(name not in ["--version", "--help"]):
                 _, default_val, _, _ = COMMAND_ARGS[name]
                 fixed_name = self._fix_name(name)
                 values[fixed_name] = default_val
@@ -146,7 +146,7 @@ class UserConfig:
     def _get_bools(self):
         values = []
         for name in COMMAND_ARGS:
-            if(name != "--version"):
+            if(name not in ["--version", "--help"]):
                 aType, _, _, _ = COMMAND_ARGS[name]
                 fixed_name = self._fix_name(name)
                 if(aType is None):

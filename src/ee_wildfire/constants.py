@@ -8,6 +8,17 @@ from pathlib import Path
 from datetime import datetime
 import argparse
 
+# =========== Helper Functions ===========
+
+# handles date and time formating from command line
+def parse_datetime(s):
+    for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S"):
+        try:
+            return datetime.strptime(s, fmt)
+        except ValueError:
+            continue
+    raise argparse.ArgumentTypeError(f"Invalid date format: '{s}'. Use YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.")
+
 # =========== Paths ===========
 
 ROOT = Path(__file__).resolve().parent
@@ -107,19 +118,13 @@ DEFAULT_GOOGLE_DRIVE_DIR = "GoogleEarthEngine"
 
 
 # =========== Command Line Arguments ===========
-def parse_datetime(s):
-    for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S"):
-        try:
-            return datetime.strptime(s, fmt)
-        except ValueError:
-            continue
-    raise argparse.ArgumentTypeError(f"Invalid date format: '{s}'. Use YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.")
 
 # most default options are located in UserConfig.py
 # For now this only suppots double flags --. double flags are also removed in YAML file
 # single - between words are swapped for _ in YAML file
 COMMAND_ARGS = {
     #"NAME":                (type,  default,                    action,         help)
+    "--help":                (None,  None,                       "help",         "Show help screen"),
     "--version":             (None,  None,                       "version",      "Show current version"),
     "--config":              (Path,  INTERNAL_USER_CONFIG_DIR,   "store",        "Path to JSON config file"),
     "--export":              (None,  False,                      "store_true",   "Export to drive."),
@@ -137,6 +142,7 @@ COMMAND_ARGS = {
     "--end-date":            (parse_datetime,  DEFAULT_END_DATE,       "store",        "Ending date for Earth Engine querry"),
     "--silent":              (None,  False,                      "store_true",   "No program output."),
 }
+
 
 def main():
     print(COMMAND_ARGS)
