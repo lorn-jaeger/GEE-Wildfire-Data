@@ -116,7 +116,6 @@ COMMAND_ARGS = {
     "--config":              (Path,  INTERNAL_USER_CONFIG_DIR,   "store",        "Path to JSON config file"),
     "--export":              (None,  False,                      "store_true",   "Export to drive."),
     "--download":            (None,  False,                      "store_true",   "Download from drive."),
-    "--show-config":         (None,  False,                      "store_true",   "Show user configuration."),
     "--credentials":         (Path,  DEFAULT_OAUTH_DIR,          "store",        "Path to Google Authetication .json"),
     "--data-dir":            (Path,  DEFAULT_DATA_DIR,           "store",        "Path to output data directory."),
     "--tiff-dir":            (Path,  DEFAULT_TIFF_DIR,           "store",        "Path where downloaded tiff files go."),
