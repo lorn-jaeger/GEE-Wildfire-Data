@@ -111,8 +111,8 @@ class DriveDownloader:
             if not current_missing:
                 ConsoleUI.print("All files found!")
                 break
-
             else:
+                ConsoleUI.print("Waiting for export...")
                 time.sleep(10)
 
 
@@ -128,6 +128,7 @@ class DriveDownloader:
             fh = io.FileIO(file_path, 'wb')
             downloader = MediaIoBaseDownload(fh, request)
 
+            ConsoleUI.print("Downloading files...")
             done = False
             while not done:
                 _, done = downloader.next_chunk()
@@ -144,6 +145,7 @@ class DriveDownloader:
 
                 for f in files:
                     try:
+                        ConsoleUI.print(f"Deleting {f['name']}")
                         self.service.files().delete(fileId=f['id']).execute()
 
                     except HttpError as error:

@@ -48,27 +48,38 @@ class ConsoleUI:
             bar.refresh()
 
     @classmethod
-    def add_bar(cls, key, total, desc="", colour="green"):
-        bar_format = "{desc:<80} | {bar:100} | {percentage:>6.2f}% | {n_fmt:>7}/{total_fmt:<7} items"
-        if key in cls._bars:
-            bar = cls._bars[key]
-            bar.total = total
-            bar.desc = desc
-            bar.colour=colour
-            bar.n = 0
-            bar.reset()
-            bar.refresh()
-        else:
-            cls._bars[key] = tqdm(
-                total=total,
-                desc=desc,
-                position=cls._get_bar_position(),
-                leave=True,
-                file=sys.stdout,
-                colour=colour,
-                ascii=False,
-                bar_format=bar_format,
-            )
+    def _get_bar_format(cls):
+        columns, rows = shutil.get_terminal_size()
+        desc_length = int(columns/3)
+        bar_length = int(columns/2)
+        desc = "{" + f"desc:<{desc_length}" + "}"
+        bar = "{" + f"bar:{bar_length}" +"}"
+        output = f"{desc} | {bar} | " + "{percentage:>6.2f}% | {n_fmt:>7}/{total_fmt:<7} items"
+        return output
+
+    @classmethod
+    def add_bar(cls, key, total, desc="", color="green"):
+        if cls._verbose:
+            bar_format = cls._get_bar_format()
+            if key in cls._bars:
+                bar = cls._bars[key]
+                bar.total = total
+                bar.desc = desc
+                bar.colour=color
+                bar.n = 0
+                bar.reset()
+                bar.refresh()
+            else:
+                cls._bars[key] = tqdm(
+                    total=total,
+                    desc=desc,
+                    position=cls._get_bar_position(),
+                    leave=True,
+                    file=sys.stdout,
+                    colour=color,
+                    ascii=False,
+                    bar_format=bar_format,
+                )
     @classmethod
     def change_bar_desc(cls, key, desc):
         if key in cls._bars.keys():
@@ -100,7 +111,8 @@ class ConsoleUI:
 
     @classmethod
     def close_all_bars(cls):
-        for key in cls._bars.keys():
+        keys = cls._bars.keys()
+        for key in keys:
             cls.close_bar(key=key)
 
     @classmethod
@@ -114,15 +126,21 @@ class ConsoleUI:
             tqdm.write(message, end=end)
 
     @classmethod
-    def print(cls, message):
+    def print(cls, message, color="green"):
         """
         Print a status line at the top (position 0) above all tqdm bars.
         """
+
+        color_map = {
+            "green": Fore.GREEN,
+            "red": Fore.RED,
+            "yellow": Fore.YELLOW,
+        }
         if not cls._verbose:
             return
 
         term_width = shutil.get_terminal_size((80, 20)).columns
-        padded = Fore.GREEN + f"[STATUS] {message}".ljust(term_width) + Style.RESET_ALL
+        padded = color_map[color] + f"[STATUS] {message}".ljust(term_width) + Style.RESET_ALL
         tqdm.write(padded, end="\r")
 
         # Flush to ensure immediate overwrite
@@ -131,3 +149,10 @@ class ConsoleUI:
     @classmethod
     def log(cls, message, level=logging.INFO):
         logging.log(level, message)
+
+def main():
+    print(ConsoleUI._get_bar_format())
+
+
+if __name__ == "__main__":
+    main()

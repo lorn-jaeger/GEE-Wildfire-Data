@@ -40,7 +40,7 @@ def process_locations(locations, user_config, fire_config):
         #FIX: This exception needs to be more specific
         except Exception as e:
             ConsoleUI.update_bar(key="failed")
-            ConsoleUI.print(f"Failed on {location}: {str(e)}")
+            ConsoleUI.print(f"Failed on {location}: {str(e)}", color="red")
             failed_locations.append(location)
             continue
 
@@ -71,17 +71,17 @@ def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
     locations = fire_names
 
     ConsoleUI.add_bar(key="processed", total=len(locations), desc="Fires processed")
-    ConsoleUI.add_bar(key="failed", total=len(locations), desc="Number of failed locations")
+    ConsoleUI.add_bar(key="failed", total=len(locations), desc="Number of failed locations",
+                      color="red")
     failed_locations = process_locations(locations, user_config, config)
 
     # NOTE: This is where I should retry failed locations
     if failed_locations:
-        ConsoleUI.print("Failed locations:")
-        for loc in failed_locations:
-            ConsoleUI.print(f"- {loc}")
-
+        # ConsoleUI.print("Failed locations:")
+        # for loc in failed_locations:
+        #     ConsoleUI.print(f"- {loc}")
         if(user_config.retry_failed):
-            ConsoleUI.print("Retrying failed locations")
+            ConsoleUI.print("Retrying failed locations",color="yellow")
             process_locations(failed_locations, user_config, config)
 
     else:

@@ -57,7 +57,7 @@ def run(config: UserConfig) -> None:
     if(config.purge_after):
         downloader.purge_data()
 
-    ConsoleUI.close_all_bars()
+    # ConsoleUI.close_all_bars()
 
 def parse() -> UserConfig:
     """
@@ -90,12 +90,12 @@ def parse() -> UserConfig:
     args, _ = base_parser.parse_known_args()
 
 
-    ConsoleUI.set_verbose(args.verbose)
+    ConsoleUI.set_verbose(not args.silent)
 
     config = UserConfig(yaml_path=args.config)
 
     config.change_configuration_from_args(args)
-    if(args.show_config or (args.config != INTERNAL_USER_CONFIG_DIR)):
+    if(not args.silent):
         print(str(config))
 
     ConsoleUI.print("")

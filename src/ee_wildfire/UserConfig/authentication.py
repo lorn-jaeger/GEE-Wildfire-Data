@@ -25,6 +25,8 @@ class AuthManager:
         else:
             raise ValueError("Unsupported Earth Engine auth mode.")
 
+        ConsoleUI.print("Google Earth autheticated succesfully.")
+
     def authenticate_drive(self):
         """Authenticate Google Drive using a service account."""
         SCOPES = ['https://www.googleapis.com/auth/drive']
@@ -36,9 +38,9 @@ class AuthManager:
             self.drive_service = build('drive', 'v3', credentials=self.drive_creds)
             ConsoleUI.print("Google Drive authenticated successfully.")
         except FileNotFoundError:
-            ConsoleUI.print(f"Could not find service account JSON at {self.service_json}")
+            ConsoleUI.print(f"Could not find service account JSON at {self.service_json}", color="red")
         except HttpError as error:
-            ConsoleUI.print(f"An error occurred during Drive auth: {error}")
+            ConsoleUI.print(f"An error occurred during Drive auth: {error}", color="red")
 
 
     def get_project_id(self) -> str:
