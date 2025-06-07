@@ -52,6 +52,7 @@ class DriveDownloader:
             files = []
             page_token = None
             while True:
+                ConsoleUI.print(f"Searching for files...")
                 results = self.service.files().list(
                     q=f"'{folder_id}' in parents",
                     spaces='drive',
