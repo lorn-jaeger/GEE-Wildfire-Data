@@ -24,15 +24,12 @@ class UserConfig:
     with Google Drive and geospatial fire datasets.
     """
 
-    def __init__(self, yaml_path: Union[Path,str] = INTERNAL_USER_CONFIG_DIR):
+    def __init__(self):
         """
         Initialize the UserConfig object by loading and validating the configuration.
-
-        Args:
-            yaml_path (Union[Path,str]): Path to the user configuration YAML file.
         """
 
-        self.change_configuration_from_yaml(yaml_path)
+        self._load_from_internal_config()
         self.exported_files = []
         self.failed_exports = []
 
@@ -156,9 +153,17 @@ class UserConfig:
     def _fix_name(self, name: str) -> str:
         return name[2:].replace("-","_")
 
-    def _fill_namespace(self, namespace) -> None:
-        for item in namespace:
-            setattr(self, item, None)
+    def _fill_namespace(self, namespace: dict) -> None:
+        for key, item in namespace.items():
+            setattr(self, key, item)
+
+    def _save_to_internal_config_file(self):
+        save_yaml_config(self.__dict__, INTERNAL_USER_CONFIG_DIR)
+
+    def _load_from_internal_config(self):
+        if os.path.exists(INTERNAL_USER_CONFIG_DIR):
+            config_data = load_yaml_config(INTERNAL_USER_CONFIG_DIR)
+            self._fill_namespace(config_data)
 
 # =========================================================================== #
 #                               Public Methods
@@ -207,48 +212,42 @@ class UserConfig:
 
         self._validate_paths()
         self._validate_time()
-        self.save_to_internal_config_file()
+        self._save_to_internal_config_file()
 
-    def change_configuration_from_args(self, args: Any) -> None:
+    def change_configuration_from_args(self, args: argparse.Namespace):
         """
         Update internal boolean flags (`export`, `download`) from parsed CLI arguments.
 
         Args:
             args (Any): Parsed argparse namespace object.
         """
-        namespace = self._get_args_namespace()
-        internal_config = args.config == INTERNAL_USER_CONFIG_DIR
-        bool_names = self._get_bools()
-        defaults = self._get_default_values()
-        for key in namespace:
-            val = getattr(args,key)
+        explicit = getattr(args, "_explicit_args", set())
+        bool_keys = self._get_bools()
+        all_keys = self._get_args_namespace()
 
-            if(not hasattr(self, key)):
-                setattr(self,key,val)
+        for key in all_keys:
+            arg_val = getattr(args, key)
 
-            if(defaults[key] != val):
-                setattr(self,key,val)
+            # Always set booleans (they're binary state toggles)
+            if key in bool_keys:
+                setattr(self, key, arg_val)
+                continue
 
-            if(bool_names and internal_config):
-                if key in bool_names:
-                    setattr(self,key,val)
+            # Set if the attribute doesn't exist
+            if not hasattr(self, key):
+                setattr(self, key, arg_val)
+                continue
 
-
-
+            # Only override if user explicitly passed it
+            if key in explicit:
+                setattr(self, key, arg_val)
 
         self._validate_paths()
         self._validate_time()
-        self.save_to_internal_config_file()
-
-    def save_to_internal_config_file(self):
-        save_yaml_config(self.__dict__, INTERNAL_USER_CONFIG_DIR)
-
-
-
+        self._save_to_internal_config_file()
 
 def main():
     outside_config_path = HOME / "NRML" / "outside_config.yml"
-    uf = UserConfig(outside_config_path)
 
 if __name__ == "__main__":
     main()

@@ -7,6 +7,7 @@ This is where the programs constant variables are stored
 from pathlib import Path
 from datetime import datetime
 import argparse
+from ee_wildfire.utils.command_line_arg_utils import StorePassedAction
 
 # =========== Helper Functions ===========
 
@@ -126,20 +127,20 @@ COMMAND_ARGS = {
     #"NAME":                (type,  default,                    action,         help)
     "--help":                (None,  None,                       "help",         "Show help screen"),
     "--version":             (None,  None,                       "version",      "Show current version"),
-    "--config":              (Path,  INTERNAL_USER_CONFIG_DIR,   "store",        "Path to JSON config file"),
+    "--config":              (Path,  INTERNAL_USER_CONFIG_DIR,   StorePassedAction,        "Path to JSON config file"),
     "--export":              (None,  False,                      "store_true",   "Export to drive."),
     "--download":            (None,  False,                      "store_true",   "Download from drive."),
-    "--credentials":         (Path,  DEFAULT_OAUTH_DIR,          "store",        "Path to Google Authetication .json"),
-    "--data-dir":            (Path,  DEFAULT_DATA_DIR,           "store",        "Path to output data directory."),
-    "--tiff-dir":            (Path,  DEFAULT_TIFF_DIR,           "store",        "Path where downloaded tiff files go."),
-    "--google-drive-dir":    (str,   DEFAULT_GOOGLE_DRIVE_DIR,   "store",        "Google Drive folder for exporting."),
-    "--min-size":            (float,   DEFAULT_MIN_SIZE,           "store",        "Minimum size of fire area."),
-    "--max-size":            (float,   DEFAULT_MAX_SIZE,           "store",        "Maximum size of fire area."),
+    "--credentials":         (Path,  DEFAULT_OAUTH_DIR,          StorePassedAction,        "Path to Google Authetication .json"),
+    "--data-dir":            (Path,  DEFAULT_DATA_DIR,           StorePassedAction,        "Path to output data directory."),
+    "--tiff-dir":            (Path,  DEFAULT_TIFF_DIR,           StorePassedAction,        "Path where downloaded tiff files go."),
+    "--google-drive-dir":    (str,   DEFAULT_GOOGLE_DRIVE_DIR,   StorePassedAction,        "Google Drive folder for exporting."),
+    "--min-size":            (float,   DEFAULT_MIN_SIZE,           StorePassedAction,        "Minimum size of fire area."),
+    "--max-size":            (float,   DEFAULT_MAX_SIZE,           StorePassedAction,        "Maximum size of fire area."),
     "--retry-failed":        (None,  False,                      "store_true",   "Retry failed locations."),
     "--purge-before":        (None,  False,                      "store_true",   "Purge data from google drive before exporting"),
     "--purge-after":         (None,  False,                      "store_true",   "Purge data from google drive after downloading"),
-    "--start-date":          (parse_datetime,  DEFAULT_START_DATE,     "store",        "Starting date for Earth Engine querry"),
-    "--end-date":            (parse_datetime,  DEFAULT_END_DATE,       "store",        "Ending date for Earth Engine querry"),
+    "--start-date":          (parse_datetime,  DEFAULT_START_DATE,     StorePassedAction,        "Starting date for Earth Engine querry"),
+    "--end-date":            (parse_datetime,  DEFAULT_END_DATE,       StorePassedAction,        "Ending date for Earth Engine querry"),
     "--silent":              (None,  False,                      "store_true",   "No program output."),
 }
 

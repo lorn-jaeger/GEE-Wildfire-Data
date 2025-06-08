@@ -96,9 +96,12 @@ def parse() -> UserConfig:
 
     ConsoleUI.set_verbose(not args.silent)
 
-    config = UserConfig(yaml_path=args.config)
+    config = UserConfig()
 
-    config.change_configuration_from_args(args)
+    if(args.config == INTERNAL_USER_CONFIG_DIR):
+        config.change_configuration_from_args(args)
+    else:
+        config.change_configuration_from_yaml(args.config)
 
     ConsoleUI.write(str(config))
 
