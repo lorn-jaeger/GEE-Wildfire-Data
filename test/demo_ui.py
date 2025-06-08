@@ -8,13 +8,13 @@ end_date = datetime(year=2021, month=1, day=14)
 ConsoleUI.clear_screen()
 
 ConsoleUI.print("Generating geodata")
-time.sleep(0.5)
+time.sleep(1)
 
 ConsoleUI.print("Generating something else with yellow text.", color="yellow")
-time.sleep(0.5)
+time.sleep(1)
 
 ConsoleUI.print("Configuring something, its red maybe something went wrong?", color="red")
-time.sleep(0.5)
+time.sleep(1)
 
 ConsoleUI.add_bar(key="bar", total=100, desc="Generation progress")
 
