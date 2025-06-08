@@ -37,13 +37,16 @@ class UserConfig:
 
 
     def __str__(self) -> str:
+        items_to_exclude = [
+            "exported_files",
+            "failed_exports",
+        ]
         config_items = {
-            k: v
+            k: str(v)
             for k, v in self.__dict__.items()
-            if not k.startswith('_')
+            if (not k.startswith('_')) and (k not in items_to_exclude)
         }
 
-        # Optional: sort keys for readability
         sorted_items = dict(sorted(config_items.items()))
 
         # Format nicely using pprint
