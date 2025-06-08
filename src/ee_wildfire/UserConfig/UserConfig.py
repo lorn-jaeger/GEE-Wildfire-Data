@@ -12,7 +12,7 @@ import argparse
 import os
 import pprint
 
-from typing import Union, Any
+from typing import Union
 
 
 
@@ -85,7 +85,7 @@ class UserConfig:
 
         if (self.data_dir != os.path.abspath(DEFAULT_DATA_DIR)):
             if(self.tiff_dir == os.path.abspath(DEFAULT_TIFF_DIR)):
-                self.tiff_dir = self.data_dir + '/tiff'
+                self.tiff_dir = self.data_dir / 'tiff'
 
 
         self._try_make_path(self.data_dir)
