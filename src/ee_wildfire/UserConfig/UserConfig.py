@@ -60,14 +60,28 @@ class UserConfig:
             FileNotFoundError: If credentials file does not exist.
         """
 
-        self.credentials = os.path.abspath(self.credentials)
-        self.data_dir = os.path.abspath(self.data_dir)
-        self.tiff_dir = os.path.abspath(self.tiff_dir)
+        if hasattr(self,'credentials'):
+            self.credentials = Path(os.path.abspath(self.credentials))
+
+        if hasattr(self, 'data_dir'):
+            self.data_dir = Path(os.path.abspath(self.data_dir))
+
+        if hasattr(self, 'tiff_dir'):
+            self.tiff_dir = Path(os.path.abspath(self.tiff_dir))
+
+        if hasattr(self, 'config'):
+            self.config = Path(self.config)
 
 
+        num_retries = 3
         while not os.path.exists(self.credentials):
+            if(num_retries <= 0):
+                break
+
             ConsoleUI.print(f"Google service credentials JSON {self.credentials} not found!", color="red")
             self.credentials = os.path.expanduser(ConsoleUI.prompt_path())
+            num_retries -= 1
+
 
         if (self.data_dir != os.path.abspath(DEFAULT_DATA_DIR)):
             if(self.tiff_dir == os.path.abspath(DEFAULT_TIFF_DIR)):

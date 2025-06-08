@@ -16,7 +16,7 @@ class AuthManager:
     def authenticate_earth_engine(self):
         if self.auth_mode == "service_account":
             self.ee_creds = ee.ServiceAccountCredentials(email=json.load(open(self.service_json))['client_email'],
-                                                 key_file=self.service_json)
+                                                 key_file=str(self.service_json))
             # creds = service_account.Credentials.from_service_account_file(self.service_json, scopes=SCOPES)
             ee.Initialize(self.ee_creds)
         elif self.auth_mode == "oauth":

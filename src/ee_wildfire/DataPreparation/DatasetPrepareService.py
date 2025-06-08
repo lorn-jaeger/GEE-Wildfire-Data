@@ -162,7 +162,7 @@ class DatasetPrepareService:
             ConsoleUI.update_bar(key="export")
 
 def wait_for_gee_queue_space():
-    ConsoleUI.add_bar("export_queue",total=EXPORT_QUEUE_SIZE, desc="Google Earth export queue")
+    ConsoleUI.add_bar("export_queue",total=EXPORT_QUEUE_SIZE, desc="Google Earth export queue", color="yellow")
     total = EXPORT_QUEUE_SIZE
     target = EXPORT_QUEUE_SIZE/2
 
