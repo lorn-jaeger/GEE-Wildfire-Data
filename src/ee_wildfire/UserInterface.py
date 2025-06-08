@@ -176,6 +176,9 @@ class ConsoleUI:
     @classmethod
     def prompt_path(cls, prompt="Enter file path: "):
         # Move cursor down from line 0 (status) to line 1, and clear it
+        if not cls._verbose:
+            return ""
+
         with _suspend_tqdm_output():
             sys.__stdout__.write("\n\033[1K")  # Move to next line, clear it
             sys.__stdout__.flush()
