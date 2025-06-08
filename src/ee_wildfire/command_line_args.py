@@ -97,6 +97,7 @@ def parse() -> UserConfig:
     # ======== Before User Config Creation ========
 
     ConsoleUI.set_verbose(not args.silent)
+    ConsoleUI.clear_screen()
 
     if(args.reset_config):
         delete_user_config()
@@ -112,7 +113,6 @@ def parse() -> UserConfig:
 
     # ======== After User Config Configuration? ========
 
-    ConsoleUI.clear_screen()
     ConsoleUI.write(str(config))
 
     ConsoleUI.write("")
