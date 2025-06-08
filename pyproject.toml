@@ -55,6 +55,7 @@ dependencies = [
 	"setuptools",
 	"wheel",
 	"prompt_toolkit",
+	"colorama",
 ]
 
 
