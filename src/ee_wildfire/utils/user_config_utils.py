@@ -1,6 +1,7 @@
 import argparse
 import os
 from pathlib import Path
+from datetime import datetime
 
 class StorePassedAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
@@ -11,19 +12,11 @@ class StorePassedAction(argparse.Action):
         setattr(namespace, self.dest, values)
 
 
-def delete_user_config() -> None:
-    """
-    Deletes the user_config.yml file if it exists.
-
-    Args:
-        path (Path): Path to the config file. Defaults to standard location.
-    """
-    path = Path(INTERNAL_USER_CONFIG_DIR)
-    try:
-        if path.exists():
-            path.unlink()
-            print(f"[INFO] Deleted config file: {path}")
-        else:
-            print(f"[INFO] No config file found at: {path}")
-    except Exception as e:
-        print(f"[ERROR] Failed to delete config file: {e}")
+# handles date and time formating from command line
+def parse_datetime(s):
+    for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S"):
+        try:
+            return datetime.strptime(s, fmt)
+        except ValueError:
+            continue
+    raise argparse.ArgumentTypeError(f"Invalid date format: '{s}'. Use YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.")

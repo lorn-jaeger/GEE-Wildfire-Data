@@ -6,19 +6,7 @@ This is where the programs constant variables are stored
 
 from pathlib import Path
 from datetime import datetime
-import argparse
-from ee_wildfire.utils.user_config_utils import StorePassedAction
-
-# =========== Helper Functions ===========
-
-# handles date and time formating from command line
-def parse_datetime(s):
-    for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S"):
-        try:
-            return datetime.strptime(s, fmt)
-        except ValueError:
-            continue
-    raise argparse.ArgumentTypeError(f"Invalid date format: '{s}'. Use YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.")
+from ee_wildfire.utils.user_config_utils import StorePassedAction, parse_datetime
 
 # =========== Paths ===========
 
