@@ -43,6 +43,8 @@ class AuthManager:
         except HttpError as error:
             ConsoleUI.print(f"An error occurred during Drive auth: {error}", color="red")
 
+        return self.service_json
+
 
     def get_project_id(self) -> str:
         return str(self.ee_creds.project_id)

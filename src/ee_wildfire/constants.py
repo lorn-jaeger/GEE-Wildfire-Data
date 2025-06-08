@@ -7,7 +7,7 @@ This is where the programs constant variables are stored
 from pathlib import Path
 from datetime import datetime
 import argparse
-from ee_wildfire.utils.command_line_arg_utils import StorePassedAction
+from ee_wildfire.utils.user_config_utils import StorePassedAction
 
 # =========== Helper Functions ===========
 
@@ -142,6 +142,7 @@ COMMAND_ARGS = {
     "--start-date":          (parse_datetime,  DEFAULT_START_DATE,     StorePassedAction,        "Starting date for Earth Engine querry"),
     "--end-date":            (parse_datetime,  DEFAULT_END_DATE,       StorePassedAction,        "Ending date for Earth Engine querry"),
     "--silent":              (None,  False,                      "store_true",   "No program output."),
+    "--reset-config":        (None,  False,                      "store_true",   "Reset internal user configuration."),
 }
 
 

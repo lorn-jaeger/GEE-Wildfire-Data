@@ -3,12 +3,36 @@ from tqdm import tqdm
 import logging
 import sys
 import shutil
+import contextlib
+import os
+
 from colorama import Fore, Style
+from prompt_toolkit import PromptSession
+from prompt_toolkit.completion import PathCompleter
+from prompt_toolkit.styles import Style as S
+@contextlib.contextmanager
+def _suspend_tqdm_output():
+    # Temporarily disable tqdm output (stdout hijack)
+    original_stdout = sys.stdout
+    try:
+        sys.stdout = sys.__stdout__
+        yield
+    finally:
+        sys.stdout = original_stdout
 
 class ConsoleUI:
     _bars = {}
     _verbose = True
     _status_line_position = 0
+
+    @classmethod
+    def clear_screen(cls):
+        if not cls._verbose:
+            return
+        if os.name == 'nt':  # Windows
+            os.system('cls')
+        else:  # Unix/Linux/Mac
+            os.system('clear')
 
     @classmethod
     def setup_logging(cls, log_file=None, level=logging.INFO):
@@ -37,8 +61,8 @@ class ConsoleUI:
 
     @classmethod
     def _get_bar_position(cls):
-        # Reserve line 0 for status; bars start at 1
-        return len(cls._bars) + 1
+        # Line 0: status, Line 1: prompt, bars start at 2
+        return len(cls._bars) + 2
 
     @classmethod
     def set_bar_position(cls, key: str, value: int):
@@ -148,6 +172,34 @@ class ConsoleUI:
     @classmethod
     def log(cls, message, level=logging.INFO):
         logging.log(level, message)
+
+    @classmethod
+    def prompt_path(cls, prompt="Enter file path: "):
+        # Move cursor down from line 0 (status) to line 1, and clear it
+        with _suspend_tqdm_output():
+            sys.__stdout__.write("\n\033[1K")  # Move to next line, clear it
+            sys.__stdout__.flush()
+
+            session = PromptSession()
+            completer = PathCompleter(expanduser=True)
+
+            style = S.from_dict({
+                'prompt': 'ansiblue',  # blue text
+            })
+
+            path = session.prompt(
+                [('class:prompt', prompt)],
+                completer=completer,
+                style=style
+            )
+
+            # path = session.prompt(prompt, completer=completer)
+
+            # Optional: write a blank line after input to maintain layout
+            sys.__stdout__.write("\033[2A\033[2K")
+            sys.__stdout__.flush()
+
+            return path
 
 def main():
     print(ConsoleUI._get_bar_format())

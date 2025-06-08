@@ -54,6 +54,7 @@ dependencies = [
 	"google-auth-oauthlib",
 	"setuptools",
 	"wheel",
+	"prompt_toolkit",
 ]
 
 

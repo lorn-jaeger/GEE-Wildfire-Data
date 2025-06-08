@@ -12,6 +12,7 @@ from ee_wildfire.utils.google_drive_util import export_data
 from ee_wildfire.UserConfig.UserConfig import UserConfig
 from ee_wildfire.UserInterface import ConsoleUI
 from ee_wildfire.drive_downloader import DriveDownloader
+from ee_wildfire.UserConfig.UserConfig import delete_user_config
 
 # from tqdm import tqdm
 
@@ -93,8 +94,14 @@ def parse() -> UserConfig:
 
     args, _ = base_parser.parse_known_args()
 
+    # ======== Before User Config Creation ========
 
     ConsoleUI.set_verbose(not args.silent)
+
+    if(args.reset_config):
+        delete_user_config()
+
+    # ======== After User Config Creation ========
 
     config = UserConfig()
 
@@ -102,6 +109,8 @@ def parse() -> UserConfig:
         config.change_configuration_from_args(args)
     else:
         config.change_configuration_from_yaml(args.config)
+
+    # ======== After User Config Configuration? ========
 
     ConsoleUI.write(str(config))
 
@@ -112,7 +121,7 @@ def parse() -> UserConfig:
 def main():
     ui = ConsoleUI()
     config = parse()
-    print(config)
+    # ConsoleUI.prompt_path()
 
 if __name__ == "__main__":
     main()

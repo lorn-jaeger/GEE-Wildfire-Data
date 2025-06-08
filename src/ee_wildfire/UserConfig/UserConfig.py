@@ -64,9 +64,14 @@ class UserConfig:
         self.tiff_dir = os.path.abspath(self.tiff_dir)
 
 
-        if not os.path.exists(self.credentials):
-            # TODO: verbose error is needed here
-            ConsoleUI.print(f"{self.credentials} not found!")
+        while not os.path.exists(self.credentials):
+            ConsoleUI.print(f"Google service credentials JSON {self.credentials} not found!", color="red")
+            self.credentials = os.path.expanduser(ConsoleUI.prompt_path())
+
+
+        # if not os.path.exists(self.credentials):
+        #     # TODO: verbose error is needed here
+        #     ConsoleUI.print(f"{self.credentials} not found!", color="red")
 
         if (self.data_dir != os.path.abspath(DEFAULT_DATA_DIR)):
             if(self.tiff_dir == os.path.abspath(DEFAULT_TIFF_DIR)):
@@ -177,8 +182,8 @@ class UserConfig:
             auth_mode="service_account",
             service_json=self.credentials,
         )
-        self.auth.authenticate_earth_engine()
         self.auth.authenticate_drive()
+        self.auth.authenticate_earth_engine()
         self.drive_service = self.auth.drive_service
         self.project_id = self.auth.get_project_id()
 
@@ -245,6 +250,23 @@ class UserConfig:
         self._validate_paths()
         self._validate_time()
         self._save_to_internal_config_file()
+
+def delete_user_config() -> None:
+    """
+    Deletes the user_config.yml file if it exists.
+
+    Args:
+        path (Path): Path to the config file. Defaults to standard location.
+    """
+    path = Path(INTERNAL_USER_CONFIG_DIR)
+    try:
+        if path.exists():
+            path.unlink()
+            print(f"[INFO] Deleted config file: {path}")
+        else:
+            print(f"[INFO] No config file found at: {path}")
+    except Exception as e:
+        print(f"[ERROR] Failed to delete config file: {e}")
 
 def main():
     outside_config_path = HOME / "NRML" / "outside_config.yml"
