@@ -2,7 +2,6 @@ from ee_wildfire.UserInterface import ConsoleUI
 from ee_wildfire.command_line_args import parse, run
 
 def main():
-    ConsoleUI.clear_screen()
     config = parse()
     run(config)
     ConsoleUI.close_all_bars()

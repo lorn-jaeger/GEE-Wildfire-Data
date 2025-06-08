@@ -6,6 +6,7 @@ from ee_wildfire.utils.yaml_utils import load_yaml_config, save_yaml_config
 from ee_wildfire.constants import *
 from ee_wildfire.globfire import get_fires
 from ee_wildfire.UserConfig.authentication import AuthManager
+import argparse
 
 
 import os
@@ -67,11 +68,6 @@ class UserConfig:
         while not os.path.exists(self.credentials):
             ConsoleUI.print(f"Google service credentials JSON {self.credentials} not found!", color="red")
             self.credentials = os.path.expanduser(ConsoleUI.prompt_path())
-
-
-        # if not os.path.exists(self.credentials):
-        #     # TODO: verbose error is needed here
-        #     ConsoleUI.print(f"{self.credentials} not found!", color="red")
 
         if (self.data_dir != os.path.abspath(DEFAULT_DATA_DIR)):
             if(self.tiff_dir == os.path.abspath(DEFAULT_TIFF_DIR)):

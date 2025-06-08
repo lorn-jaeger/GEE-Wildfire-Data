@@ -112,6 +112,7 @@ def parse() -> UserConfig:
 
     # ======== After User Config Configuration? ========
 
+    ConsoleUI.clear_screen()
     ConsoleUI.write(str(config))
 
     ConsoleUI.write("")
