@@ -92,6 +92,7 @@ class DriveDownloader:
         results = self.service.files().list(
             q=f"'{folder_id}' in parents and mimeType='image/tiff' and trashed=false",
             spaces="drive",
+            pageSize=1000,
             fields="files(id, name)"
         ).execute()
         files = results.get("files",[])
@@ -168,10 +169,12 @@ class DriveDownloader:
 
 def main():
     from ee_wildfire.constants import HOME
-    outside_config_path = HOME / "NRML" / "outside_config.yml"
-    uf = UserConfig(outside_config_path)
+    uf = UserConfig()
+    ConsoleUI.set_verbose(False)
+    uf.authenticate()
     dn = DriveDownloader(uf)
-    dn.purge_data()
+    found_files, files = dn.get_files_in_drive()
+    print(len(found_files), len(files))
     
 
 
