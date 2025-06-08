@@ -4,8 +4,7 @@ from ee_wildfire.command_line_args import parse, run
 def main():
     config = parse()
     run(config)
-    ConsoleUI.close_all_bars()
-    print()
+    ConsoleUI.clear_screen()
 
 
 if __name__ == "__main__":

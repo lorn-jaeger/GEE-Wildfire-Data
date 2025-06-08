@@ -120,6 +120,7 @@ class ConsoleUI:
     def update_bar(cls, key, n=1):
         if key in cls._bars:
             cls._bars[key].update(n)
+            cls._bars[key].refresh()
 
     @classmethod
     def reset_bar(cls, key, n=0):
