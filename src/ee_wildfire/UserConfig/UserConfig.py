@@ -262,11 +262,11 @@ def delete_user_config() -> None:
     try:
         if path.exists():
             path.unlink()
-            print(f"[INFO] Deleted config file: {path}")
+            ConsoleUI.print(f"Deleted config file: {path}")
         else:
-            print(f"[INFO] No config file found at: {path}")
+            ConsoleUI.print(f"No config file found at: {path}", color="yellow")
     except Exception as e:
-        print(f"[ERROR] Failed to delete config file: {e}")
+        ConsoleUI.print(f"Failed to delete config file: {e}", color="red")
 
 def main():
     outside_config_path = HOME / "NRML" / "outside_config.yml"
