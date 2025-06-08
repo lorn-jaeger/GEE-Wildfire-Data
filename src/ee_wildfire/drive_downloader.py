@@ -142,7 +142,7 @@ class DriveDownloader:
         try:
             while True:
                 _, files = self.get_files_in_drive()
-                ConsoleUI.add_bar(key="purge", total=len(files), desc="Purge progress")
+                ConsoleUI.add_bar(key="purge", total=len(files), desc="Purge progress", color="yellow")
                 ConsoleUI.print(f"found {len(files)} files")
 
                 for f in files:
