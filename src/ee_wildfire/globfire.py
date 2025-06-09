@@ -116,7 +116,7 @@ def get_daily_fires(region, row):
             daily.append(gdf)
 
     if not daily:
-        return gpd.GeoDataframe(columns=['Id', 'IDate', 'lat', 'lon']) # type: ignore
+        return gpd.GeoDataFrame(columns=['Id', 'IDate', 'lat', 'lon']) # type: ignore
 
     daily = gpd.GeoDataFrame(pd.concat(daily, ignore_index=True))
 
@@ -182,21 +182,30 @@ def get_fires(config):
 
     return fires
 
-def save_fires(config):
-    print("Caching fire query...")
+
+def sanitize_filename(value):
+    return str(value).replace(":", "-").replace(" ", "_")
+
+def get_fire_cache_path(config):
     output_dir = os.path.join(config.data_dir, "gdfs")
     os.makedirs(output_dir, exist_ok=True)
-    filename = f"{config.start_date}_{config.end_date}_{config.min_size}_FIRES"
 
-    output_path = os.path.join(output_dir, filename)
-    config.geodataframe.to_file(output_path)
+    start = sanitize_filename(config.start_date)
+    end = sanitize_filename(config.end_date)
+    filename = f"{start}_{end}_{config.min_size}_FIRES.pkl"
+
+    return os.path.join(output_dir, filename)
+
+def save_fires(config):
+    print("Caching fire query...")
+    output_path = get_fire_cache_path(config)
+    config.geodataframe.to_pickle(output_path)
 
 def load_fires(config):
-    print("Loading from fire cache...")
-    input_dir = os.path.join(config.data_dir, "gdfs")
-    filename = f"{config.start_date}_{config.end_date}_{config.min_size}_FIRES"
+    input_path = get_fire_cache_path(config)
+    if not os.path.exists(input_path):
+        raise FileNotFoundError(f"Cached fire data not found: {input_path}")
 
-    input_path = os.path.join(input_dir, filename)
-    config.geodataframe = gpd.read_file(input_path)
-
+    print("GeoDataFrame already exists. Loading from file cache instead.")
+    config.geodataframe = pd.read_pickle(input_path)
 

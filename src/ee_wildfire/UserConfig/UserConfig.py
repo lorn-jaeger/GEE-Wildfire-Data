@@ -167,10 +167,10 @@ class UserConfig:
         Load the combined fire geodataframe and assign it to `self.geodataframe`.
         """
         try:
-           load_fires(self.config) 
+           load_fires(self) 
         except:
             self.geodataframe = get_fires(self)
-            save_fires(self.config)
+            save_fires(self)
 
     def change_configuration_from_yaml(self, yaml_path: Union[Path,str]) -> None:
         """
