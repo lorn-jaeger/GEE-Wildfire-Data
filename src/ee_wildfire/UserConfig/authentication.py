@@ -18,7 +18,9 @@ class AuthManager:
             self.ee_creds = ee.ServiceAccountCredentials(email=json.load(open(self.service_json))['client_email'],
                                                  key_file=str(self.service_json))
             # creds = service_account.Credentials.from_service_account_file(self.service_json, scopes=SCOPES)
-            ee.Initialize(self.ee_creds)
+            # print(self.ee_creds.project_id)
+            # ee.Initialize(self.ee_creds)
+            ee.Initialize(project=self.ee_creds.project_id)
         elif self.auth_mode == "oauth":
             ee.Authenticate()  # launches browser
             ee.Initialize()
