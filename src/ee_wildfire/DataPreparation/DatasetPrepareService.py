@@ -63,6 +63,29 @@ class DatasetPrepareService:
 
         self.scale_dict = {"FirePred": 375}
 
+    def _gee_export(self,img,base_filename,utm_zone):
+        geemap.ee_export_image_to_drive(
+            image=img,
+            description=base_filename,
+            folder=self.user_config.google_drive_dir,
+            region=self.geometry.toGeoJSON()['coordinates'],
+            scale=self.scale_dict.get("FirePred"),
+            crs=f'EPSG:{utm_zone}',
+            maxPixels=1e13
+        )
+
+    def _batch_export(self,image, base_filename, utm_zone):
+        task = ee.batch.Export.image.toDrive(
+            image=image,
+            description=base_filename,
+            folder=self.user_config.google_drive_dir,
+            region=self.geometry.toGeoJSON()['coordinates'],
+            scale=self.scale_dict.get("FirePred"),
+            crs=f'EPSG:{utm_zone}',
+            maxPixels=self.user_config.max_size,
+        )
+        task.start()
+
         
     def prepare_daily_image(self, date_of_interest:str, time_stamp_start:str="00:00", time_stamp_end:str="23:59") -> ImageCollection:
         """
@@ -98,29 +121,22 @@ class DatasetPrepareService:
             utm_zone (str): EPSG code for UTM projection to use for export.
         """
 
-        folder = self.user_config.google_drive_dir
         base_filename = f"Image_Export_{self.location}_{index}"
-
         img = image_collection.max().toFloat()
 
-        
         # Use geemap's export function
         try:
-            geemap.ee_export_image_to_drive(
-                image=img,
-                description=base_filename,
-                folder=folder,
-                region=self.geometry.toGeoJSON()['coordinates'],
-                scale=self.scale_dict.get("FirePred"),
-                crs=f'EPSG:{utm_zone}',
-                maxPixels=1e13
-            )
+            # self._gee_export(img, base_filename, utm_zone)
+            self._batch_export(img,base_filename,utm_zone)
 
             # add item to export queue
             self.user_config.exported_files.append(f"{base_filename}.tif")
 
         except Exception as e:
+            # NOTE: log this
             # ConsoleUI.print(f"Export failed for {filename}: {str(e)}")
+
+            # FIX: Are these getting handled at all?
             self.user_config.failed_exports.append(f"{base_filename}.tif")
             wait_for_gee_queue_space()
 
