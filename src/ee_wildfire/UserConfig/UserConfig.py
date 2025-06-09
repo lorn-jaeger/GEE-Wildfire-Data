@@ -4,31 +4,17 @@
 from ee_wildfire.UserInterface import ConsoleUI
 from ee_wildfire.utils.yaml_utils import load_yaml_config, save_yaml_config
 from ee_wildfire.constants import *
-from ee_wildfire.drive_downloader import DriveDownloader
 from ee_wildfire.globfire import get_fires, load_fires, save_fires
-from ee_wildfire.get_globfire import get_combined_fires
-
-from ee import Authenticate #type: ignore
-from ee import Initialize
-
-import os, sys
-
-from typing import Union, Dict, Any
+from ee_wildfire.UserConfig.authentication import AuthManager
+import argparse
 
 
-default_values: Dict[str, Any] = {
-    "project_id": DEFAULT_PROJECT_ID,
-    "credentials":DEFAULT_OAUTH_DIR,
-    "start_date": DEFAULT_START_DATE,
-    "end_date": DEFAULT_END_DATE,
-    "google_drive_dir": DEFAULT_GOOGLE_DRIVE_DIR,
-    "min_size": DEFAULT_MIN_SIZE,
-    "max_size": DEFAULT_MAX_SIZE,
-    "data_dir": DEFAULT_DATA_DIR,
-    "tiff_dir": DEFAULT_TIFF_DIR,
-    "export": False,
-    "download": False,
-}
+import os
+import pprint
+
+from typing import Union
+
+
 
 class UserConfig:
     """
@@ -39,58 +25,36 @@ class UserConfig:
     with Google Drive and geospatial fire datasets.
     """
 
-    def __init__(self, yaml_path: Union[Path,str] = INTERNAL_USER_CONFIG_DIR):
+    def __init__(self):
         """
         Initialize the UserConfig object by loading and validating the configuration.
-
-        Args:
-            yaml_path (Union[Path,str]): Path to the user configuration YAML file.
         """
-        self.change_configuration_from_yaml(yaml_path)
 
-        self._validate_paths()
-        self._validate_time()
-        self._authenticate()
-
+        self._load_from_internal_config()
         self.exported_files = []
         self.failed_exports = []
 
 
+
     def __str__(self) -> str:
-        """
-        String representation of the configuration for display or debugging.
+        items_to_exclude = [
+            "exported_files",
+            "failed_exports",
+        ]
+        config_items = {
+            k: str(v)
+            for k, v in self.__dict__.items()
+            if (not k.startswith('_')) and (k not in items_to_exclude)
+        }
 
-        Returns:
-            str: Human-readable representation of the current config state.
-        """
-        output_string = ""
-        attrs = self.__dict__
-        for key in attrs:
-            output_string += f"{key}: {attrs[key]}\n"
+        sorted_items = dict(sorted(config_items.items()))
 
-        return output_string
-
-    def _authenticate(self) -> None:
-        """
-        Authenticate with Google Earth Engine and initialize the DriveDownloader.
-        """
-        try:
-            Authenticate()
-            Initialize(project=self.project_id)
-            self.downloader = DriveDownloader(self.credentials, self.google_drive_dir)
-
-        except Exception as e:
-            print("\n Google Earth Engine authentication failed.")
-            print(f"🔍 Error: {str(e)}")
-
-            print("\n Suggested fixes:")
-            print("1. Make sure you're logged into a Google account with Earth Engine access.")
-            print("2. Run `earthengine authenticate` in the terminal to manually authenticate.")
-            print("3. Check that your internet connection is active and not blocking access to Earth Engine.")
-            print("4. If you're using a service account, verify your credentials and permissions.")
-            print("5. Ensure your project ID is correct and the account has access to it.")
-
-            sys.exit(1)  # or raise a RuntimeError if you want traceback info
+        # Format nicely using pprint
+        return "\n".join([
+            "╭─ User Configuration ─────────────────────────────────────────────────────────────────────────────",
+            *[f"│ {key:<20} : {pprint.pformat(value)}" for key, value in sorted_items.items()],
+            "╰──────────────────────────────────────────────────────────────────────────────────────────────────"
+        ])
 
     def _validate_paths(self) -> None:
         """
@@ -98,9 +62,34 @@ class UserConfig:
         Raises:
             FileNotFoundError: If credentials file does not exist.
         """
-        if not os.path.exists(self.credentials):
-            # TODO: verbose error is needed here
-            raise FileNotFoundError(f"{self.credentials} not found!")
+
+        if hasattr(self,'credentials'):
+            self.credentials = Path(os.path.abspath(self.credentials))
+
+        if hasattr(self, 'data_dir'):
+            self.data_dir = Path(os.path.abspath(self.data_dir))
+
+        if hasattr(self, 'tiff_dir'):
+            self.tiff_dir = Path(os.path.abspath(self.tiff_dir))
+
+        if hasattr(self, 'config'):
+            self.config = Path(self.config)
+
+
+        num_retries = 3
+        while not os.path.exists(self.credentials):
+            if(num_retries <= 0):
+                break
+
+            ConsoleUI.print(f"Google service credentials JSON {self.credentials} not found!", color="red")
+            self.credentials = os.path.expanduser(ConsoleUI.prompt_path())
+            num_retries -= 1
+
+
+        if (self.data_dir != os.path.abspath(DEFAULT_DATA_DIR)):
+            if(self.tiff_dir == os.path.abspath(DEFAULT_TIFF_DIR)):
+                self.tiff_dir = self.data_dir / 'tiff'
+
 
         self._try_make_path(self.data_dir)
         self._try_make_path(self.tiff_dir)
@@ -113,6 +102,8 @@ class UserConfig:
         """
         start_year = int(self.start_date.year)
         end_year = int(self.end_date.year)
+
+        # FIX: Validate new time if put in by command line argument
 
         if(start_year < MIN_YEAR):
             raise IndexError(f"Querry year '{start_year}' is smaller than the minimum year {MIN_YEAR}")
@@ -153,14 +144,61 @@ class UserConfig:
         """
         namespace = []
         for name in COMMAND_ARGS:
-            if(name != "-version"):
-                fixed_name = name[2:].replace("-","_")
+            if(name not in ["--version", "--help"]):
+                fixed_name = self._fix_name(name)
                 namespace.append(fixed_name)
         return namespace
+
+    def _get_default_values(self):
+        values = {}
+        for name in COMMAND_ARGS:
+            if(name not in ["--version", "--help"]):
+                _, default_val, _, _ = COMMAND_ARGS[name]
+                fixed_name = self._fix_name(name)
+                values[fixed_name] = default_val
+        return values
+
+    def _get_bools(self):
+        values = []
+        for name in COMMAND_ARGS:
+            if(name not in ["--version", "--help"]):
+                aType, _, _, _ = COMMAND_ARGS[name]
+                fixed_name = self._fix_name(name)
+                if(aType is None):
+                    values.append(fixed_name)
+        return values
+
+    def _fix_name(self, name: str) -> str:
+        return name[2:].replace("-","_")
+
+    def _fill_namespace(self, namespace: dict) -> None:
+        for key, item in namespace.items():
+            setattr(self, key, item)
+
+    def _save_to_internal_config_file(self):
+        save_yaml_config(self.__dict__, INTERNAL_USER_CONFIG_DIR)
+
+    def _load_from_internal_config(self):
+        if os.path.exists(INTERNAL_USER_CONFIG_DIR):
+            config_data = load_yaml_config(INTERNAL_USER_CONFIG_DIR)
+            self._fill_namespace(config_data)
 
 # =========================================================================== #
 #                               Public Methods
 # =========================================================================== #
+
+    def authenticate(self) -> None:
+        """
+        Authenticate with Google Earth Engine and initialize the DriveDownloader.
+        """
+        self.auth = AuthManager(
+            auth_mode="service_account",
+            service_json=self.credentials,
+        )
+        self.auth.authenticate_drive()
+        self.auth.authenticate_earth_engine()
+        self.drive_service = self.auth.drive_service
+        self.project_id = self.auth.get_project_id()
 
     def get_geodataframe(self) -> None:
         """
@@ -180,43 +218,74 @@ class UserConfig:
             yaml_path (Union[Path,str]): Path to the YAML config file.
         """
         config_data = load_yaml_config(yaml_path)
+        defaults = self._get_default_values()
+        namespace = defaults.keys()
 
-        for key in default_values.keys():
-            if key not in config_data:
-                config_data[key] = default_values[key]
+        # fill in missing config options with default
+        for name in namespace:
+            if name not in config_data.keys():
+                config_data[name] = defaults[name]
 
-            setattr(self, key ,config_data[key])
+        # set the object attributes with fixed config data
+        for item, value in config_data.items():
+            setattr(self, item, value)
 
-        self.save_to_internal_config_file()
 
-    def change_configuration_from_args(self, args: Any) -> None:
+        self._validate_paths()
+        self._validate_time()
+        self._save_to_internal_config_file()
+
+    def change_configuration_from_args(self, args: argparse.Namespace):
         """
         Update internal boolean flags (`export`, `download`) from parsed CLI arguments.
 
         Args:
             args (Any): Parsed argparse namespace object.
         """
-        namespace = self._get_args_namespace()
-        internal_config = args.config == INTERNAL_USER_CONFIG_DIR
-        for key in namespace:
-            val = getattr(args,key)
-            if(internal_config and (val is not None)):
-                setattr(self, key, val)
+        explicit = getattr(args, "_explicit_args", set())
+        bool_keys = self._get_bools()
+        all_keys = self._get_args_namespace()
+
+        for key in all_keys:
+            arg_val = getattr(args, key)
+
+            # Always set booleans (they're binary state toggles)
+            if key in bool_keys:
+                setattr(self, key, arg_val)
+                continue
+
+            # Set if the attribute doesn't exist
+            if not hasattr(self, key):
+                setattr(self, key, arg_val)
+                continue
+
+            # Only override if user explicitly passed it
+            if key in explicit:
+                setattr(self, key, arg_val)
 
         self._validate_paths()
         self._validate_time()
-        self.save_to_internal_config_file()
+        self._save_to_internal_config_file()
 
-    def save_to_internal_config_file(self):
-        save_yaml_config(self.__dict__, INTERNAL_USER_CONFIG_DIR)
+def delete_user_config() -> None:
+    """
+    Deletes the user_config.yml file if it exists.
 
-
-
+    Args:
+        path (Path): Path to the config file. Defaults to standard location.
+    """
+    path = Path(INTERNAL_USER_CONFIG_DIR)
+    try:
+        if path.exists():
+            path.unlink()
+            ConsoleUI.print(f"Deleted config file: {path}")
+        else:
+            ConsoleUI.print(f"No config file found at: {path}", color="yellow")
+    except Exception as e:
+        ConsoleUI.print(f"Failed to delete config file: {e}", color="red")
 
 def main():
     outside_config_path = HOME / "NRML" / "outside_config.yml"
-    uf = UserConfig(outside_config_path)
-    uf.save_config_to_yaml()
 
 if __name__ == "__main__":
     main()

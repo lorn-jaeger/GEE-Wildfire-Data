@@ -6,9 +6,7 @@ This is a bunch of helper functions for handling yaml files
 import yaml
 import os
 from pathlib import PosixPath
-from geopandas import GeoDataFrame
 from ee_wildfire.constants import ROOT
-from ee_wildfire.drive_downloader import DriveDownloader
 from ee_wildfire.constants import *
 from datetime import datetime
 
@@ -34,8 +32,6 @@ def save_yaml_config(config_data: Dict[str, Any], yaml_path: Union[Path,str]) ->
 
     transform_types = [PosixPath, Path]
 
-    rejected_types = [DriveDownloader, GeoDataFrame]
-
     config_data_fixed = {}
 
     if not validate_yaml_path(yaml_path):
@@ -47,11 +43,11 @@ def save_yaml_config(config_data: Dict[str, Any], yaml_path: Union[Path,str]) ->
         if type_check in accepted_types:
             config_data_fixed[key] = config_data[key]
 
-        if type_check in rejected_types:
-            pass
-
         if type_check in transform_types:
             config_data_fixed[key] = str(config_data[key])
+
+        if type_check is None:
+            config_data_fixed[key] = False
 
 
     with open(yaml_path, 'w') as f:

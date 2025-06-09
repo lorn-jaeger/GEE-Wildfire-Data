@@ -99,7 +99,6 @@ class DatasetPrepareService:
         """
 
         folder = self.user_config.google_drive_dir
-        filename = f"{self.location}/{index}"
         base_filename = f"Image_Export_{self.location}_{index}"
 
         img = image_collection.max().toFloat()
@@ -142,7 +141,7 @@ class DatasetPrepareService:
 
         for i in range(time_dif.days):
             date_of_interest = str(self.start_time - buffer_days + datetime.timedelta(days=i))
-            # tqdm.write(f"Processing date: {date_of_interest}")
+            ConsoleUI.print(f"Processing date: {date_of_interest}")
 
             try:
                 img_collection = self.prepare_daily_image(date_of_interest=date_of_interest)
@@ -157,28 +156,30 @@ class DatasetPrepareService:
                 if len(max_img.getInfo().get('bands')) != 0:
                     self.download_image_to_drive(img_collection, date_of_interest, utm_zone)
             except Exception as e:
-                tqdm.write(f"Failed pocessing {date_of_interest}: {str(e)}")
+                ConsoleUI.print(f"Failed processing {date_of_interest}: {str(e)}", color="red")
                 raise
 
             ConsoleUI.update_bar(key="export")
 
 def wait_for_gee_queue_space():
-    ConsoleUI.add_bar("export_queue",total=EXPORT_QUEUE_SIZE, desc="Google Earth export queue")
+    ConsoleUI.add_bar("export_queue",total=EXPORT_QUEUE_SIZE, desc="Google Earth export queue", color="yellow")
+    total = EXPORT_QUEUE_SIZE
+    target = EXPORT_QUEUE_SIZE/2
 
     while True:
         tasks = ee.data.getTaskList()
         active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
 
-        total = EXPORT_QUEUE_SIZE
         if len(active_tasks) > total:
             total = len(active_tasks)
 
         # update progress bar
-        # ConsoleUI.update_bar(key="export_queue", n=len(active_tasks))
         ConsoleUI.change_bar_total(key="export_queue",total=total)
         ConsoleUI.set_bar_position(key="export_queue",value=len(active_tasks))
+        ConsoleUI.print(f"Waiting until export queue size = {target}. {len(active_tasks)-target} remaining")
 
-        if len(active_tasks) < EXPORT_QUEUE_SIZE/2:
+        if len(active_tasks) <= target:
+            ConsoleUI.change_bar_desc(key="export_queue", desc="Google Earth export queue")
             break
         else:
             ConsoleUI.change_bar_desc(key="export_queue", desc="Google Earth export queue full, waiting...")

@@ -6,6 +6,7 @@ This is where the programs constant variables are stored
 
 from pathlib import Path
 from datetime import datetime
+from ee_wildfire.utils.user_config_utils import StorePassedAction, parse_datetime
 
 # =========== Paths ===========
 
@@ -20,15 +21,17 @@ INTERNAL_USER_CONFIG_DIR = ROOT / "UserConfig" /"user_config.yml"
 
 # =========== Needed Constants ===========
 
-VERSION = "2025.1.6"
+VERSION = "2025.06.13"
 
-SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
+# SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
+
+SCOPES = ['https://www.googleapis.com/auth/drive']
 
 CRS_CODE = "32610"
 
 DATE_FORMAT = "%Y-%m-%d"
 
-EXPORT_QUEUE_SIZE = 3050
+EXPORT_QUEUE_SIZE = 3000
 
 MIN_YEAR = 2001
 
@@ -100,7 +103,7 @@ DEFAULT_HDF5_DIR = DEFAULT_DATA_DIR / "hdf5"
 
 DEFAULT_OAUTH_DIR = DEFAULT_DATA_DIR / "OAuth" / "credentials.json"
 
-DEFAULT_GOOGLE_DRIVE_DIR = "EarthEngine_WildfireSpreadTS"
+DEFAULT_GOOGLE_DRIVE_DIR = "GoogleEarthEngine"
 
 
 # =========== Command Line Arguments ===========
@@ -110,27 +113,29 @@ DEFAULT_GOOGLE_DRIVE_DIR = "EarthEngine_WildfireSpreadTS"
 # single - between words are swapped for _ in YAML file
 COMMAND_ARGS = {
     #"NAME":                (type,  default,                    action,         help)
+    "--help":                (None,  None,                       "help",         "Show help screen"),
     "--version":             (None,  None,                       "version",      "Show current version"),
-    "--config":              (Path,  INTERNAL_USER_CONFIG_DIR,   "store",        "Path to JSON config file"),
+    "--config":              (Path,  INTERNAL_USER_CONFIG_DIR,   StorePassedAction,        "Path to JSON config file"),
     "--export":              (None,  False,                      "store_true",   "Export to drive."),
     "--download":            (None,  False,                      "store_true",   "Download from drive."),
-    "--show-config":         (None,  False,                      "store_true",   "Show user configuration."),
-    "--project-id":          (str,   None,                       "store",        "Change Google Earth project ID"),
-    "--credentials":         (Path,  None,                       "store",        "Path to Google Authetication .json"),
-    "--data-dir":            (Path,  None,                       "store",        "Path to output data directory."),
-    "--tiff-dir":            (Path,  None,                       "store",        "Path where downloaded tiff files go."),
-    "--google-drive-dir":    (str,   None,                       "store",        "Google Drive folder for exporting."),
-    "--min-size":            (int,   None,                       "store",        "Minimum size of fire area."),
-    "--max-size":            (int,   None,                       "store",        "Maximum size of fire area."),
+    "--credentials":         (Path,  DEFAULT_OAUTH_DIR,          StorePassedAction,        "Path to Google Authetication .json"),
+    "--data-dir":            (Path,  DEFAULT_DATA_DIR,           StorePassedAction,        "Path to output data directory."),
+    "--tiff-dir":            (Path,  DEFAULT_TIFF_DIR,           StorePassedAction,        "Path where downloaded tiff files go."),
+    "--google-drive-dir":    (str,   DEFAULT_GOOGLE_DRIVE_DIR,   StorePassedAction,        "Google Drive folder for exporting."),
+    "--min-size":            (float,   DEFAULT_MIN_SIZE,           StorePassedAction,        "Minimum size of fire area."),
+    "--max-size":            (float,   DEFAULT_MAX_SIZE,           StorePassedAction,        "Maximum size of fire area."),
     "--retry-failed":        (None,  False,                      "store_true",   "Retry failed locations."),
-    #"-purge-before":        (None,  False,                      "store_true",   "Purge data from google drive before exporting"),
-    #"-purge-after":         (None,  False,                      "store_true",   "Purge data from google drive after downloading"),
-
+    "--purge-before":        (None,  False,                      "store_true",   "Purge data from google drive before exporting"),
+    "--purge-after":         (None,  False,                      "store_true",   "Purge data from google drive after downloading"),
+    "--start-date":          (parse_datetime,  DEFAULT_START_DATE,     StorePassedAction,        "Starting date for Earth Engine querry"),
+    "--end-date":            (parse_datetime,  DEFAULT_END_DATE,       StorePassedAction,        "Ending date for Earth Engine querry"),
+    "--silent":              (None,  False,                      "store_true",   "No program output."),
+    "--reset-config":        (None,  False,                      "store_true",   "Reset internal user configuration."),
 }
 
+
 def main():
-    print(DEFAULT_START_DATE)
-    print(DEFAULT_END_DATE)
+    print(COMMAND_ARGS)
 
 if __name__ == "__main__":
     main()

@@ -11,8 +11,10 @@ from ee_wildfire.utils.yaml_utils import  get_full_yaml_path
 from ee_wildfire.utils.google_drive_util import export_data
 from ee_wildfire.UserConfig.UserConfig import UserConfig
 from ee_wildfire.UserInterface import ConsoleUI
+from ee_wildfire.drive_downloader import DriveDownloader
+from ee_wildfire.UserConfig.UserConfig import delete_user_config
 
-from tqdm import tqdm
+# from tqdm import tqdm
 
 def run(config: UserConfig) -> None:
     # TODO: update docs
@@ -22,34 +24,41 @@ def run(config: UserConfig) -> None:
     Args:
         config (UserConfig): Fully initialized user configuration.
     """
-    # pre-perge google drive if true
+    config.authenticate()
+    downloader = DriveDownloader(config)
 
-    if(config.export or config.download):
+    if(config.purge_before):
+        downloader.purge_data()
+
+    if(config.export):
         # generate geodata frame
-        tqdm.write("Generating GeoDataFrame...")
+        ConsoleUI.print("Generating GeoDataFrame...")
         config.get_geodataframe()
 
         # generate the YAML output config
-        tqdm.write("Generating Fire Configuration...")
+        ConsoleUI.print("Generating Fire Configuration...")
         create_fire_config_globfire(config)
 
 
 
     if((not config.export) and config.download):
-        config.downloader.download_folder(config.google_drive_dir, config.tiff_dir)
+        # config.downloader.download_folder(config.google_drive_dir, config.tiff_dir)
+        downloader.download_folder()
 
     # export data from earth engine to google drive
     if(config.export):
-        tqdm.write("Processing Data...")
+        ConsoleUI.print("Processing Data...")
         export_data(yaml_path=get_full_yaml_path(config), user_config=config)
 
 
     # download from google drive to local machine
     if(config.download):
-        config.downloader.download_files(config.tiff_dir, config.exported_files)
+        # config.downloader.download_files(config.tiff_dir, config.exported_files)
+        downloader.download_files()
 
-    ConsoleUI.close_all_bars()
-    # post-purge google drive if true
+    if(config.purge_after):
+        downloader.purge_data()
+
 
 def parse() -> UserConfig:
     """
@@ -67,35 +76,53 @@ def parse() -> UserConfig:
                                      default=_default,
                                      action=_action,
                                      help=_help)
-        elif(cmd != "-version"):
+        elif(cmd not in ["--version", "--help"]):
             base_parser.add_argument(cmd,
                                      default=_default,
                                      action=_action,
                                      help=_help)
-        else:
+        elif(cmd == "--version"):
             base_parser.add_argument(cmd,
                                      action=_action,
                                      version=VERSION,
+                                     help=_help)
+        elif(cmd == "--help"):
+            base_parser.add_argument(cmd,
+                                     action=_action,
                                      help=_help)
 
 
     args, _ = base_parser.parse_known_args()
 
+    # ======== Before User Config Creation ========
 
-    outside_user_config_path = args.config
+    ConsoleUI.set_verbose(not args.silent)
+    ConsoleUI.clear_screen()
 
-    config = UserConfig(yaml_path=outside_user_config_path)
-    config.change_configuration_from_args(args)
+    if(args.reset_config):
+        delete_user_config()
 
-    if(args.show_config or (args.config != INTERNAL_USER_CONFIG_DIR)):
-        tqdm.write(str(config))
+    # ======== After User Config Creation ========
+
+    config = UserConfig()
+
+    if(args.config == INTERNAL_USER_CONFIG_DIR):
+        config.change_configuration_from_args(args)
+    else:
+        config.change_configuration_from_yaml(args.config)
+
+    # ======== After User Config Configuration? ========
+
+    ConsoleUI.write(str(config))
+
+    ConsoleUI.write("")
 
     return config
 
 def main():
     ui = ConsoleUI()
     config = parse()
-    print(config)
+    # ConsoleUI.prompt_path()
 
 if __name__ == "__main__":
     main()

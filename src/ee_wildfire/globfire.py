@@ -23,6 +23,8 @@ import geopandas as gpd
 import os
 from tqdm import tqdm
 
+from ee_wildfire.UserInterface import ConsoleUI
+
 usa_coords = [
     [-125.1803892906456, 35.26328285844432],
     [-117.08916345892665, 33.2311514593429],
@@ -156,17 +158,17 @@ def format_gdf(fires):
 def get_fires(config):
     collection = 'JRC/GWIS/GlobFire/v2/FinalPerimeters'
     region = create_usa_geometry()
-
     gdfs = []
-
     weeks = pd.date_range(start=config.start_date, end=config.end_date, freq='W')
+
+
     for week in tqdm(weeks, desc="Fire dates"):
         start = int(week.timestamp() * 1000)
         end = int((week + pd.Timedelta(days=1)).timestamp() * 1000)
         gdf = get_final_fires(config, collection, start, end, region)
-
         if not gdf.empty:
             gdfs.append(gdf)
+
 
     fires = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True))
     fires = format_gdf(fires)

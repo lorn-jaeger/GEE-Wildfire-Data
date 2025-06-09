@@ -31,60 +31,38 @@ To run this project with Google Earth Engine and Google Drive access, follow the
 
 ---
 
-## 1. ✅ Create a Service Account
+## Step 1. Create a Google Cloud Project
+- Go the [Google Cloud Console.](https://console.cloud.google.com/)
+- Click the project drop-down (top bar) -> **New Project**.
+- Name your project (eg., ee-wildfire) and click **Create**.
 
-In the [Google Cloud Console](https://console.cloud.google.com/), do the following:
+## Step 2. Enable Required APIs
+- [Earth Engine API](https://console.cloud.google.com/flows/enableapi?apiid=earthengine.googleapis.com)
+- [Google Drive API](https://console.cloud.google.com/flows/enableapi?apiid=drive.googleapis.com)
 
-- Go to **IAM & Admin → Service Accounts → Create Service Account**
-- Assign the following roles to the **Service Account**:
-  - `Owner`
-  - `Service Usage Admin`
-  - `Service Usage Consumer`
-  - `Storage Admin`
-  - `Storage Object Creator`
+## Step 3. Create a Service Account
+- In the left sidebar: **IAM & Admin** → **Service Accounts**.
+- Click **+ Create Service Account**.
+- Name it (e.g., `wildfire-access`) and click **Create and Continue**.
+- Assign the following roles to the service account:
+  - Owner
+  - Service Usage Admin
+  - Service Usage Consumer
+  - Storage Admin
+  - Storage Object Creator
+- On the list, find your service account → Click **Actions (⋮)** → **Manage keys**.
+- Under **Keys**, click **Add Key → Create new key → JSON**.
+- Save the downloaded JSON file somewhere safe (e.g., `service_account.json`).
 
----
+## Step 4. Share Google Drive Folder
+If your code needs to read/write to Google Drive:
 
-## 2. 🔑 Assign Roles to Your Personal Account
-
-Make sure your **main Google Cloud account** (the one you'll log in with) has these roles:
-
-- `Owner`
-- `Service Usage Admin`
-- `Service Usage Consumer`
-
----
-
-## 3. 🧭 Create OAuth Credentials (for Google Drive Access)
-
-Still in the Google Cloud Console:
-
-- Go to **APIs & Services → Credentials → + Create Credentials → OAuth Client ID**
-- If prompted, **configure the OAuth consent screen**:
-  - Choose **Desktop App**
-  - Provide a name (e.g., "Drive Access")
-- Once created:
-  - **Download the JSON** file (this is your OAuth credentials)
-  - **Save** the `client_id` and `client_secret` (you’ll use these in your config)
+- Create a folder in [Google Drive](https://drive.google.com/).
+- Right-click → **Share**.
+- Share it with your **service account email** (e.g., `your-sa@your-project.iam.gserviceaccount.com`).
+- Grant **Editor** permission.
 
 ---
-
-## 4. 🚀 Enable Required APIs
-
-In the left-hand menu:
-
-- Go to **APIs & Services → Library**
-- Enable the following APIs:
-  - `Google Drive API`
-  - `Google Earth Engine API`
-
----
-
-## 5. 👤 Add Test Users (Required for OAuth)
-
-- Go to **APIs & Services → OAuth consent screen**
-- Scroll to the **Test Users** section
-- Click **+ Add Users** and add your personal Google account (the one you'll use for authentication)
 
 # Install Instructions
 
@@ -108,20 +86,22 @@ Template for configuration:
 ```yaml
 # NEEDED
 # These items are necessary to function.
-project_id: YOUR PROJECT ID
 credentials: ~/ee_wildfire_data/OAuth/credentials.json
 
 # OPTIONAL
 # These items have default values if not provided in YAML file.
+min_size: 10000000.0
+max_size: 1000000000.0
 data_dir: ~/ee_wildfire_data
 start_date: 2021-01-01 00:00:00
 end_date: 2021-04-20 00:00:00
 tiff_dir: ~/ee_wildfire_data/tiff/2021
-drive_dir: EarthEngine_WildfireSpreadTS_2021
+google_drive_dir: GoogleEarthEngine
 download: false
 export: false
-min_size: 10000000.0
-max_size: 1000000000.0
+retry-failed: false
+
+
 
 ```
 
@@ -133,19 +113,23 @@ To finish configuration you will need to use the `-config` command line argument
 You can also edit configuration on the fly with command line arguments:
 
 | Argument | Parameters | Description |
-| -------- |-- |------------|
-| `--config` | `PATH`| Loads a YAML config file located at PATH. This will overload any other command-line arguments.|
-| `--version` | None | Prints current program version|
-| `--show-config`| None | Prints current config to command line. |
+| -------- |------------|-------------|
+| `--version` | None | Show current version. |
+| `--config` | `PATH` | Path to YAML config file. Overrides all other command-line arguments. |
 | `--export` | None | Export data from Google Earth Engine to Google Drive. |
-| `--download`| None | Downloads data from Google Drive to your local machine. |
-| `--project-id` | `str` | The name of your google earth project id |
-| `--credentials` | `PATH`| The path to your credentials.json from google cloud OAuth2.0 |
-| `--data-dir` | `PATH`| The path to your local machine's output data directory |
-| `--tiff-dir` | `PATH`| The path to your local machine's output data directory, but specifically for tif files. |
-| `--google-drive-dir` | `str`| The name of your google drive directory for file exporting. |
-| `--min-size` | `float` | The mimimum size of fire to detect. |
-| `--max-size` | `float` | The maximum size of fire to detect. |
+| `--download` | None | Download data from Google Drive to your local machine. |
+| `--show-config` | None | Show user configuration. |
+| `--credentials` | `PATH` | Path to Google authentication `.json` service account file. |
+| `--data-dir` | `PATH` | Path to output data directory on your local machine. |
+| `--tiff-dir` | `PATH` | Path where downloaded `.tif` files are stored. |
+| `--google-drive-dir` | `str` | Name of your Google Drive folder for exporting. |
+| `--min-size` | `float` | Minimum size of fire area to detect (in hectares). |
+| `--max-size` | `float` | Maximum size of fire area to detect (in hectares). |
+| `--retry-failed` | None | Retry failed Earth Engine locations. |
+| `--purge-before` | None | Purge files from Google Drive before exporting new data. |
+| `--purge-after` | None | Purge files from Google Drive after downloading. |
+| `--start-date` | `datetime` | Starting date for Earth Engine query (e.g., `2020-01-01`). |
+| `--end-date` | `datetime` | Ending date for Earth Engine query (e.g., `2020-12-31`). |
 
 
 
