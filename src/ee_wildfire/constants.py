@@ -22,7 +22,7 @@ INTERNAL_USER_CONFIG_DIR = ROOT / "UserConfig" /"user_config.yml"
 
 # =========== Needed Constants ===========
 
-VERSION = "2025.06.13"
+VERSION = "2025.06.14"
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
 
