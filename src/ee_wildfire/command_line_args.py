@@ -96,6 +96,7 @@ def parse() -> UserConfig:
 
     # ======== Before User Config Creation ========
 
+
     ConsoleUI.set_verbose(not args.silent)
     ConsoleUI.clear_screen()
 
@@ -105,6 +106,10 @@ def parse() -> UserConfig:
     # ======== After User Config Creation ========
 
     config = UserConfig()
+
+    if(not args.no_log):
+        debug = "debug" if args.debug else "info"
+        ConsoleUI.setup_logging(config.log_dir, debug)
 
     if(args.config == INTERNAL_USER_CONFIG_DIR):
         config.change_configuration_from_args(args)

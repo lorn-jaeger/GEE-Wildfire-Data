@@ -73,9 +73,13 @@ class UserConfig:
             self.tiff_dir = Path(os.path.abspath(self.tiff_dir))
 
         if hasattr(self, 'config'):
-            self.config = Path(self.config)
+            self.config = Path(os.path.abspath(self.config))
+
+        if hasattr(self, "log_dir"):
+            self.log_dir = Path(os.path.abspath(self.log_dir))
 
 
+        # prompt user for service credentials if not found
         num_retries = 3
         while not os.path.exists(self.credentials):
             if(num_retries <= 0):
@@ -85,14 +89,19 @@ class UserConfig:
             self.credentials = os.path.expanduser(ConsoleUI.prompt_path())
             num_retries -= 1
 
-
+        # Sync data directory
         if (self.data_dir != os.path.abspath(DEFAULT_DATA_DIR)):
+
             if(self.tiff_dir == os.path.abspath(DEFAULT_TIFF_DIR)):
-                self.tiff_dir = self.data_dir / 'tiff'
+                self.tiff_dir = Path(self.data_dir / 'tiff')
+
+            if(self.log_dir == os.path.abspath(DEFAULT_LOG_DIR)):
+                self.log_dir = Path(self.data_dir / 'logs')
 
 
         self._try_make_path(self.data_dir)
         self._try_make_path(self.tiff_dir)
+        self._try_make_path(self.log_dir)
 
     def _validate_time(self) -> None:
         """
@@ -129,6 +138,7 @@ class UserConfig:
         Args:
             path (Path): Directory path to create.
         """
+        print(path, f"exists? {os.path.exists(path)}")
         if not os.path.exists(path):
             try:
                 os.makedirs(path, exist_ok=True)
@@ -182,6 +192,9 @@ class UserConfig:
         if os.path.exists(INTERNAL_USER_CONFIG_DIR):
             config_data = load_yaml_config(INTERNAL_USER_CONFIG_DIR)
             self._fill_namespace(config_data)
+
+        self._validate_paths()
+        self._validate_time()
 
 # =========================================================================== #
 #                               Public Methods

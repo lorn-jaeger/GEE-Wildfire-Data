@@ -10,6 +10,18 @@ from colorama import Fore, Style
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import PathCompleter
 from prompt_toolkit.styles import Style as S
+from datetime import datetime
+from pathlib import Path
+
+from ee_wildfire.constants import DEFAULT_LOG_DIR, DEFAULT_LOG_LEVEL
+
+color_map = {
+    "green": Fore.GREEN,
+    "red": Fore.RED,
+    "yellow": Fore.YELLOW,
+    "white": Fore.WHITE,
+}
+
 @contextlib.contextmanager
 def _suspend_tqdm_output():
     # Temporarily disable tqdm output (stdout hijack)
@@ -24,6 +36,13 @@ class ConsoleUI:
     _bars = {}
     _verbose = True
     _status_line_position = 0
+    _logger = None
+    _log_dir = Path("")
+    _log_file = ""
+
+    # ========================================
+    #               Misc Public Methods
+    # ========================================
 
     @classmethod
     def clear_screen(cls):
@@ -35,29 +54,12 @@ class ConsoleUI:
             os.system('clear')
 
     @classmethod
-    def setup_logging(cls, log_file=None, level=logging.INFO):
-        """
-        Setup logging configuration for both console and optional log file.
-
-        Args:
-            log_file (str): Optional path to log file.
-            level (int): Logging level, e.g., logging.INFO or logging.DEBUG.
-        """
-        handlers = [logging.StreamHandler(sys.stdout)]
-
-        if log_file:
-            file_handler = logging.FileHandler(log_file, mode='w')
-            handlers.append(file_handler)
-
-        logging.basicConfig(
-            level=level,
-            format='[%(asctime)s] %(levelname)s - %(message)s',
-            handlers=handlers
-        )
-
-    @classmethod
     def set_verbose(cls, verbose):
         cls._verbose = verbose
+
+    # ========================================
+    #               Private Methods
+    # ========================================
 
     @classmethod
     def _get_bar_position(cls):
@@ -65,21 +67,24 @@ class ConsoleUI:
         return len(cls._bars) + 2
 
     @classmethod
-    def set_bar_position(cls, key: str, value: int):
-        if key in cls._bars:
-            bar = cls._bars[key]
-            bar.n = value
-            bar.refresh()
-
-    @classmethod
     def _get_bar_format(cls):
-        columns, rows = shutil.get_terminal_size()
+        columns, _ = shutil.get_terminal_size()
         desc_length = int(columns/3)
         bar_length = int(columns/2)
         desc = "{" + f"desc:<{desc_length}" + "}"
         bar = "{" + f"bar:{bar_length}" +"}"
         output = f"{desc} | {bar} | " + "{percentage:>6.2f}% | {n_fmt:>7}/{total_fmt:<7} items"
         return output
+
+    @classmethod
+    def _create_log_file(cls):
+        timestamp = datetime.now().strftime("%Y-%m-%d:%H-%M-%S")
+        filename = f"{timestamp}-run.log"
+        cls._log_file = cls._log_dir / filename
+
+    # ========================================
+    #               Bars
+    # ========================================
 
     @classmethod
     def add_bar(cls, key, total, desc="", color="green"):
@@ -104,6 +109,14 @@ class ConsoleUI:
                     ascii=False,
                     bar_format=bar_format,
                 )
+
+    @classmethod
+    def set_bar_position(cls, key: str, value: int):
+        if key in cls._bars:
+            bar = cls._bars[key]
+            bar.n = value
+            bar.refresh()
+
     @classmethod
     def change_bar_desc(cls, key, desc):
         if key in cls._bars.keys():
@@ -127,7 +140,6 @@ class ConsoleUI:
         if key in cls._bars.keys():
             cls._bars[key].n=n
             cls._bars[key].update(n)
-
     @classmethod
     def close_bar(cls, key):
         if key in cls._bars:
@@ -144,10 +156,16 @@ class ConsoleUI:
         for bar in cls._bars.values():
             bar.refresh()
 
+    # ========================================
+    #           Text and Status Line
+    # ========================================
+
     @classmethod
     def write(cls, message, end="\n"):
         if cls._verbose:
             tqdm.write(message, end=end)
+
+        cls.log(message)
 
     @classmethod
     def print(cls, message, color="green"):
@@ -155,13 +173,10 @@ class ConsoleUI:
         Print a status line at the top (position 0) above all tqdm bars.
         """
 
-        color_map = {
-            "green": Fore.GREEN,
-            "red": Fore.RED,
-            "yellow": Fore.YELLOW,
-        }
         if not cls._verbose:
             return
+
+        cls.log(message)
 
         term_width = shutil.get_terminal_size((80, 20)).columns
         padded = color_map[color] + f"[STATUS] {message}".ljust(term_width) + Style.RESET_ALL
@@ -170,19 +185,15 @@ class ConsoleUI:
         # Flush to ensure immediate overwrite
         sys.stdout.flush()
 
-    @classmethod
-    def log(cls, message, level=logging.INFO):
-        logging.log(level, message)
 
     @classmethod
     def prompt_path(cls, prompt="Enter file path: "):
-        # Move cursor down from line 0 (status) to line 1, and clear it
         if not cls._verbose:
             return ""
 
         with _suspend_tqdm_output():
-            sys.__stdout__.write("\n\033[1K")  # Move to next line, clear it
-            sys.__stdout__.flush()
+            sys.stdout.write("\n\033[1K")  # Move to next line, clear it
+            sys.stdout.flush()
 
             session = PromptSession()
             completer = PathCompleter(expanduser=True)
@@ -197,16 +208,95 @@ class ConsoleUI:
                 style=style
             )
 
-            # path = session.prompt(prompt, completer=completer)
+            sys.stdout.write("\033[2A\033[2K")
+            sys.stdout.flush()
 
-            # Optional: write a blank line after input to maintain layout
-            sys.__stdout__.write("\033[2A\033[2K")
-            sys.__stdout__.flush()
+            cls.log(f"Path input: {path}")
 
             return path
 
+    # ========================================
+    #               Logging
+    # ========================================
+
+    @classmethod
+    def set_log_file(cls, path, level=logging.INFO):
+        # os.makedirs(os.path.dirname(path), exist_ok=True)
+        cls._logger = logging.getLogger("ConsoleUI")
+        cls._logger.setLevel(level)
+
+        # Remove any old handlers (for reruns)
+        if cls._logger.hasHandlers():
+            cls._logger.handlers.clear()
+
+        # File handler
+        file_handler = logging.FileHandler(path)
+        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        cls._logger.addHandler(file_handler)
+
+        # Optional: Also log to console
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
+        cls._logger.addHandler(stream_handler)
+
+
+    @classmethod
+    def setup_logging(cls, log_dir, log_level):
+        """
+        """
+        cls._log_dir = Path(log_dir)
+        cls._create_log_file()
+        cls._logger = logging.getLogger("ConsoleUI")
+        cls.set_log_level(log_level)
+
+        # Remove any old handlers (for reruns)
+        if cls._logger.hasHandlers():
+            cls._logger.handlers.clear()
+
+        # File handler
+        file_handler = logging.FileHandler(cls._log_file)
+        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        cls._logger.addHandler(file_handler)
+
+    @classmethod
+    def set_log_level(cls, level):
+        if cls._logger:
+            if level == "debug":
+                cls._logger.setLevel(logging.DEBUG)
+            else:
+                cls._logger.setLevel(DEFAULT_LOG_LEVEL)
+
+    @classmethod
+    def debug(cls, message):
+        if message:
+            if cls._logger:
+                cls._logger.log(logging.DEBUG, message)
+
+    @classmethod
+    def log(cls, message):
+        if message:
+            if cls._logger:
+                cls._logger.log(logging.INFO, message)
+
+    @classmethod
+    def warn(cls, message):
+        if message:
+            if cls._logger:
+                cls._logger.log(logging.WARNING, message)
+
+    @classmethod
+    def error(cls, message):
+        if message:
+            if cls._logger:
+                cls._logger.log(logging.ERROR, message)
+
+
 def main():
-    print(ConsoleUI._get_bar_format())
+    ConsoleUI.setup_logging(DEFAULT_LOG_DIR,"debug")
+    ConsoleUI.log("logging stuff")
+    ConsoleUI.debug("debuggin stuff")
+    ConsoleUI.warn("Warnign here!")
+    ConsoleUI.error("Something went wrong")
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ This is where the programs constant variables are stored
 from pathlib import Path
 from datetime import datetime
 from ee_wildfire.utils.user_config_utils import StorePassedAction, parse_datetime
+import logging
 
 # =========== Paths ===========
 
@@ -85,6 +86,7 @@ COLLECTIONS = [
 
 # =========== Default User Configs ===========
 
+
 DEFAULT_PROJECT_ID = "ee-earthdata-459817"
     
 DEFAULT_START_DATE = datetime.strptime(f'{MAX_YEAR}-{MIN_MONTH}-1', DATE_FORMAT)
@@ -96,6 +98,10 @@ DEFAULT_MIN_SIZE = 1e7
 DEFAULT_MAX_SIZE = 1e10
 
 DEFAULT_DATA_DIR = HOME / "ee_wildfire_data"
+
+DEFAULT_LOG_DIR = DEFAULT_DATA_DIR / "logs"
+
+DEFAULT_LOG_LEVEL = logging.INFO
 
 DEFAULT_TIFF_DIR = DEFAULT_DATA_DIR / "tiff"
 
@@ -131,6 +137,9 @@ COMMAND_ARGS = {
     "--end-date":            (parse_datetime,  DEFAULT_END_DATE,       StorePassedAction,        "Ending date for Earth Engine querry"),
     "--silent":              (None,  False,                      "store_true",   "No program output."),
     "--reset-config":        (None,  False,                      "store_true",   "Reset internal user configuration."),
+    "--log-dir":             (Path,  DEFAULT_LOG_DIR,                      StorePassedAction,   "Log files directory."),
+    "--no-log":              (None,  False,                      "store_true",   "Disable log files."),
+    "--debug":               (None,  False,                      "store_true",   "Debug mode for log files."),
 }
 
 
