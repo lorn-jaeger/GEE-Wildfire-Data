@@ -21,16 +21,19 @@ def _strip_tif_extention(filenames):
     return filenames
 
 def get_number_items_in_export_queue():
+    ConsoleUI.print("Quering Google Earth export queue...")
     tasks = getTaskList()
     active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
     return len(active_tasks)
 
 def get_active_tasks_in_export_queue():
+    ConsoleUI.print("Quering Google Earth export queue...")
     tasks = getTaskList()
     active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
     return active_tasks
 
 def get_completed_tasks_in_export_queue():
+    ConsoleUI.print("Quering Google Earth export queue...")
     tasks = getTaskList()
     completed_tasks = [t for t in tasks if t['state'] == 'COMPLETED']
     return completed_tasks 
@@ -47,15 +50,6 @@ def get_completed_tasks_versus_list(expected_files):
             "name": item['description']+".tif",
         })
     return output
-
-
-    
-
-
-
-
-def check_export_completion() -> bool:
-    return False
 
 def process_locations(locations, user_config, fire_config):
     failed_locations = []
