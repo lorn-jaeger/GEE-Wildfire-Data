@@ -121,8 +121,9 @@ def parse() -> UserConfig:
     # log level
     if hasattr(config,"log_level"):
         ConsoleUI.set_log_level(config.log_level)
-    if(hasattr(config,"debug") or args.debug):
-        ConsoleUI.set_log_level("debug")
+    if(hasattr(config,"debug")):
+        if(config.debug or args.debug):
+            ConsoleUI.set_log_level("debug")
 
     # ======== After User Config Configuration? ========
 
