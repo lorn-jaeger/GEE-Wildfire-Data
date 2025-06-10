@@ -66,9 +66,12 @@ class DatasetPrepareService:
         self.scale_dict = {"FirePred": 375}
         ConsoleUI.debug(self)
 
-    def __repr__(self):
-        output_str = "DatasetPrepareService\n" + str(self.__dict__)
-        return output_str
+    def __repr__(self) -> str:
+        output_str = "DatasetPrepareService.py\n"
+        for key, value in self.__dict__.items():
+            if key != "user_config":
+                output_str += f"{key} {value}"
+        return(output_str)
 
     def _batch_export(self,image, base_filename, utm_zone):
         ConsoleUI.debug(f"Exporting {image} as {base_filename} in zone {utm_zone}")

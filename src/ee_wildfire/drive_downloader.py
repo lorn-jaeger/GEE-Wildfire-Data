@@ -26,6 +26,14 @@ class DriveDownloader:
         # self.creds = credentials
         self.service = config.drive_service
         self.folderID = self.get_folder_id()
+        ConsoleUI.debug(self)
+
+    def __repr__(self) -> str:
+        output_str = "DriveDownloader.py\n"
+        for key, value in self.__dict__.items():
+            if key != "config":
+                output_str += f"{key} {value}"
+        return(output_str)
         
     def get_folder_id(self):
         service = self.service
