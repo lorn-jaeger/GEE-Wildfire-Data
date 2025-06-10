@@ -70,7 +70,7 @@ class DatasetPrepareService:
         output_str = "DatasetPrepareService.py\n"
         for key, value in self.__dict__.items():
             if key != "user_config":
-                output_str += f"{key} {value}"
+                output_str += f"{key} {value}\n"
         return(output_str)
 
     def _batch_export(self,image, base_filename, utm_zone):

@@ -32,7 +32,7 @@ class DriveDownloader:
         output_str = "DriveDownloader.py\n"
         for key, value in self.__dict__.items():
             if key != "config":
-                output_str += f"{key} {value}"
+                output_str += f"{key} {value}\n"
         return(output_str)
         
     def get_folder_id(self):

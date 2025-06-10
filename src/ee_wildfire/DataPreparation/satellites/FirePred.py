@@ -42,7 +42,7 @@ class FirePred:
     def __repr__(self) -> str:
         output_str = "FirePred.py\n"
         for key, value in self.__dict__.items():
-            output_str += f"{key} {value}"
+            output_str += f"{key} {value}\n"
         return(output_str)
 
     def compute_daily_features(self, start_time:str, end_time:str, geometry:Geometry) -> ImageCollection:
