@@ -107,17 +107,22 @@ def parse() -> UserConfig:
 
     config = UserConfig()
 
-    # log files configuration
+    # log files setup
     if(not args.no_log):
-        if(hasattr(config,"log_dir") and hasattr(config, "log_level")):
-            ConsoleUI.setup_logging(config.log_dir, config.log_level)
-        if(hasattr(config,"debug") and args.debug):
-            ConsoleUI.set_log_level("debug")
+        if(hasattr(config,"log_dir")):
+            ConsoleUI.setup_logging(config.log_dir)
 
+    # user config from yaml or command line args
     if(args.config == INTERNAL_USER_CONFIG_DIR):
         config.change_configuration_from_args(args)
     else:
         config.change_configuration_from_yaml(args.config)
+
+    # log level
+    if hasattr(config,"log_level"):
+        ConsoleUI.set_log_level(config.log_level)
+    if(hasattr(config,"debug") or args.debug):
+        ConsoleUI.set_log_level("debug")
 
     # ======== After User Config Configuration? ========
 

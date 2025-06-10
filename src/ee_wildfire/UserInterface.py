@@ -215,7 +215,7 @@ class ConsoleUI:
     # ========================================
 
     @classmethod
-    def setup_logging(cls, log_dir, log_level):
+    def setup_logging(cls, log_dir, log_level="info"):
         """
         """
         cls._log_dir = Path(log_dir)
