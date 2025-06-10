@@ -118,7 +118,7 @@ download: false
 
 export: false
 
-retry-failed: false
+retry_failed: false
 
 purge_after: false
 
