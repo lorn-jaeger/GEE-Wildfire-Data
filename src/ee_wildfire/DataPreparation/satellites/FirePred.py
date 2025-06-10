@@ -11,7 +11,9 @@ from ee import Reducer #type: ignore
 from ee import Number #type: ignore
 from ee import String #type: ignore
 from ee import Terrain #type: ignore
-from ee import Geometry #type: ignore
+from ee import Geometry
+
+from ee_wildfire.UserInterface import ConsoleUI #type: ignore
 
 
 class FirePred:
@@ -38,6 +40,7 @@ class FirePred:
         # self.viirs_af = ee.FeatureCollection('projects/ee-earthdata/assets/fire_archive_SV-C2_574505') # This is the historical archive (02-01-2012 to end of 2024)
         # VIIRS vegetation index, needed updating to new dataset
         self.viirs_veg_idx = ImageCollection("NASA/VIIRS/002/VNP13A1")
+        ConsoleUI.debug(self)
 
     def __repr__(self) -> str:
         output_str = "FirePred.py\n"

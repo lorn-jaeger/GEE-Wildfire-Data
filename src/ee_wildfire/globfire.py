@@ -206,8 +206,6 @@ def get_fires(config):
 
     return fires
 
-
-
 def sanitize_filename(value):
     return str(value).replace(":", "-").replace(" ", "_")
 
@@ -231,6 +229,7 @@ def save_fires(config):
 def load_fires(config):
     input_path = get_fire_cache_path(config)
     if not os.path.exists(input_path):
+        ConsoleUI.error(f"Cached fire data not found: {input_path}")
         raise FileNotFoundError(f"Cached fire data not found: {input_path}")
 
     ConsoleUI.print("GeoDataFrame already exists. Loading from file cache instead.")
