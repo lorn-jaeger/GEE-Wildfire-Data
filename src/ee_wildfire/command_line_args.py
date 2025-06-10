@@ -109,7 +109,8 @@ def parse() -> UserConfig:
 
     if(not args.no_log):
         debug = "debug" if args.debug else "info"
-        ConsoleUI.setup_logging(config.log_dir, debug)
+        if(hasattr(config,"log_dir")):
+            ConsoleUI.setup_logging(config.log_dir, debug)
 
     if(args.config == INTERNAL_USER_CONFIG_DIR):
         config.change_configuration_from_args(args)
@@ -121,6 +122,8 @@ def parse() -> UserConfig:
     ConsoleUI.write(str(config))
 
     ConsoleUI.write("")
+
+    ConsoleUI.debug(config.__repr__())
 
     return config
 

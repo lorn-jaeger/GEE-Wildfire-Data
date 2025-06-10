@@ -88,8 +88,8 @@ def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
         bool: True if execution completed (regardless of success/failure for individual locations).
     """
     
-    config = load_fire_config(yaml_path)
-    fire_names = list(config.keys())
+    fire_config = load_fire_config(yaml_path)
+    fire_names = list(fire_config.keys())
     for non_fire_key in ["output_bucket", "rectangular_size", "year"]:
         fire_names.remove(non_fire_key)
     locations = fire_names
@@ -97,16 +97,15 @@ def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
     ConsoleUI.add_bar(key="processed", total=len(locations), desc="Fires processed")
     ConsoleUI.add_bar(key="failed", total=len(locations), desc="Number of failed locations",
                       color="red")
-    failed_locations = process_locations(locations, user_config, config)
+    failed_locations = process_locations(locations, user_config, fire_config)
 
-    # NOTE: This is where I should retry failed locations
     if failed_locations:
-        # ConsoleUI.print("Failed locations:")
-        # for loc in failed_locations:
-        #     ConsoleUI.print(f"- {loc}")
+        ConsoleUI.debug("Failed locations:")
+        for loc in failed_locations:
+            ConsoleUI.debug(f"- {loc}")
         if(user_config.retry_failed):
             ConsoleUI.print("Retrying failed locations",color="yellow")
-            process_locations(failed_locations, user_config, config)
+            process_locations(failed_locations, user_config, fire_config)
 
     else:
         ConsoleUI.print("All locations processed successfully!")

@@ -1,14 +1,16 @@
 import datetime
-import ee
-from ee import Geometry, ImageCollection # type: ignore
-import geemap
-from ee_wildfire.UserInterface import ConsoleUI
 import sys
-from pathlib import Path
 import time
+
+from pathlib import Path
+
+from ee import batch
+from ee import data
+from ee import Geometry, ImageCollection # type: ignore
 
 from ee_wildfire.UserConfig.UserConfig import UserConfig
 from ee_wildfire.constants import EXPORT_QUEUE_SIZE
+from ee_wildfire.UserInterface import ConsoleUI
 
 
 # Add the parent directory to the Python path to enable imports
@@ -50,7 +52,7 @@ class DatasetPrepareService:
         self.location = location
         self.rectangular_size = self.config.get('rectangular_size')
         self.latitude = self.config.get(self.location).get('latitude')
-        self.longitude = self.config.get(self.location).get('longitude')
+        self.longitude = self.config.get(self.location).get('longitude') 
         self.start_time = self.config.get(location).get('start')
         self.end_time = self.config.get(location).get('end')
         self.total_tasks = 0
@@ -62,20 +64,15 @@ class DatasetPrepareService:
              self.longitude + self.rectangular_size, self.latitude + self.rectangular_size])
 
         self.scale_dict = {"FirePred": 375}
+        ConsoleUI.debug(self)
 
-    def _gee_export(self,img,base_filename,utm_zone):
-        geemap.ee_export_image_to_drive(
-            image=img,
-            description=base_filename,
-            folder=self.user_config.google_drive_dir,
-            region=self.geometry.toGeoJSON()['coordinates'],
-            scale=self.scale_dict.get("FirePred"),
-            crs=f'EPSG:{utm_zone}',
-            maxPixels=1e13
-        )
+    def __repr__(self):
+        output_str = "DatasetPrepareService\n" + str(self.__dict__)
+        return output_str
 
     def _batch_export(self,image, base_filename, utm_zone):
-        task = ee.batch.Export.image.toDrive(
+        ConsoleUI.debug(f"Exporting {image} as {base_filename} in zone {utm_zone}")
+        task = batch.Export.image.toDrive(
             image=image,
             description=base_filename,
             folder=self.user_config.google_drive_dir,
@@ -87,6 +84,7 @@ class DatasetPrepareService:
         task.start()
 
         
+    # NOTE: look at this funciton for querrying google earth export queue
     def prepare_daily_image(self, date_of_interest:str, time_stamp_start:str="00:00", time_stamp_end:str="23:59") -> ImageCollection:
         """
         Prepare a daily image from Google Earth Engine (GEE) for a specified date and time range.
@@ -101,10 +99,10 @@ class DatasetPrepareService:
         """
         self.total_tasks += 1
         if self.total_tasks > 2500:
-            active_tasks = str(ee.batch.Task.list()).count('READY')
+            active_tasks = str(batch.Task.list()).count('READY')
             while active_tasks > 2000:
                 time.sleep(60)
-                active_tasks = str(ee.batch.Task.list()).count('READY')
+                active_tasks = str(batch.Task.list()).count('READY')
         satellite_client = FirePred()
         img_collection = satellite_client.compute_daily_features(date_of_interest + 'T' + time_stamp_start,
                                                                date_of_interest + 'T' + time_stamp_end,
@@ -133,8 +131,7 @@ class DatasetPrepareService:
             self.user_config.exported_files.append(f"{base_filename}.tif")
 
         except Exception as e:
-            # NOTE: log this
-            # ConsoleUI.print(f"Export failed for {filename}: {str(e)}")
+            ConsoleUI.warn(f"Export failed for {base_filename}: {str(e)}")
 
             # FIX: Are these getting handled at all?
             self.user_config.failed_exports.append(f"{base_filename}.tif")
@@ -166,13 +163,19 @@ class DatasetPrepareService:
 
                 n_images = len(img_collection.getInfo().get("features"))
                 if n_images > 1:
+
+                    ConsoleUI.error(f"Found {n_images} features in img_collection returned by prepare_daily_image. "
+                                     f"Should have been exactly 1.")
+
                     raise RuntimeError(f"Found {n_images} features in img_collection returned by prepare_daily_image. "
                                      f"Should have been exactly 1.")
+
                 max_img = img_collection.max()
+
                 if len(max_img.getInfo().get('bands')) != 0:
                     self.download_image_to_drive(img_collection, date_of_interest, utm_zone)
             except Exception as e:
-                ConsoleUI.print(f"Failed processing {date_of_interest}: {str(e)}", color="red")
+                ConsoleUI.error(f"Failed processing {date_of_interest}: {str(e)}")
                 raise
 
             ConsoleUI.update_bar(key="export")
@@ -183,7 +186,7 @@ def wait_for_gee_queue_space():
     target = EXPORT_QUEUE_SIZE/2
 
     while True:
-        tasks = ee.data.getTaskList()
+        tasks = data.getTaskList()
         active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
 
         if len(active_tasks) > total:
@@ -207,10 +210,6 @@ def main():
     from ee_wildfire.UserConfig.UserConfig import UserConfig
     uf = UserConfig()
     wait_for_gee_queue_space()
-    # tasks = ee.data.getTaskList()
-    # active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
-    #
-    # print(len(active_tasks))
 
 if __name__ == "__main__":
     main()

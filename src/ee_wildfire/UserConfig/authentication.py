@@ -8,23 +8,16 @@ import ee
 
 
 class AuthManager:
-    def __init__(self, auth_mode="oauth", service_json=None, oauth_json=None):
-        self.auth_mode = auth_mode
+    def __init__(self,service_json):
         self.service_json = service_json
-        self.oauth_json = oauth_json
 
     def authenticate_earth_engine(self):
-        if self.auth_mode == "service_account":
+        try:
             self.ee_creds = ee.ServiceAccountCredentials(email=json.load(open(self.service_json))['client_email'],
                                                  key_file=str(self.service_json))
-            # creds = service_account.Credentials.from_service_account_file(self.service_json, scopes=SCOPES)
             ee.Initialize(credentials=self.ee_creds)
-            # ee.Initialize(project=self.ee_creds.project_id)
-        elif self.auth_mode == "oauth":
-            # ee.Authenticate()  # launches browser
-            ee.Initialize()
-        else:
-            raise ValueError("Unsupported Earth Engine auth mode.")
+        except Exception as e:
+            ConsoleUI.error(f"Failed to authenticate google earth engine: {str(e)}")
 
         ConsoleUI.print("Google Earth autheticated succesfully.")
 

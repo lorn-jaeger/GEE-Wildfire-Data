@@ -6,11 +6,12 @@ from ee_wildfire.utils.yaml_utils import load_yaml_config, save_yaml_config
 from ee_wildfire.constants import *
 from ee_wildfire.globfire import get_fires
 from ee_wildfire.UserConfig.authentication import AuthManager
+
+
 import argparse
-
-
 import os
 import pprint
+import json
 
 from typing import Union
 
@@ -36,6 +37,12 @@ class UserConfig:
 
 
 
+    def __repr__(self) -> str:
+        output_str = "UserConfig\n"
+        for key, value in self.__dict__.items():
+            output_str += f"{key} {value}"
+        return(output_str)
+
     def __str__(self) -> str:
         items_to_exclude = [
             "exported_files",
@@ -55,6 +62,21 @@ class UserConfig:
             *[f"│ {key:<20} : {pprint.pformat(value)}" for key, value in sorted_items.items()],
             "╰──────────────────────────────────────────────────────────────────────────────────────────────────"
         ])
+    def _validate_service_account_file(self, path: Path) -> bool:
+        try:
+            with open(path, "r") as f:
+                data = json.load(f)
+            
+            required_fields = [
+                "type", "project_id", "private_key_id", "private_key",
+                "client_email", "client_id", "auth_uri", "token_uri",
+                "auth_provider_x509_cert_url", "client_x509_cert_url"
+            ]
+            self._missing = [field for field in required_fields if field not in data]
+            return all(field in data for field in required_fields)
+        
+        except (json.JSONDecodeError, FileNotFoundError):
+            return False
 
     def _validate_paths(self) -> None:
         """
@@ -63,45 +85,60 @@ class UserConfig:
             FileNotFoundError: If credentials file does not exist.
         """
 
-        if hasattr(self,'credentials'):
-            self.credentials = Path(os.path.abspath(self.credentials))
-
-        if hasattr(self, 'data_dir'):
-            self.data_dir = Path(os.path.abspath(self.data_dir))
-
-        if hasattr(self, 'tiff_dir'):
-            self.tiff_dir = Path(os.path.abspath(self.tiff_dir))
-
         if hasattr(self, 'config'):
             self.config = Path(os.path.abspath(self.config))
 
+        if hasattr(self, 'tiff_dir'):
+            self.tiff_dir = Path(os.path.abspath(self.tiff_dir))
+            self._try_make_path(self.tiff_dir)
+
         if hasattr(self, "log_dir"):
             self.log_dir = Path(os.path.abspath(self.log_dir))
+            self._try_make_path(self.log_dir)
+
+        if hasattr(self,'credentials'):
+            self.credentials = Path(os.path.abspath(self.credentials))
+            # prompt user for service credentials if not found
+            num_retries = 3
+            while not os.path.exists(self.credentials):
+                # FIX: Raise error here
+                if(num_retries <= 0):
+                    ConsoleUI.error(f"Google service credentials JSON {self.credentials} not found!")
+                    raise FileNotFoundError(f"Google cloud service account file not found at {self.credentials}")
+
+                ConsoleUI.print(f"Google service credentials JSON {self.credentials} not found!", color="red")
+                self.credentials = os.path.expanduser(ConsoleUI.prompt_path())
+                num_retries -= 1
+
+            # validate service credentials format
+            # print(self._validate_service_account_file(Path(self.credentials)))
+            num_retries = 3
+            while not self._validate_service_account_file(Path(self.credentials)):
+                # FIX: Raise error here
+                if(num_retries <= 0):
+                    ConsoleUI.error(f"Google service credentials JSON {self.credentials} incorrect format! {self._missing}")
+                    raise ValueError(f"Google cloud service account at {self.credentials} is not in the right format.")
+
+                ConsoleUI.print(f"Google service credentials JSON {self.credentials} is not in the correct format!", color="red")
+                self.credentials = os.path.expanduser(ConsoleUI.prompt_path())
+                num_retries -= 1
 
 
-        # prompt user for service credentials if not found
-        num_retries = 3
-        while not os.path.exists(self.credentials):
-            if(num_retries <= 0):
-                break
-
-            ConsoleUI.print(f"Google service credentials JSON {self.credentials} not found!", color="red")
-            self.credentials = os.path.expanduser(ConsoleUI.prompt_path())
-            num_retries -= 1
 
         # Sync data directory
-        if (self.data_dir != os.path.abspath(DEFAULT_DATA_DIR)):
+        if hasattr(self, 'data_dir'):
+            self.data_dir = Path(os.path.abspath(self.data_dir))
+            if (self.data_dir != os.path.abspath(DEFAULT_DATA_DIR)):
 
-            if(self.tiff_dir == os.path.abspath(DEFAULT_TIFF_DIR)):
-                self.tiff_dir = Path(self.data_dir / 'tiff')
+                if(self.tiff_dir == os.path.abspath(DEFAULT_TIFF_DIR)):
+                    self.tiff_dir = Path(self.data_dir / 'tiff')
 
-            if(self.log_dir == os.path.abspath(DEFAULT_LOG_DIR)):
-                self.log_dir = Path(self.data_dir / 'logs')
+                if(self.log_dir == os.path.abspath(DEFAULT_LOG_DIR)):
+                    self.log_dir = Path(self.data_dir / 'logs')
+
+            self._try_make_path(self.data_dir)
 
 
-        self._try_make_path(self.data_dir)
-        self._try_make_path(self.tiff_dir)
-        self._try_make_path(self.log_dir)
 
     def _validate_time(self) -> None:
         """
@@ -109,26 +146,25 @@ class UserConfig:
         Raises:
             IndexError: If date ranges are outside of accepted year limits or incorrectly ordered.
         """
-        start_year = int(self.start_date.year)
-        end_year = int(self.end_date.year)
+        if(hasattr(self, "start_date") and hasattr(self, "end_date")):
+            start_year = int(self.start_date.year)
+            end_year = int(self.end_date.year)
 
-        # FIX: Validate new time if put in by command line argument
+            if(start_year < MIN_YEAR):
+                raise IndexError(f"Querry year '{start_year}' is smaller than the minimum year {MIN_YEAR}")
 
-        if(start_year < MIN_YEAR):
-            raise IndexError(f"Querry year '{start_year}' is smaller than the minimum year {MIN_YEAR}")
+            if(start_year > MAX_YEAR):
+                raise IndexError(f"Querry year '{start_year}' is larger than the maximum year {MAX_YEAR}")
 
-        if(start_year > MAX_YEAR):
-            raise IndexError(f"Querry year '{start_year}' is larger than the maximum year {MAX_YEAR}")
+            if(end_year < MIN_YEAR):
+                raise IndexError(f"Querry year '{end_year}' is smaller than the minimum year {MIN_YEAR}")
 
-        if(end_year < MIN_YEAR):
-            raise IndexError(f"Querry year '{end_year}' is smaller than the minimum year {MIN_YEAR}")
-
-        if(end_year > MAX_YEAR):
-            raise IndexError(f"Querry year '{end_year}' is larger than the maximum year {MAX_YEAR}")
+            if(end_year > MAX_YEAR):
+                raise IndexError(f"Querry year '{end_year}' is larger than the maximum year {MAX_YEAR}")
 
 
-        if(self.start_date > self.end_date):
-            raise IndexError(f"start date '{self.start_date}' is after end date '{self.end_date}'")
+            if(self.start_date > self.end_date):
+                raise IndexError(f"start date '{self.start_date}' is after end date '{self.end_date}'")
 
 
     def _try_make_path(self, path: Path) -> None:
@@ -138,7 +174,6 @@ class UserConfig:
         Args:
             path (Path): Directory path to create.
         """
-        print(path, f"exists? {os.path.exists(path)}")
         if not os.path.exists(path):
             try:
                 os.makedirs(path, exist_ok=True)
@@ -205,7 +240,6 @@ class UserConfig:
         Authenticate with Google Earth Engine and initialize the DriveDownloader.
         """
         self.auth = AuthManager(
-            auth_mode="service_account",
             service_json=self.credentials,
         )
         self.auth.authenticate_drive()

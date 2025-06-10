@@ -140,10 +140,6 @@ class ConsoleUI:
         if key in cls._bars.keys():
             cls._bars[key].n=n
             cls._bars[key].update(n)
-    @classmethod
-    def close_bar(cls, key):
-        if key in cls._bars:
-            cls._bars[key].close()
 
     @classmethod
     def close_all_bars(cls):
@@ -164,8 +160,6 @@ class ConsoleUI:
     def write(cls, message, end="\n"):
         if cls._verbose:
             tqdm.write(message, end=end)
-
-        cls.log(message)
 
     @classmethod
     def print(cls, message, color="green"):
