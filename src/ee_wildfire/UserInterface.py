@@ -15,7 +15,7 @@ from pathlib import Path
 
 from ee_wildfire.constants import DEFAULT_LOG_DIR, LOG_LEVELS
 
-from types import Union
+from typing import Union
 
 color_map = {
     "green": Fore.GREEN,
