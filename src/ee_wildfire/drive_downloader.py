@@ -7,6 +7,8 @@ from googleapiclient.errors import HttpError
 from ee_wildfire.UserConfig.UserConfig import UserConfig
 from ee_wildfire.UserInterface import ConsoleUI
 
+from ee_wildfire.utils.google_drive_util import get_active_tasks_in_export_queue
+
 from pathlib import Path
 
 
@@ -89,61 +91,84 @@ class DriveDownloader:
 
     def get_files_in_drive(self):
         folder_id = self.folderID
-        results = self.service.files().list(
-            q=f"'{folder_id}' in parents and mimeType='image/tiff' and trashed=false",
-            spaces="drive",
-            pageSize=1000,
-            fields="files(id, name)"
-        ).execute()
-        files = results.get("files",[])
-        found_files = {f['name'] for f in files}
-        return found_files, files
+        query = f"'{folder_id}' in parents and mimeType='image/tiff' and trashed=false"
+        
+        all_files = []
+        page_token = None
+
+        ConsoleUI.print("Searching for files in google drive.")
+        while True:
+            response = self.service.files().list(
+                q=query,
+                spaces="drive",
+                pageSize=1000,
+                fields="nextPageToken, files(id, name)",
+                pageToken=page_token
+            ).execute()
+
+            all_files.extend(response.get("files", []))
+            page_token = response.get("nextPageToken", None)
+
+            if not page_token:
+                break
+
+        return all_files
 
 
     def download_files(self):
         local_path = self.config.tiff_dir
         expected_files = self.config.exported_files
+
         ConsoleUI.add_bar(key="download",total=len(expected_files), desc="Export progress")
+
+        # wait on export queue
         while True:
-            found_names, files = self.get_files_in_drive()
-            current_missing = set(expected_files) - found_names
 
-            ConsoleUI.set_bar_position(key="download", value=(len(expected_files) - len(current_missing)))
+            active_tasks = get_active_tasks_in_export_queue()
+            files = [f['description']+".tif" for f in active_tasks]
+            common = set(files) & set(expected_files)
 
-            if not current_missing:
+            ConsoleUI.set_bar_position(key="download", value=len(expected_files) - len(common))
+
+            if len(active_tasks) == 0:
                 ConsoleUI.print("All files found!")
                 break
             else:
-                ConsoleUI.print("Waiting for export...")
-                time.sleep(10)
+                ConsoleUI.print(f"{len(active_tasks)} tasks are on the export qeueue.")
+                time.sleep(60)
 
-
-
-        # Build a dict for easy access
-        file_map = {f['name']: f for f in files if f['name'] in expected_files}
+        files_in_drive = self.get_files_in_drive()
+        id_map = {f['name']:f['id'] for f in files_in_drive if f['name'] in expected_files}
 
         ConsoleUI.add_bar(key="download", total=len(expected_files), desc="Download progress")
         for fname in expected_files:
-            file = file_map[fname]
-            request = self.service.files().get_media(fileId=file['id'])
-            file_path = os.path.join(local_path, fname)
+            fileId = id_map[fname]
+            try:
+                request = self.service.files().get_media(fileId=fileId)
+                file_path = os.path.join(local_path, fname)
 
-            fh = io.FileIO(file_path, 'wb')
-            downloader = MediaIoBaseDownload(fh, request)
+                fh = io.FileIO(file_path, 'wb')
+                downloader = MediaIoBaseDownload(fh, request)
 
-            ConsoleUI.print("Downloading files...")
-            done = False
-            while not done:
-                _, done = downloader.next_chunk()
+                ConsoleUI.print("Downloading files...")
+                done = False
+                while not done:
+                    _, done = downloader.next_chunk()
+                ConsoleUI.update_bar(key="download")
+            except HttpError as e:
+                if e.resp.status == 404:
+                    ConsoleUI.print(f"File {fname} not found (404). Skipping...", color="red")
+                else:
+                    ConsoleUI.print(f"Unexpected error downloaded {fname}: {e}", color="red")
 
-            ConsoleUI.update_bar(key="download")
+
 
 
     def purge_data(self):
         try:
             while True:
-                _, files = self.get_files_in_drive()
-                ConsoleUI.add_bar(key="purge", total=len(files), desc="Purge progress", color="yellow")
+                files = self.get_files_in_drive()
+                ConsoleUI.add_bar(key="purge", total=len(files), desc="Purge progress (for first 1000 items)", color="yellow")
                 ConsoleUI.print(f"found {len(files)} files")
 
                 for f in files:
@@ -170,12 +195,19 @@ class DriveDownloader:
 def main():
     from ee_wildfire.constants import HOME
     uf = UserConfig()
-    ConsoleUI.set_verbose(False)
+    # ConsoleUI.set_verbose(False)
     uf.authenticate()
     dn = DriveDownloader(uf)
-    found_files, files = dn.get_files_in_drive()
-    print(len(found_files), len(files))
-    
+
+    expected = [
+        "Image_Export_fire_23655799_2020-01-01.tif",
+        "Image_Export_fire_23655799_2020-01-02.tif",
+        "Image_Export_fire_23655799_2020-01-03.tif",
+    ]
+    uf.exported_files = expected
+
+    dn.download_files()
+
 
 
 if __name__ == '__main__':

@@ -15,17 +15,41 @@ from ee_wildfire.DataPreparation.DatasetPrepareService import DatasetPrepareServ
 
 from typing import Union
 
+def _strip_tif_extention(filenames):
+    if all(name.endswith('.tif') for name in filenames):
+        return [name[:-4] for name in filenames]
+    return filenames
+
 def get_number_items_in_export_queue():
-    # tasks = ee.data.getTaskList()
+    ConsoleUI.print("Quering Google Earth export queue...")
     tasks = getTaskList()
     active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
     return len(active_tasks)
 
-def get_number_items_in_google_drive():
-    pass
+def get_active_tasks_in_export_queue():
+    ConsoleUI.print("Quering Google Earth export queue...")
+    tasks = getTaskList()
+    active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
+    return active_tasks
 
-def get_number_items_in_local_directory():
-    pass
+def get_completed_tasks_in_export_queue():
+    ConsoleUI.print("Quering Google Earth export queue...")
+    tasks = getTaskList()
+    completed_tasks = [t for t in tasks if t['state'] == 'COMPLETED']
+    return completed_tasks 
+
+def get_completed_tasks_versus_list(expected_files):
+    ConsoleUI.print("Quering Google Earth export queue...")
+    fixed_files = _strip_tif_extention(expected_files)
+    completed_tasks = get_completed_tasks_in_export_queue()
+    filtered_completed_tasks = [t for t in completed_tasks if t['description'] in fixed_files]
+    output = []
+    for item in filtered_completed_tasks:
+        output.append({
+            "id": item['id'],
+            "name": item['description']+".tif",
+        })
+    return output
 
 def process_locations(locations, user_config, fire_config):
     failed_locations = []
@@ -88,14 +112,3 @@ def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
         ConsoleUI.print("All locations processed successfully!")
 
     return True
-
-def main():
-    uf = UserConfig()
-    print(get_number_items_in_export_queue())
-    pass
-
-if __name__ == "__main__":
-    main()
-
-
-
