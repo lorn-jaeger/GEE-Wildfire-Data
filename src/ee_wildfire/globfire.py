@@ -21,8 +21,7 @@ from ee.featurecollection import FeatureCollection
 import pandas as pd
 import geopandas as gpd
 import os
-from tqdm import tqdm
-
+import time
 from ee_wildfire.UserInterface import ConsoleUI
 
 usa_coords = [
@@ -161,28 +160,52 @@ def get_fires(config):
     gdfs = []
     weeks = pd.date_range(start=config.start_date, end=config.end_date, freq='W')
 
+    ConsoleUI.add_bar("fires", total=len(weeks), desc=collection, color="green")
 
-    for week in tqdm(weeks, desc="Fire dates"):
+
+    for week in weeks:
         start = int(week.timestamp() * 1000)
         end = int((week + pd.Timedelta(days=1)).timestamp() * 1000)
         gdf = get_final_fires(config, collection, start, end, region)
         if not gdf.empty:
             gdfs.append(gdf)
-
+        ConsoleUI.update_bar("fires")
 
     fires = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True))
     fires = format_gdf(fires)
-    
-    tqdm.pandas(desc="Initial coordinates")
-    fires[['lat', 'lon']] = fires.progress_apply(
-        get_initial_coordinates,
-        axis=1,
-        args=(region,),
-    )
 
-    fires = fires.dropna()
+    # Applying to the whole dataframe. This is iterating over rows
+    # internally and takes about as long as the uncommented way
+    
+    # tqdm.pandas(desc="Initial coordinates")
+    # fires[['lat', 'lon']] = fires.progress_apply(
+    #     get_initial_coordinates,
+    #     axis=1,
+    #     args=(region,),
+    # )
+    #
+    # fires = fires.dropna()
+    #
+    # return fires
+    #
+
+    ConsoleUI.add_bar("coords", total=len(fires), desc="Initial coordinates", color="green")
+    lats = []
+    lons = []
+
+    for _, row in fires.iterrows():
+        lat, lon = get_initial_coordinates(row, region)
+        lats.append(lat)
+        lons.append(lon)
+        ConsoleUI.update_bar("coords")
+
+
+    fires['lat'] = lats
+    fires['lon'] = lons
+    fires = fires.dropna()    
 
     return fires
+
 
 
 def sanitize_filename(value):
@@ -198,8 +221,10 @@ def get_fire_cache_path(config):
 
     return os.path.join(output_dir, filename)
 
+
 def save_fires(config):
     ConsoleUI.print("Caching fire query...")
+    time.sleep(1) # can remove these. this is just so the message shows
     output_path = get_fire_cache_path(config)
     config.geodataframe.to_pickle(output_path)
 
@@ -209,5 +234,6 @@ def load_fires(config):
         raise FileNotFoundError(f"Cached fire data not found: {input_path}")
 
     ConsoleUI.print("GeoDataFrame already exists. Loading from file cache instead.")
+    time.sleep(1)
     config.geodataframe = pd.read_pickle(input_path)
 
