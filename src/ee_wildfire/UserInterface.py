@@ -173,10 +173,11 @@ class ConsoleUI:
         Print a status line at the top (position 0) above all tqdm bars.
         """
 
+        cls.log(message)
+
         if not cls._verbose:
             return
 
-        cls.log(message)
 
         term_width = shutil.get_terminal_size((80, 20)).columns
         padded = color_map[color] + f"[STATUS] {message}".ljust(term_width) + Style.RESET_ALL
