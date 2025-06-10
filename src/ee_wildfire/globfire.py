@@ -199,7 +199,7 @@ def get_fire_cache_path(config):
     return os.path.join(output_dir, filename)
 
 def save_fires(config):
-    print("Caching fire query...")
+    ConsoleUI.print("Caching fire query...")
     output_path = get_fire_cache_path(config)
     config.geodataframe.to_pickle(output_path)
 
@@ -208,6 +208,6 @@ def load_fires(config):
     if not os.path.exists(input_path):
         raise FileNotFoundError(f"Cached fire data not found: {input_path}")
 
-    print("GeoDataFrame already exists. Loading from file cache instead.")
+    ConsoleUI.print("GeoDataFrame already exists. Loading from file cache instead.")
     config.geodataframe = pd.read_pickle(input_path)
 
