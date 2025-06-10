@@ -85,24 +85,50 @@ Template for configuration:
 
 ```yaml
 # NEEDED
-# These items are necessary to function.
+
+# You need a google cloud service account JSON, if not provided here the program
+# will prompt you for one
 credentials: ~/ee_wildfire_data/OAuth/credentials.json
 
 # OPTIONAL
 # These items have default values if not provided in YAML file.
+
+# Fire query
 min_size: 10000000.0
+
 max_size: 1000000000.0
-data_dir: ~/ee_wildfire_data
+
 start_date: 2021-01-01 00:00:00
+
 end_date: 2021-04-20 00:00:00
-tiff_dir: ~/ee_wildfire_data/tiff/2021
+
+# Directories
+tiff_dir: ~/ee_wildfire_data/tiff
+
+data_dir: ~/ee_wildfire_data
+
+log_dir : ~/ee_wildfire_data/logs
+
 google_drive_dir: GoogleEarthEngine
+
+# Pipeline
+purge_before: false
+
 download: false
+
 export: false
+
 retry-failed: false
 
+purge_after: false
 
+# Logs
+no_log: false
 
+log_level: info # levels: debug, info, warn, error
+
+# Misc
+silent: false
 ```
 
 To finish configuration you will need to use the `-config` command line argument.
@@ -130,9 +156,11 @@ You can also edit configuration on the fly with command line arguments:
 | `--purge-after` | None | Purge files from Google Drive after downloading. |
 | `--start-date` | `datetime` | Starting date for Earth Engine query (e.g., `2020-01-01`). |
 | `--end-date` | `datetime` | Ending date for Earth Engine query (e.g., `2020-12-31`). |
-
-
-
+| `--silent` | None | No command line output. |
+| `--reset-config` | None | Resets internal YAML file to default values. |
+| `--no-log` | None | Disable logging. |
+| `--log-dir` | `PATH` | Directory where you want your logs files stored.|
+| `--log-level` | `'debug', 'info', 'warn', or 'error'` | Sets the level of verbosity for log files.|
 ###  Basic Usage
 
 ```bash
@@ -140,7 +168,7 @@ ee-wildfire --config /path/to/some/config.yml
 ```
 
 ```bash
-ee-wildfire --project-id PROJECT_ID --credentials PATH_TO_CREDS --export --download --min-size 10
+ee-wildfire --credentials PATH_TO_CREDS --export --download --min-size 10 --log-level warn
 ```
 
 # Acknowledgements
