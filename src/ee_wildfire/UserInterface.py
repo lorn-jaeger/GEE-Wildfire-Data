@@ -236,10 +236,6 @@ class ConsoleUI:
     def set_log_level(cls, level):
         if cls._logger:
             cls._logger.setLevel(LOG_LEVELS[level])
-            # if level == "debug":
-            #     cls._logger.setLevel(logging.DEBUG)
-            # else:
-            #     cls._logger.setLevel(LOG_LEVELS[DEFAULT_LOG_LEVEL])
 
     @classmethod
     def debug(cls, message):
