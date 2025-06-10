@@ -13,7 +13,7 @@ from prompt_toolkit.styles import Style as S
 from datetime import datetime
 from pathlib import Path
 
-from ee_wildfire.constants import DEFAULT_LOG_DIR, DEFAULT_LOG_LEVEL
+from ee_wildfire.constants import DEFAULT_LOG_DIR, DEFAULT_LOG_LEVEL, LOG_LEVELS
 
 color_map = {
     "green": Fore.GREEN,
@@ -215,27 +215,6 @@ class ConsoleUI:
     # ========================================
 
     @classmethod
-    def set_log_file(cls, path, level=logging.INFO):
-        # os.makedirs(os.path.dirname(path), exist_ok=True)
-        cls._logger = logging.getLogger("ConsoleUI")
-        cls._logger.setLevel(level)
-
-        # Remove any old handlers (for reruns)
-        if cls._logger.hasHandlers():
-            cls._logger.handlers.clear()
-
-        # File handler
-        file_handler = logging.FileHandler(path)
-        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-        cls._logger.addHandler(file_handler)
-
-        # Optional: Also log to console
-        stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
-        cls._logger.addHandler(stream_handler)
-
-
-    @classmethod
     def setup_logging(cls, log_dir, log_level):
         """
         """
@@ -256,10 +235,11 @@ class ConsoleUI:
     @classmethod
     def set_log_level(cls, level):
         if cls._logger:
-            if level == "debug":
-                cls._logger.setLevel(logging.DEBUG)
-            else:
-                cls._logger.setLevel(DEFAULT_LOG_LEVEL)
+            cls._logger.setLevel(LOG_LEVELS[level])
+            # if level == "debug":
+            #     cls._logger.setLevel(logging.DEBUG)
+            # else:
+            #     cls._logger.setLevel(LOG_LEVELS[DEFAULT_LOG_LEVEL])
 
     @classmethod
     def debug(cls, message):

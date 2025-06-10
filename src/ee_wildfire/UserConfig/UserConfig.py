@@ -13,7 +13,7 @@ import os
 import pprint
 import json
 
-from typing import Union
+from typing import Any, Dict, Union, List
 
 
 
@@ -25,6 +25,10 @@ class UserConfig:
     Handles authentication, validation of user input, and integration
     with Google Drive and geospatial fire datasets.
     """
+
+    # =========================================================================== #
+    #                               Dunder Methods
+    # =========================================================================== #
 
     def __init__(self):
         """
@@ -40,7 +44,7 @@ class UserConfig:
     def __repr__(self) -> str:
         output_str = "UserConfig\n"
         for key, value in self.__dict__.items():
-            output_str += f"{key} {value}"
+            output_str += f"{key} {value}\n"
         return(output_str)
 
     def __str__(self) -> str:
@@ -62,6 +66,17 @@ class UserConfig:
             *[f"│ {key:<20} : {pprint.pformat(value)}" for key, value in sorted_items.items()],
             "╰──────────────────────────────────────────────────────────────────────────────────────────────────"
         ])
+
+    # =========================================================================== #
+    #                               Private Methods
+    # =========================================================================== #
+
+    def _validate_logs(self) -> None:
+        if hasattr(self, "log_level"):
+            if(self.log_level not in LOG_LEVELS.keys()):
+                ConsoleUI.debug(f"{self.log_level} is not in {LOG_LEVELS.keys()}, setting to default {DEFAULT_LOG_LEVEL}")
+                self.log_dir = DEFAULT_LOG_LEVEL
+
     def _validate_service_account_file(self, path: Path) -> bool:
         try:
             with open(path, "r") as f:
@@ -73,6 +88,7 @@ class UserConfig:
                 "auth_provider_x509_cert_url", "client_x509_cert_url"
             ]
             self._missing = [field for field in required_fields if field not in data]
+            ConsoleUI.debug(f"Service account JSON is missing {self._missing}")
             return all(field in data for field in required_fields)
         
         except (json.JSONDecodeError, FileNotFoundError):
@@ -98,32 +114,36 @@ class UserConfig:
 
         if hasattr(self,'credentials'):
             self.credentials = Path(os.path.abspath(self.credentials))
+
             # prompt user for service credentials if not found
             num_retries = 3
-            while not os.path.exists(self.credentials):
-                # FIX: Raise error here
+            service_exists = os.path.exists(self.credentials)
+            ConsoleUI.debug(f"Service credentials path exists: {service_exists}")
+            while not service_exists:
                 if(num_retries <= 0):
                     ConsoleUI.error(f"Google service credentials JSON {self.credentials} not found!")
                     raise FileNotFoundError(f"Google cloud service account file not found at {self.credentials}")
 
                 ConsoleUI.print(f"Google service credentials JSON {self.credentials} not found!", color="red")
                 self.credentials = os.path.expanduser(ConsoleUI.prompt_path())
+
+                service_exists = os.path.exists(self.credentials)
                 num_retries -= 1
 
             # validate service credentials format
-            # print(self._validate_service_account_file(Path(self.credentials)))
+            valid_service = self._validate_service_account_file(Path(self.credentials))
+            ConsoleUI.debug(f"Service credentials validation: {valid_service}")
             num_retries = 3
-            while not self._validate_service_account_file(Path(self.credentials)):
-                # FIX: Raise error here
+            while not valid_service:
                 if(num_retries <= 0):
                     ConsoleUI.error(f"Google service credentials JSON {self.credentials} incorrect format! {self._missing}")
                     raise ValueError(f"Google cloud service account at {self.credentials} is not in the right format.")
 
                 ConsoleUI.print(f"Google service credentials JSON {self.credentials} is not in the correct format!", color="red")
                 self.credentials = os.path.expanduser(ConsoleUI.prompt_path())
+
+                valid_service = self._validate_service_account_file(Path(self.credentials))
                 num_retries -= 1
-
-
 
         # Sync data directory
         if hasattr(self, 'data_dir'):
@@ -194,7 +214,7 @@ class UserConfig:
                 namespace.append(fixed_name)
         return namespace
 
-    def _get_default_values(self):
+    def _get_default_values(self) -> Dict:
         values = {}
         for name in COMMAND_ARGS:
             if(name not in ["--version", "--help"]):
@@ -203,7 +223,7 @@ class UserConfig:
                 values[fixed_name] = default_val
         return values
 
-    def _get_bools(self):
+    def _get_bools(self) -> List[str]:
         values = []
         for name in COMMAND_ARGS:
             if(name not in ["--version", "--help"]):
@@ -220,20 +240,24 @@ class UserConfig:
         for key, item in namespace.items():
             setattr(self, key, item)
 
-    def _save_to_internal_config_file(self):
+    def _save_to_internal_config_file(self) -> None:
         save_yaml_config(self.__dict__, INTERNAL_USER_CONFIG_DIR)
 
-    def _load_from_internal_config(self):
+    def _load_from_internal_config(self) -> None:
         if os.path.exists(INTERNAL_USER_CONFIG_DIR):
             config_data = load_yaml_config(INTERNAL_USER_CONFIG_DIR)
             self._fill_namespace(config_data)
 
-        self._validate_paths()
-        self._validate_time()
+        self.validate()
 
 # =========================================================================== #
 #                               Public Methods
 # =========================================================================== #
+
+    def validate(self) -> None:
+        self._validate_time()
+        self._validate_paths()
+        self._validate_logs()
 
     def authenticate(self) -> None:
         """
@@ -278,8 +302,7 @@ class UserConfig:
             setattr(self, item, value)
 
 
-        self._validate_paths()
-        self._validate_time()
+        self.validate()
         self._save_to_internal_config_file()
 
     def change_configuration_from_args(self, args: argparse.Namespace):
@@ -310,8 +333,7 @@ class UserConfig:
             if key in explicit:
                 setattr(self, key, arg_val)
 
-        self._validate_paths()
-        self._validate_time()
+        self.validate()
         self._save_to_internal_config_file()
 
 def delete_user_config() -> None:
@@ -330,9 +352,3 @@ def delete_user_config() -> None:
             ConsoleUI.print(f"No config file found at: {path}", color="yellow")
     except Exception as e:
         ConsoleUI.print(f"Failed to delete config file: {e}", color="red")
-
-def main():
-    outside_config_path = HOME / "NRML" / "outside_config.yml"
-
-if __name__ == "__main__":
-    main()

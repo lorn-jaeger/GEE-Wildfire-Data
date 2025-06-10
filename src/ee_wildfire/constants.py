@@ -24,9 +24,14 @@ INTERNAL_USER_CONFIG_DIR = ROOT / "UserConfig" /"user_config.yml"
 
 VERSION = "2025.06.13"
 
-# SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
-
 SCOPES = ['https://www.googleapis.com/auth/drive']
+
+LOG_LEVELS = {
+    "debug":logging.DEBUG,
+    "info":logging.INFO,
+    "warn":logging.WARN,
+    "error":logging.ERROR,
+}
 
 CRS_CODE = "32610"
 
@@ -101,7 +106,7 @@ DEFAULT_DATA_DIR = HOME / "ee_wildfire_data"
 
 DEFAULT_LOG_DIR = DEFAULT_DATA_DIR / "logs"
 
-DEFAULT_LOG_LEVEL = logging.INFO
+DEFAULT_LOG_LEVEL = "info"
 
 DEFAULT_TIFF_DIR = DEFAULT_DATA_DIR / "tiff"
 
@@ -138,6 +143,7 @@ COMMAND_ARGS = {
     "--silent":              (None,  False,                      "store_true",   "No program output."),
     "--reset-config":        (None,  False,                      "store_true",   "Reset internal user configuration."),
     "--log-dir":             (Path,  DEFAULT_LOG_DIR,                      StorePassedAction,   "Log files directory."),
+    "--log-level":           (str,  DEFAULT_LOG_LEVEL,           StorePassedAction,   "Log level: debug, info, warn, error"),
     "--no-log":              (None,  False,                      "store_true",   "Disable log files."),
     "--debug":               (None,  False,                      "store_true",   "Debug mode for log files."),
 }

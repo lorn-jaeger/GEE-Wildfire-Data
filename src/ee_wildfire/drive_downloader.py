@@ -173,6 +173,7 @@ class DriveDownloader:
 
 
     def purge_data(self):
+        ConsoleUI.print("Purging data...")
         try:
             while True:
                 files = self.get_files_in_drive()
