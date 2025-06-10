@@ -13,7 +13,9 @@ from prompt_toolkit.styles import Style as S
 from datetime import datetime
 from pathlib import Path
 
-from ee_wildfire.constants import DEFAULT_LOG_DIR, DEFAULT_LOG_LEVEL, LOG_LEVELS
+from ee_wildfire.constants import DEFAULT_LOG_DIR, LOG_LEVELS
+
+from types import Union
 
 color_map = {
     "green": Fore.GREEN,
@@ -62,12 +64,12 @@ class ConsoleUI:
     # ========================================
 
     @classmethod
-    def _get_bar_position(cls):
+    def _get_bar_position(cls) -> int:
         # Line 0: status, Line 1: prompt, bars start at 2
         return len(cls._bars) + 2
 
     @classmethod
-    def _get_bar_format(cls):
+    def _get_bar_format(cls) -> str:
         columns, _ = shutil.get_terminal_size()
         desc_length = int(columns/3)
         bar_length = int(columns/2)
@@ -77,7 +79,7 @@ class ConsoleUI:
         return output
 
     @classmethod
-    def _create_log_file(cls):
+    def _create_log_file(cls) -> None:
         timestamp = datetime.now().strftime("%Y-%m-%d:%H-%M-%S")
         filename = f"{timestamp}-run.log"
         cls._log_file = cls._log_dir / filename
@@ -87,7 +89,7 @@ class ConsoleUI:
     # ========================================
 
     @classmethod
-    def add_bar(cls, key, total, desc="", color="green"):
+    def add_bar(cls, key:str, total:int, desc="", color="green"):
         if cls._verbose:
             bar_format = cls._get_bar_format()
             if key in cls._bars:
@@ -118,25 +120,25 @@ class ConsoleUI:
             bar.refresh()
 
     @classmethod
-    def change_bar_desc(cls, key, desc):
+    def change_bar_desc(cls, key:str, desc:str):
         if key in cls._bars.keys():
             cls._bars[key].desc=desc
 
     @classmethod
-    def change_bar_total(cls, key, total):
+    def change_bar_total(cls, key:str, total:int):
         if key in cls._bars.keys():
             cls._bars[key].total = total
             cls._bars[key].refresh()
 
 
     @classmethod
-    def update_bar(cls, key, n=1):
+    def update_bar(cls, key:str, n=1):
         if key in cls._bars:
             cls._bars[key].update(n)
             cls._bars[key].refresh()
 
     @classmethod
-    def reset_bar(cls, key, n=0):
+    def reset_bar(cls, key:str, n=0):
         if key in cls._bars.keys():
             cls._bars[key].n=n
             cls._bars[key].update(n)
@@ -157,12 +159,12 @@ class ConsoleUI:
     # ========================================
 
     @classmethod
-    def write(cls, message, end="\n"):
+    def write(cls, message:str, end="\n"):
         if cls._verbose:
             tqdm.write(message, end=end)
 
     @classmethod
-    def print(cls, message, color="green"):
+    def print(cls, message:str, color="green"):
         """
         Print a status line at the top (position 0) above all tqdm bars.
         """
@@ -215,9 +217,7 @@ class ConsoleUI:
     # ========================================
 
     @classmethod
-    def setup_logging(cls, log_dir, log_level="info"):
-        """
-        """
+    def setup_logging(cls, log_dir: Union[Path,str], log_level="info"):
         cls._log_dir = Path(log_dir)
         cls._create_log_file()
         cls._logger = logging.getLogger("ConsoleUI")
@@ -233,30 +233,30 @@ class ConsoleUI:
         cls._logger.addHandler(file_handler)
 
     @classmethod
-    def set_log_level(cls, level):
+    def set_log_level(cls, level: str):
         if cls._logger:
             cls._logger.setLevel(LOG_LEVELS[level])
 
     @classmethod
-    def debug(cls, message):
+    def debug(cls, message: str):
         if message:
             if cls._logger:
                 cls._logger.log(logging.DEBUG, message)
 
     @classmethod
-    def log(cls, message):
+    def log(cls, message: str):
         if message:
             if cls._logger:
                 cls._logger.log(logging.INFO, message)
 
     @classmethod
-    def warn(cls, message):
+    def warn(cls, message: str):
         if message:
             if cls._logger:
                 cls._logger.log(logging.WARNING, message)
 
     @classmethod
-    def error(cls, message):
+    def error(cls, message: str):
         if message:
             if cls._logger:
                 cls._logger.log(logging.ERROR, message)
