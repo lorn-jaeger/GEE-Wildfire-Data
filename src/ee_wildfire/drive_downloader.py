@@ -167,7 +167,7 @@ class DriveDownloader:
     def purge_data(self):
         try:
             while True:
-                _, files = self.get_files_in_drive()
+                files = self.get_files_in_drive()
                 ConsoleUI.add_bar(key="purge", total=len(files), desc="Purge progress (for first 1000 items)", color="yellow")
                 ConsoleUI.print(f"found {len(files)} files")
 
