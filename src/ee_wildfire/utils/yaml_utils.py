@@ -16,8 +16,10 @@ def validate_yaml_path(yaml_path: Union[Path,str]) -> bool:
     return os.path.exists(yaml_path)
 
 def get_full_yaml_path(config) -> Path:
-    config_dir = ROOT / "config" / f"us_fire_{config.start_date.year}_1e{str(int(config.min_size)).count('0')}.yml"
-    return config_dir
+    file_name = f"us_fire_{config.start_date.year}_1e{str(int(config.min_size)).count('0')}.yml"
+    full_path = config.data_dir / "fire_configs" /file_name
+    return full_path
+
 
 def load_yaml_config(yaml_path: Union[Path,str]) -> Dict:
 
