@@ -217,9 +217,9 @@ class ConsoleUI:
     # ========================================
 
     @classmethod
-    def setup_logging(cls, log_dir: Union[Path,str], log_level="info"):
+    def setup_logging(cls, log_dir: Union[Path,str], log_level="info", file_tag="run"):
         cls._log_dir = Path(log_dir)
-        cls._create_log_file()
+        cls._create_log_file(tag=file_tag)
         cls._logger = logging.getLogger("ConsoleUI")
         cls.set_log_level(log_level)
 
