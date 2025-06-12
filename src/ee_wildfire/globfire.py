@@ -23,6 +23,7 @@ import geopandas as gpd
 import os
 import time
 from ee_wildfire.UserInterface.UserInterface import ConsoleUI
+from ee_wildfire.constants import USA_COORDS
 
 usa_coords = [
     [-125.1803892906456, 35.26328285844432],
@@ -63,7 +64,10 @@ usa_coords = [
 
 
 def create_usa_geometry():
-    return Geometry.Polygon([usa_coords])
+    return Geometry.Polygon([USA_COORDS])
+
+def create_misc_geometry(bounds):
+    return Geometry.Polygon([bounds])
 
 def compute_area(feature):
     return feature.set({'area': feature.area()})
@@ -156,7 +160,8 @@ def format_gdf(fires):
 
 def get_fires(config):
     collection = 'JRC/GWIS/GlobFire/v2/FinalPerimeters'
-    region = create_usa_geometry()
+    # region = create_usa_geometry()
+    region = create_misc_geometry(config.bounding_area)
     gdfs = []
     weeks = pd.date_range(start=config.start_date, end=config.end_date, freq='W')
 

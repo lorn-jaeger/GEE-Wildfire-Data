@@ -35,6 +35,7 @@ class UserConfig:
         Initialize the UserConfig object by loading and validating the configuration.
         """
 
+        self.bounding_area = USA_COORDS
         self._load_from_internal_config()
         self.exported_files = []
         self.failed_exports = []
@@ -51,6 +52,7 @@ class UserConfig:
         items_to_exclude = [
             "exported_files",
             "failed_exports",
+            "bounding_area",
         ]
         config_items = {
             k: str(v)

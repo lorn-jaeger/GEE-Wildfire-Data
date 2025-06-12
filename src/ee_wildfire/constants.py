@@ -150,6 +150,7 @@ COMMAND_ARGS = {
     "--log-level":           (str,  DEFAULT_LOG_LEVEL,           StorePassedAction,   "Log level: debug, info, warn, error"),
     "--no-log":              (None,  False,                      "store_true",   "Disable log files."),
     "--debug":               (None,  False,                      "store_true",   "Debug mode for log files."),
+    "--draw-bbox":           (None,  False,                      "store_true",   "Draw a bounding box for querry."),
 }
 
 

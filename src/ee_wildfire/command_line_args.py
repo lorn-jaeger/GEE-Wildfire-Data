@@ -13,7 +13,7 @@ from ee_wildfire.UserConfig.UserConfig import UserConfig
 from ee_wildfire.drive_downloader import DriveDownloader
 from ee_wildfire.UserConfig.UserConfig import delete_user_config
 from ee_wildfire.UserInterface.UserInterface import ConsoleUI
-# from tqdm import tqdm
+from ee_wildfire.UserInterface import map_maker
 
 def run(config: UserConfig) -> None:
     # TODO: update docs
@@ -62,8 +62,7 @@ def run(config: UserConfig) -> None:
 def parse() -> UserConfig:
     """
     Parses command-line arguments and initializes user config.
-
-    Returns:
+Returns:
         UserConfig: A fully initialized user configuration.
     """
     base_parser = argparse.ArgumentParser(add_help=False)
@@ -130,7 +129,13 @@ def parse() -> UserConfig:
 
     ConsoleUI.write("")
 
+    if(args.draw_bbox or config.draw_bbox):
+        map_maker.setup_logging(config)
+        map_maker.get_map_html()
+        config.bounding_area = map_maker.launch_draw_map()
+
     ConsoleUI.debug(config.__repr__())
+
 
     return config
 
