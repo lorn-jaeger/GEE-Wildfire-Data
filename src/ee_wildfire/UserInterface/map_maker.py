@@ -42,6 +42,20 @@ def submit():
         ConsoleUI.error("Invalid bounding box recieved from flask server.")
         return jsonify(success=False, error="Invalid bounding box received")
 
+    # complete the circle
+    ConsoleUI.debug(f"map maker first point before fix: {raw_bbox[0][0]}")
+    ConsoleUI.debug(f"map maker last point before fix: {raw_bbox[0][-1]}")
+    ConsoleUI.debug(f"map maker complete points before fix? {raw_bbox[0][0] == raw_bbox[0][-1]}")
+
+    if raw_bbox[0][0] != raw_bbox[0][-1]:
+        ConsoleUI.debug(f"map maker, circle incomplete appending point: {raw_bbox[0][0]}")
+        raw_bbox[0].append(raw_bbox[0][0])
+
+    ConsoleUI.debug(f"map maker first point after fix: {raw_bbox[0][0]}")
+    ConsoleUI.debug(f"map maker last point after fix: {raw_bbox[0][-1]}")
+    ConsoleUI.debug(f"map maker complete points after fix? {raw_bbox[0][0] == raw_bbox[0][-1]}")
+
+    ConsoleUI.debug(f"map maker raw bbox: {raw_bbox}")
     bbox_coords = raw_bbox
 
     ConsoleUI.print(f"Received bounding box")

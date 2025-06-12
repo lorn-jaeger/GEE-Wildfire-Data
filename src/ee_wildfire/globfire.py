@@ -64,10 +64,11 @@ usa_coords = [
 
 
 def create_usa_geometry():
-    return Geometry.Polygon([USA_COORDS])
+    return Geometry.Polygon(USA_COORDS)
 
 def create_misc_geometry(bounds):
-    return Geometry.Polygon([bounds])
+    ConsoleUI.debug(f"globfire creating geometry: {bounds}")
+    return Geometry.Polygon(bounds)
 
 def compute_area(feature):
     return feature.set({'area': feature.area()})
