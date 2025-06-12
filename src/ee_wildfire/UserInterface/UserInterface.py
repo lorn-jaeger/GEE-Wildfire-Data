@@ -233,6 +233,11 @@ class ConsoleUI:
         cls._logger.addHandler(file_handler)
 
     @classmethod
+    def get_log_handlers(cls):
+        if cls._logger:
+            return cls._logger.handlers
+
+    @classmethod
     def set_log_level(cls, level: str):
         if cls._logger:
             cls._logger.setLevel(LOG_LEVELS[level])

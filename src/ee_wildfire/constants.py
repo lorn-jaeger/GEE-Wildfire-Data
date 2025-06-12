@@ -19,6 +19,8 @@ AUTH_TOKEN_PATH = ROOT / "UserConfig" / "auth_token.json"
 
 INTERNAL_USER_CONFIG_DIR = ROOT / "UserConfig" /"user_config.yml"
 
+TEMPLATE_DIR = ROOT / "UserInterface" / "templates"
+
 
 # =========== Needed Constants ===========
 
@@ -46,6 +48,8 @@ MAX_YEAR = 2021
 MIN_MONTH = 1
 
 MAX_MONTH = 12
+
+USA_CENTER = [39.8283, -98.5795]  # [lat, lon]
 
 USA_COORDS = [
     [-125.1803892906456, 35.26328285844432],

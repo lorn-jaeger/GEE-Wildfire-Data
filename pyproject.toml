@@ -57,6 +57,9 @@ dependencies = [
 	"wheel",
 	"prompt_toolkit",
 	"colorama",
+	"folium",
+	"flask",
+	"flask-cors",
 ]
 
 
