@@ -215,8 +215,9 @@ def sanitize_filename(value):
     return str(value).replace(":", "-").replace(" ", "_")
 
 def get_fire_cache_path(config):
-    output_dir = os.path.join(config.data_dir, "gdfs")
-    os.makedirs(output_dir, exist_ok=True)
+    # output_dir = os.path.join(config.data_dir, "gdfs")
+    # os.makedirs(output_dir, exist_ok=True)
+    output_dir = config.gdf_dir
 
     start = sanitize_filename(config.start_date)
     end = sanitize_filename(config.end_date)

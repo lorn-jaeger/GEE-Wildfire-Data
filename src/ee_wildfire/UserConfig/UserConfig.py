@@ -110,6 +110,10 @@ class UserConfig:
             self.tiff_dir = Path(os.path.abspath(self.tiff_dir))
             self._try_make_path(self.tiff_dir)
 
+        if hasattr(self, 'gdf_dir'):
+            self.gdf_dir = Path(os.path.abspath(self.gdf_dir))
+            self._try_make_path(self.gdf_dir)
+
         if hasattr(self, "log_dir"):
             self.log_dir = Path(os.path.abspath(self.log_dir))
             self._try_make_path(self.log_dir)
@@ -157,6 +161,9 @@ class UserConfig:
 
                 if(self.log_dir == os.path.abspath(DEFAULT_LOG_DIR)):
                     self.log_dir = Path(self.data_dir / 'logs')
+
+                if(self.gdf_dir == os.path.abspath(DEFAULT_GDF_DIR)):
+                    self.gdf_dir= Path(self.data_dir / 'gdfs')
 
             self._try_make_path(self.data_dir)
 

@@ -114,6 +114,8 @@ DEFAULT_LOG_LEVEL = "info"
 
 DEFAULT_TIFF_DIR = DEFAULT_DATA_DIR / "tiff"
 
+DEFAULT_GDF_DIR = DEFAULT_DATA_DIR / "gdfs"
+
 DEFAULT_HDF5_DIR = DEFAULT_DATA_DIR / "hdf5"
 
 DEFAULT_OAUTH_DIR = DEFAULT_DATA_DIR / "OAuth" / "credentials.json"
@@ -136,6 +138,7 @@ COMMAND_ARGS = {
     "--credentials":         (Path,  DEFAULT_OAUTH_DIR,          StorePassedAction,        "Path to Google Authetication .json"),
     "--data-dir":            (Path,  DEFAULT_DATA_DIR,           StorePassedAction,        "Path to output data directory."),
     "--tiff-dir":            (Path,  DEFAULT_TIFF_DIR,           StorePassedAction,        "Path where downloaded tiff files go."),
+    "--gdf-dir":             (Path,  DEFAULT_GDF_DIR,           StorePassedAction,        "Directory to store geodataframes"),
     "--google-drive-dir":    (str,   DEFAULT_GOOGLE_DRIVE_DIR,   StorePassedAction,        "Google Drive folder for exporting."),
     "--min-size":            (float,   DEFAULT_MIN_SIZE,           StorePassedAction,        "Minimum size of fire area."),
     "--max-size":            (float,   DEFAULT_MAX_SIZE,           StorePassedAction,        "Maximum size of fire area."),
