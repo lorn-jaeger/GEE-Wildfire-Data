@@ -129,8 +129,9 @@ def launch_draw_map() -> List:
 
     return bbox_coords
 
-def show_bbox_on_map(bbox: ee.Geometry, center=None, zoom=8):
+def show_bbox_on_map(bbox: List, center=None, zoom=8):
     """Display the bounding box in a standalone browser window."""
+    bbox = ee.Geometry.Polygon(bbox) # type: ignore
     if center is None:
         coords = bbox.bounds().coordinates().getInfo()[0]
         lons = [pt[0] for pt in coords]

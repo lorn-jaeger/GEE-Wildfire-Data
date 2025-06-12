@@ -26,6 +26,10 @@ def run(config: UserConfig) -> None:
     config.authenticate()
     downloader = DriveDownloader(config)
 
+    print(config.show_bbox)
+    if(config.show_bbox):
+        map_maker.show_bbox_on_map(config.bounding_area)
+
     if(config.purge_before):
         downloader.purge_data()
 
@@ -129,7 +133,7 @@ Returns:
 
     ConsoleUI.write("")
 
-    if(args.draw_bbox or config.draw_bbox):
+    if(config.draw_bbox):
         map_maker.setup_logging(config)
         map_maker.get_map_html()
         config.bounding_area = map_maker.launch_draw_map()

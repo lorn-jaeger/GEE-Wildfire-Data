@@ -154,6 +154,7 @@ COMMAND_ARGS = {
     "--no-log":              (None,  False,                      "store_true",   "Disable log files."),
     "--debug":               (None,  False,                      "store_true",   "Debug mode for log files."),
     "--draw-bbox":           (None,  False,                      "store_true",   "Draw a bounding box for querry."),
+    "--show-bbox":           (None,  False,                      "store_true",   "show the current bounding box for querry."),
 }
 
 
