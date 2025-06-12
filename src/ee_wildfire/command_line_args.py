@@ -10,10 +10,9 @@ from ee_wildfire.create_fire_config import create_fire_config_globfire
 from ee_wildfire.utils.yaml_utils import  get_full_yaml_path
 from ee_wildfire.utils.google_drive_util import export_data
 from ee_wildfire.UserConfig.UserConfig import UserConfig
-from ee_wildfire.UserInterface import ConsoleUI
 from ee_wildfire.drive_downloader import DriveDownloader
 from ee_wildfire.UserConfig.UserConfig import delete_user_config
-
+from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 # from tqdm import tqdm
 
 def run(config: UserConfig) -> None:

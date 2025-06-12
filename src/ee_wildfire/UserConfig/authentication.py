@@ -1,4 +1,5 @@
-from ee_wildfire.UserInterface import ConsoleUI
+from ee_wildfire.UserInterface.UserInterface import ConsoleUI
+
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from google.oauth2 import service_account

@@ -1,7 +1,7 @@
 
 
 
-from ee_wildfire.UserInterface import ConsoleUI
+from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 from ee_wildfire.utils.yaml_utils import load_yaml_config, save_yaml_config
 from ee_wildfire.constants import *
 from ee_wildfire.globfire import get_fires, load_fires, save_fires

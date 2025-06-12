@@ -6,7 +6,7 @@ helper funcitons to help handle google drive api calls.
 from ee.data import getTaskList
 
 from ee_wildfire.UserConfig.UserConfig import UserConfig
-from ee_wildfire.UserInterface import ConsoleUI
+from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 from pathlib import Path
 
 from ee_wildfire.utils.yaml_utils import load_fire_config

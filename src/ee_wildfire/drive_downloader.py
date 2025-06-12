@@ -5,7 +5,7 @@ from googleapiclient.http import MediaIoBaseDownload
 from googleapiclient.errors import HttpError
 
 from ee_wildfire.UserConfig.UserConfig import UserConfig
-from ee_wildfire.UserInterface import ConsoleUI
+from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 
 from ee_wildfire.utils.google_drive_util import get_active_tasks_in_export_queue
 

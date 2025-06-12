@@ -13,7 +13,7 @@ from ee import String #type: ignore
 from ee import Terrain #type: ignore
 from ee import Geometry
 
-from ee_wildfire.UserInterface import ConsoleUI #type: ignore
+from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 
 
 class FirePred:

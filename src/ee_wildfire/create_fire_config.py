@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import yaml
 import os
 
-from ee_wildfire.UserInterface import ConsoleUI
+from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 from ee_wildfire.utils.yaml_utils import get_full_yaml_path
 from ee_wildfire.UserConfig.UserConfig import UserConfig
 

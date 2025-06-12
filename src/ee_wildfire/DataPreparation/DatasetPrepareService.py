@@ -8,9 +8,9 @@ from ee import batch
 from ee import data
 from ee import Geometry, ImageCollection # type: ignore
 
-from ee_wildfire.UserConfig.UserConfig import UserConfig
+from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 from ee_wildfire.constants import EXPORT_QUEUE_SIZE
-from ee_wildfire.UserInterface import ConsoleUI
+from ee_wildfire.UserConfig.UserConfig import UserConfig
 
 
 # Add the parent directory to the Python path to enable imports

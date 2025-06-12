@@ -22,7 +22,7 @@ import pandas as pd
 import geopandas as gpd
 import os
 import time
-from ee_wildfire.UserInterface import ConsoleUI
+from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 
 usa_coords = [
     [-125.1803892906456, 35.26328285844432],
