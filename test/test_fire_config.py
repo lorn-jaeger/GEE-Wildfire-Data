@@ -16,7 +16,6 @@ map_maker.get_map_html()
 coords = map_maker.launch_draw_map()
 print(coords)
 img = ee.Geometry.Polygon(coords)
-map_maker.show_bbox_on_map(img)
 
 poly = Polygon(coords[0])
 assert poly.is_valid, "invalid polygon"
