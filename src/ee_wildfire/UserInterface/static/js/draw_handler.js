@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
       draw: {
         polygon: true,
         rectangle: true,
-        circle: false,
+        circle: true,
         marker: false,
         circlemarker: false,
         polyline: false

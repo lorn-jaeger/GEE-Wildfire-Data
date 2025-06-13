@@ -95,9 +95,9 @@ def get_map_html():
         export=False, 
         draw_options={
             'polyline': False,
-            # 'rectangle': True,
-            # 'polygon': True,
-            # 'circle': True,
+            'rectangle': False,
+            'polygon': False,
+            'circle': False,
             'marker': False,
             'circlemarker': False,
         },
@@ -119,9 +119,12 @@ def launch_draw_map() -> List:
     thread = threading.Thread(target=run, daemon=True)
     thread.start()
 
-    # FIX: check for webbrowser access
     time.sleep(1)  # Give server time to start
-    webbrowser.open("http://127.0.0.1:5000")
+    try:
+        webbrowser.open("http://127.0.0.1:5000")
+    except webbrowser.Error as e:
+        ConsoleUI.error(f"Unable to open webbrowser: {str(e)}. Setting bounding box to USA.")
+        bbox_coords = USA_COORDS
 
     # Wait until user submits bbox
     while bbox_coords is None:
@@ -146,7 +149,12 @@ def show_bbox_on_map(bbox: List, center=None, zoom=8):
     # Export to HTML and open in browser
     with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as tmp:
         m.save(tmp.name)
-        webbrowser.open(f"file://{tmp.name}")
+        try:
+            webbrowser.open(f"file://{tmp.name}")
+        except webbrowser.Error as e:
+            ConsoleUI.error(f"Unable to open webbrowser: {str(e)}")
+            return
+
 if __name__ == "__main__":
     ConsoleUI.setup_logging(log_dir=DEFAULT_LOG_DIR, log_level="info")
     get_map_html()

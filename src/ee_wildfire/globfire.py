@@ -177,6 +177,10 @@ def get_fires(config):
             gdfs.append(gdf)
         ConsoleUI.update_bar("fires")
 
+    if not gdfs:
+        ConsoleUI.error("No fires found under current parameters.")
+        raise FileNotFoundError(f"No fires were found. Please adjust your configuration.")
+
     fires = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True))
     fires = format_gdf(fires)
 

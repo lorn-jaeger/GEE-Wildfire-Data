@@ -26,7 +26,6 @@ def run(config: UserConfig) -> None:
     config.authenticate()
     downloader = DriveDownloader(config)
 
-    print(config.show_bbox)
     if(config.show_bbox):
         map_maker.show_bbox_on_map(config.bounding_area)
 
