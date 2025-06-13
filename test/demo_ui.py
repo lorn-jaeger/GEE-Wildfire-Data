@@ -1,4 +1,4 @@
-from ee_wildfire.UserInterface import ConsoleUI
+from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 from datetime import datetime
 import time
 

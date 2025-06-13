@@ -16,7 +16,6 @@ from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 from ee_wildfire.UserInterface import map_maker
 
 def run(config: UserConfig) -> None:
-    # TODO: update docs
     """
     Core pipeline logic for exporting and downloading wildfire data.
     

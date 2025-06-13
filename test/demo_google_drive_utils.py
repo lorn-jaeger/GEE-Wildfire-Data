@@ -1,6 +1,10 @@
 import ee
+import time
 from ee_wildfire.UserConfig.UserConfig import UserConfig
-from ee_wildfire.UserInterface import ConsoleUI
+from ee_wildfire.UserInterface.UserInterface import ConsoleUI
+from ee_wildfire.UserConfig.authentication import AuthManager
+from ee_wildfire.ExportQueue.QueueManager import QueueManager
+from ee_wildfire.constants import *
 
 from ee_wildfire.utils import google_drive_util
 from ee_wildfire.drive_downloader import DriveDownloader
@@ -9,13 +13,15 @@ from pathlib import Path
 import json
 
 SERVICE_ACCOUNT = Path("/home/kyle/NRML/OAuth/service-account-credentials.json")
+DRIVE_DIR = 'EE-Wildfire-Test'
 
 def __auth(verb=False):
     uf = UserConfig()
     ConsoleUI.set_verbose(verb)
     ConsoleUI.write(str(uf))
-    uf.authenticate()
-    return uf
+    # uf.authenticate()
+    auth = AuthManager(SERVICE_ACCOUNT)
+    return auth
 
 def test_export_queue_pull():
     __auth()
@@ -48,35 +54,26 @@ def test_download():
     dl.download_files()
 
 def test_others():
-    creds = ee.ServiceAccountCredentials(email=json.load(open(SERVICE_ACCOUNT))['client_email'],
-                                                 key_file=str(SERVICE_ACCOUNT))
-    ee.Authenticate()
-    ee.Initialize(project='ee-earthdata-459817')
-    # ee.Initialize(credentials=creds)
-    small_region = ee.Geometry.Rectangle([-122.45, 37.75, -122.44, 37.76])
-    image = ee.Image('CGIAR/SRTM90_V4')
-    task = ee.batch.Export.image.toDrive(
-        image=image,
-        description='test_export',
-        folder='EE-wildfire-Test',  # or use folder ID instead
-        # folder='GoogleEarthEngine',
-        fileNamePrefix='test_image',
-        scale=30,
-        region=small_region,
-        maxPixels=1e6,
-    )
-    task.start()
-    print(ee.data.getAssetRoots())
+    auth = AuthManager(SERVICE_ACCOUNT)
+    ConsoleUI.setup_logging(DEFAULT_LOG_DIR, "debug")
+    qm = QueueManager()
 
-def test_auth():
-    uf = __auth()
-    print(ee.data.getAssetRoots())
+    # Example: queue two dummy exports
+    for i in range(5):
+        img = ee.Image(1).rename(f"const_{i}")
+        desc = f"test_const_{i}"
+        name = f"Test_{i}"
+        ConsoleUI.print(f"[TEST] - {name} : {desc}")
+        qm.add_export(img,desc,name)
+
+    qm.start()
+
+    # while(not qm.is_done):
+    #     ConsoleUI.print("waiting on exports...")
 
 
-
-
-
-
+    # print(monitor.tasks)
+    # monitor.stop()
 
 if __name__ == "__main__":
     test_others()
