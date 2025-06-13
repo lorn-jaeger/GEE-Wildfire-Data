@@ -2,17 +2,22 @@ from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
+from googleapiclient.discovery import Resource
 from google.oauth2 import service_account
+
+from pathlib import Path
 
 import json
 import ee
 
 
 class AuthManager:
-    def __init__(self,service_json):
+    def __init__(self,service_json: Path):
         self.service_json = service_json
+        self.__authenticate_drive()
+        self.__authenticate_earth_engine()
 
-    def authenticate_earth_engine(self):
+    def __authenticate_earth_engine(self):
         try:
             self.ee_creds = ee.ServiceAccountCredentials(email=json.load(open(self.service_json))['client_email'],
                                                  key_file=str(self.service_json))
@@ -22,7 +27,7 @@ class AuthManager:
 
         ConsoleUI.print("Google Earth autheticated succesfully.")
 
-    def authenticate_drive(self):
+    def __authenticate_drive(self):
         """Authenticate Google Drive using a service account."""
         SCOPES = ['https://www.googleapis.com/auth/drive']
         try:
@@ -41,14 +46,16 @@ class AuthManager:
         return self.service_json
 
 
+
     def get_project_id(self) -> str:
         return str(self.ee_creds.project_id)
 
+    def get_drive_service(self) -> Resource:
+        return self.drive_service
+
 def main():
     am = AuthManager(
-        auth_mode="service_account",
         service_json="/home/kyle/NRML/OAuth/service-account-credentials.json",
-        # oauth_json="/home/kyle/NRML/OAuth/user-account-credentials.json",
     )
     am.authenticate_earth_engine()
     am.authenticate_drive()

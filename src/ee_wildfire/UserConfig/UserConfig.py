@@ -275,9 +275,8 @@ class UserConfig:
         self.auth = AuthManager(
             service_json=self.credentials,
         )
-        self.auth.authenticate_drive()
-        self.auth.authenticate_earth_engine()
-        self.drive_service = self.auth.drive_service
+        # self.drive_service = self.auth.drive_service
+        self.drive_service = self.auth.get_drive_service()
         self.project_id = self.auth.get_project_id()
 
     def get_geodataframe(self) -> None:
