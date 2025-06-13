@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", function () {
         circle: true,
         marker: false,
         circlemarker: false,
-        polyline: false
+        polyline: false,
       },
       edit: {
         featureGroup: drawnItems
