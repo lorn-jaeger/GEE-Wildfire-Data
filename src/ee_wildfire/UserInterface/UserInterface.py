@@ -1,4 +1,5 @@
 
+from threading import RLock
 from tqdm import tqdm
 import logging
 import sys
@@ -41,6 +42,7 @@ class ConsoleUI:
     _logger = None
     _log_dir = Path("")
     _log_file = ""
+    _lock = RLock()
 
     # ========================================
     #               Misc Public Methods
@@ -66,7 +68,8 @@ class ConsoleUI:
     @classmethod
     def _get_bar_position(cls) -> int:
         # Line 0: status, Line 1: prompt, bars start at 2
-        return len(cls._bars) + 2
+        with cls._lock:
+            return len(cls._bars) + 2
 
     @classmethod
     def _get_bar_format(cls) -> str:
@@ -90,69 +93,77 @@ class ConsoleUI:
 
     @classmethod
     def add_bar(cls, key:str, total:int, desc="", color="green"):
-        if cls._verbose:
-            bar_format = cls._get_bar_format()
-            if key in cls._bars:
-                bar = cls._bars[key]
-                bar.total = total
-                bar.desc = desc
-                bar.colour=color
-                bar.n = 0
-                bar.reset()
-                bar.refresh()
-            else:
-                cls._bars[key] = tqdm(
-                    total=total,
-                    desc=desc,
-                    position=cls._get_bar_position(),
-                    leave=True,
-                    file=sys.stdout,
-                    colour=color,
-                    ascii=False,
-                    bar_format=bar_format,
-                )
+        with cls._lock:
+            if cls._verbose:
+                bar_format = cls._get_bar_format()
+                if key in cls._bars:
+                    bar = cls._bars[key]
+                    bar.total = total
+                    bar.desc = desc
+                    bar.colour=color
+                    bar.n = 0
+                    bar.reset()
+                    bar.refresh()
+                else:
+                    cls._bars[key] = tqdm(
+                        total=total,
+                        desc=desc,
+                        position=cls._get_bar_position(),
+                        leave=True,
+                        file=sys.stdout,
+                        colour=color,
+                        ascii=False,
+                        bar_format=bar_format,
+                    )
 
     @classmethod
     def set_bar_position(cls, key: str, value: int):
-        if key in cls._bars:
-            bar = cls._bars[key]
-            bar.n = value
-            bar.refresh()
+        with cls._lock:
+            if key in cls._bars:
+                bar = cls._bars[key]
+                bar.n = value
+                bar.refresh()
 
     @classmethod
     def change_bar_desc(cls, key:str, desc:str):
-        if key in cls._bars.keys():
-            cls._bars[key].desc=desc
+        with cls._lock:
+            if key in cls._bars.keys():
+                cls._bars[key].desc=desc
 
     @classmethod
     def change_bar_total(cls, key:str, total:int):
-        if key in cls._bars.keys():
-            cls._bars[key].total = total
-            cls._bars[key].refresh()
+        with cls._lock:
+            if key in cls._bars.keys():
+                cls._bars[key].total = total
+                cls._bars[key].refresh()
 
 
     @classmethod
     def update_bar(cls, key:str, n=1):
-        if key in cls._bars:
-            cls._bars[key].update(n)
-            cls._bars[key].refresh()
+        with cls._lock:
+            if key in cls._bars:
+                cls._bars[key].update(n)
+                cls._bars[key].refresh()
 
     @classmethod
     def reset_bar(cls, key:str, n=0):
-        if key in cls._bars.keys():
-            cls._bars[key].n=n
-            cls._bars[key].update(n)
+        with cls._lock:
+            if key in cls._bars.keys():
+                cls._bars[key].n=n
+                cls._bars[key].update(n)
 
     @classmethod
     def close_all_bars(cls):
-        keys = cls._bars.keys()
-        for key in keys:
-            cls._bars[key].close()
+        with cls._lock:
+            keys = cls._bars.keys()
+            for key in keys:
+                cls._bars[key].close()
 
     @classmethod
     def refresh_all(cls):
-        for bar in cls._bars.values():
-            bar.refresh()
+        with cls._lock:
+            for bar in cls._bars.values():
+                bar.refresh()
 
     # ========================================
     #           Text and Status Line
@@ -169,18 +180,22 @@ class ConsoleUI:
         Print a status line at the top (position 0) above all tqdm bars.
         """
 
-        cls.log(message)
+        logger = cls._logger
+        if logger:
+            logger.info(message)
 
         if not cls._verbose:
             return
 
 
-        term_width = shutil.get_terminal_size((80, 20)).columns
-        padded = color_map[color] + f"[STATUS] {message}".ljust(term_width) + Style.RESET_ALL
-        tqdm.write(padded, end="\r")
+        with cls._lock:
+            term_width = shutil.get_terminal_size((80, 20)).columns
+            padded = color_map[color] + f"[STATUS] {message}".ljust(term_width) + Style.RESET_ALL
+            tqdm.write(padded, end="\r")
+            # tqdm.write(padded)
 
-        # Flush to ensure immediate overwrite
-        sys.stdout.flush()
+            # Flush to ensure immediate overwrite
+            sys.stdout.flush()
 
 
     @classmethod
@@ -218,53 +233,60 @@ class ConsoleUI:
 
     @classmethod
     def setup_logging(cls, log_dir: Union[Path,str], log_level="info", file_tag="run"):
-        cls._log_dir = Path(log_dir)
-        cls._create_log_file(tag=file_tag)
-        cls._logger = logging.getLogger("ConsoleUI")
-        cls.set_log_level(log_level)
+        with cls._lock:
+            cls._log_dir = Path(log_dir)
+            cls._create_log_file(tag=file_tag)
+            cls._logger = logging.getLogger("ConsoleUI")
+            cls.set_log_level(log_level)
 
-        # Remove any old handlers (for reruns)
-        if cls._logger.hasHandlers():
-            cls._logger.handlers.clear()
+            # Remove any old handlers (for reruns)
+            if cls._logger.hasHandlers():
+                cls._logger.handlers.clear()
 
-        # File handler
-        file_handler = logging.FileHandler(cls._log_file)
-        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-        cls._logger.addHandler(file_handler)
+            # File handler
+            file_handler = logging.FileHandler(cls._log_file)
+            file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+            cls._logger.addHandler(file_handler)
 
     @classmethod
     def get_log_handlers(cls):
-        if cls._logger:
-            return cls._logger.handlers
+        with cls._lock:
+            if cls._logger:
+                return cls._logger.handlers
 
     @classmethod
     def set_log_level(cls, level: str):
-        if cls._logger:
-            cls._logger.setLevel(LOG_LEVELS[level])
+        with cls._lock:
+            if cls._logger:
+                cls._logger.setLevel(LOG_LEVELS[level])
 
     @classmethod
     def debug(cls, message: str):
-        if message:
-            if cls._logger:
-                cls._logger.log(logging.DEBUG, message)
+        with cls._lock:
+            if message:
+                if cls._logger:
+                    cls._logger.log(logging.DEBUG, message)
 
     @classmethod
     def log(cls, message: str):
-        if message:
-            if cls._logger:
-                cls._logger.log(logging.INFO, message)
+        with cls._lock:
+            if message:
+                if cls._logger:
+                    cls._logger.log(logging.INFO, message)
 
     @classmethod
     def warn(cls, message: str):
-        if message:
-            if cls._logger:
-                cls._logger.log(logging.WARNING, message)
+        with cls._lock:
+            if message:
+                if cls._logger:
+                    cls._logger.log(logging.WARNING, message)
 
     @classmethod
     def error(cls, message: str):
-        if message:
-            if cls._logger:
-                cls._logger.log(logging.ERROR, message)
+        with cls._lock:
+            if message:
+                if cls._logger:
+                    cls._logger.log(logging.ERROR, message)
 
 
 def main():
