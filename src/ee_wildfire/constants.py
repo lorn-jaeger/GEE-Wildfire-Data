@@ -35,7 +35,7 @@ LOG_LEVELS = {
     "error":logging.ERROR,
 }
 
-CRS_CODE = "32610"
+CRS_CODE = "EPSG:32610"
 
 DATE_FORMAT = "%Y-%m-%d"
 

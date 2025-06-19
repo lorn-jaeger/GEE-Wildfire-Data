@@ -6,6 +6,7 @@ from googleapiclient.errors import HttpError
 
 from ee_wildfire.UserConfig.UserConfig import UserConfig
 from ee_wildfire.UserInterface.UserInterface import ConsoleUI
+from ee_wildfire.ExportQueue.QueueManager import QueueManager as qm
 
 from ee_wildfire.utils.google_drive_util import get_active_tasks_in_export_queue
 
@@ -127,23 +128,24 @@ class DriveDownloader:
         local_path = self.config.tiff_dir
         expected_files = self.config.exported_files
 
-        ConsoleUI.add_bar(key="download",total=len(expected_files), desc="Export progress")
 
-        # wait on export queue
-        while True:
+        qm.wait_for_exports()
 
-            active_tasks = get_active_tasks_in_export_queue()
-            files = [f['description']+".tif" for f in active_tasks]
-            common = set(files) & set(expected_files)
-
-            ConsoleUI.set_bar_position(key="download", value=len(expected_files) - len(common))
-
-            if len(active_tasks) == 0:
-                ConsoleUI.print("All files found!")
-                break
-            else:
-                ConsoleUI.print(f"{len(active_tasks)} tasks are on the export qeueue.")
-                time.sleep(60)
+        # # wait on export queue
+        # while True:
+        #
+        #     active_tasks = get_active_tasks_in_export_queue()
+        #     files = [f['description']+".tif" for f in active_tasks]
+        #     common = set(files) & set(expected_files)
+        #
+        #     ConsoleUI.set_bar_position(key="download", value=len(expected_files) - len(common))
+        #
+        #     if len(active_tasks) == 0:
+        #         ConsoleUI.print("All files found!")
+        #         break
+        #     else:
+        #         ConsoleUI.print(f"{len(active_tasks)} tasks are on the export qeueue.")
+        #         time.sleep(60)
 
         files_in_drive = self.get_files_in_drive()
         id_map = {f['name']:f['id'] for f in files_in_drive if f['name'] in expected_files}

@@ -11,6 +11,7 @@ from ee import Geometry, ImageCollection # type: ignore
 from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 from ee_wildfire.constants import EXPORT_QUEUE_SIZE
 from ee_wildfire.UserConfig.UserConfig import UserConfig
+from ee_wildfire.ExportQueue.QueueManager import QueueManager as qm
 
 
 # Add the parent directory to the Python path to enable imports
@@ -124,21 +125,38 @@ class DatasetPrepareService:
 
         base_filename = f"Image_Export_{self.location}_{index}"
         img = image_collection.max().toFloat()
+        folder=self.user_config.google_drive_dir
+        region=self.geometry.toGeoJSON()['coordinates']
+        scale=self.scale_dict.get("FirePred")
+        crs=utm_zone
+        maxPixels=self.user_config.max_size
+
+        qm.add_export(
+            image=img,
+            description=base_filename,
+            max_pixels=maxPixels,
+            scale=scale,
+            region=region,
+            crs=crs,
+            folder=folder
+        )
+        self.user_config.exported_files.append(f"{base_filename}.tif")
 
         # Use geemap's export function
-        try:
-            # self._gee_export(img, base_filename, utm_zone)
-            self._batch_export(img,base_filename,utm_zone)
+        # try:
+        #     # self._gee_export(img, base_filename, utm_zone)
+        #     self._batch_export(img,base_filename,utm_zone)
+        #
+        #     # add item to export queue
+        #     self.user_config.exported_files.append(f"{base_filename}.tif")
+        #
+        # except Exception as e:
+        #     ConsoleUI.warn(f"Export failed for {base_filename}: {str(e)}")
+        #
+        #     # FIX: Are these getting handled at all?
+        #     self.user_config.failed_exports.append(f"{base_filename}.tif")
+            # wait_for_gee_queue_space()
 
-            # add item to export queue
-            self.user_config.exported_files.append(f"{base_filename}.tif")
-
-        except Exception as e:
-            ConsoleUI.warn(f"Export failed for {base_filename}: {str(e)}")
-
-            # FIX: Are these getting handled at all?
-            self.user_config.failed_exports.append(f"{base_filename}.tif")
-            wait_for_gee_queue_space()
 
         
     def extract_dataset_from_gee_to_drive(self, utm_zone:str, n_buffer_days:int=0) -> None:
@@ -183,36 +201,11 @@ class DatasetPrepareService:
 
             ConsoleUI.update_bar(key="export")
 
-def wait_for_gee_queue_space():
-    ConsoleUI.add_bar("export_queue",total=EXPORT_QUEUE_SIZE, desc="Google Earth export queue", color="yellow")
-    total = EXPORT_QUEUE_SIZE
-    target = EXPORT_QUEUE_SIZE/2
-
-    while True:
-        tasks = data.getTaskList()
-        active_tasks = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
-
-        if len(active_tasks) > total:
-            total = len(active_tasks)
-
-        # update progress bar
-        ConsoleUI.change_bar_total(key="export_queue",total=total)
-        ConsoleUI.set_bar_position(key="export_queue",value=len(active_tasks))
-        ConsoleUI.print(f"Waiting until export queue size = {target}. {len(active_tasks)-target} remaining")
-
-        if len(active_tasks) <= target:
-            ConsoleUI.change_bar_desc(key="export_queue", desc="Google Earth export queue")
-            break
-        else:
-            ConsoleUI.change_bar_desc(key="export_queue", desc="Google Earth export queue full, waiting...")
-
-        time.sleep(60)
 
 
 def main():
     from ee_wildfire.UserConfig.UserConfig import UserConfig
     uf = UserConfig()
-    wait_for_gee_queue_space()
 
 if __name__ == "__main__":
     main()

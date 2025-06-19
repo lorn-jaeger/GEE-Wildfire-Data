@@ -10,7 +10,7 @@ from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 from pathlib import Path
 
 from ee_wildfire.utils.yaml_utils import load_fire_config
-from ee_wildfire.constants import CRS_CODE
+from ee_wildfire.constants import CRS_CODE, EXPORT_QUEUE_SIZE
 from ee_wildfire.DataPreparation.DatasetPrepareService import DatasetPrepareService
 
 from typing import Dict, Union, List
@@ -93,6 +93,7 @@ def export_data(yaml_path: Union[Path,str], user_config: UserConfig) -> bool:
         fire_names.remove(non_fire_key)
     locations = fire_names
 
+    ConsoleUI.add_bar(key="export_queue", total=EXPORT_QUEUE_SIZE, desc="Google Earth Export Queue", color="yellow")
     ConsoleUI.add_bar(key="processed", total=len(locations), desc="Fires processed")
     ConsoleUI.add_bar(key="failed", total=len(locations), desc="Number of failed locations",
                       color="red")

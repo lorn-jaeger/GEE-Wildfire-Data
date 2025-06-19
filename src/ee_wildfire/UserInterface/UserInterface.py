@@ -83,7 +83,7 @@ class ConsoleUI:
 
     @classmethod
     def _create_log_file(cls, tag="run") -> None:
-        timestamp = datetime.now().strftime("%Y-%m-%d:%H-%M")
+        timestamp = datetime.now().strftime("%Y-%m-%d:%H")
         filename = f"{timestamp}-{tag}.log"
         cls._log_file = cls._log_dir / filename
 

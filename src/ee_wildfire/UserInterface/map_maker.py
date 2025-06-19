@@ -38,7 +38,7 @@ def submit():
     ConsoleUI.debug(f"map maker last point before fix: {raw_bbox[0][-1]}")
     ConsoleUI.debug(f"map maker complete points before fix? {raw_bbox[0][0] == raw_bbox[0][-1]}")
 
-    if raw_bbox[0][0]!=raw_bbox[0][-1]:
+    if raw_bbox[0][0] != raw_bbox[0][-1]:
         ConsoleUI.debug(f"map maker, circle incomplete appending point: {raw_bbox[0][0]}")
         raw_bbox[0].append(raw_bbox[0][0])
 

@@ -56,24 +56,29 @@ def test_download():
 def test_others():
     auth = AuthManager(SERVICE_ACCOUNT)
     ConsoleUI.setup_logging(DEFAULT_LOG_DIR, "debug")
-    qm = QueueManager()
 
+    ConsoleUI.add_bar(key="export_queue",
+                      total= EXPORT_QUEUE_SIZE,
+                      desc="Google Earth Export Queue")
     # Example: queue two dummy exports
-    for i in range(5):
+    for i in range(25):
         img = ee.Image(1).rename(f"const_{i}")
         desc = f"test_const_{i}"
         name = f"Test_{i}"
-        ConsoleUI.print(f"[TEST] - {name} : {desc}")
-        qm.add_export(img,desc,name)
+        folder="EE-Wildfire-Test"
+        # ConsoleUI.print(f"[TEST] - {name} : {desc}")
+        QueueManager.add_export(
+            image=img,
+            description=desc,
+            filename=f"Test_const_{i}",
+            google_drive_folder=folder,
+            max_pixels=100000
+        )
 
-    qm.start()
-
-    # while(not qm.is_done):
-    #     ConsoleUI.print("waiting on exports...")
+    QueueManager.wait_for_exports()
 
 
-    # print(monitor.tasks)
-    # monitor.stop()
+
 
 if __name__ == "__main__":
     test_others()
