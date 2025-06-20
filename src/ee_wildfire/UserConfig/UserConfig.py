@@ -1,20 +1,14 @@
+import argparse
+import json
+import os
+import pprint
+from typing import Any, Dict, List, Union
 
-
-
-from ee_wildfire.UserInterface.UserInterface import ConsoleUI
-from ee_wildfire.utils.yaml_utils import load_yaml_config, save_yaml_config
 from ee_wildfire.constants import *
 from ee_wildfire.globfire import get_fires, load_fires, save_fires
 from ee_wildfire.UserConfig.authentication import AuthManager
-
-
-import argparse
-import os
-import pprint
-import json
-
-from typing import Any, Dict, Union, List
-
+from ee_wildfire.UserInterface.UserInterface import ConsoleUI
+from ee_wildfire.utils.yaml_utils import load_yaml_config, save_yaml_config
 
 
 class UserConfig:
@@ -40,13 +34,11 @@ class UserConfig:
         self.exported_files = []
         self.failed_exports = []
 
-
-
     def __repr__(self) -> str:
         output_str = "UserConfig\n"
         for key, value in self.__dict__.items():
             output_str += f"{key} {value}\n"
-        return(output_str)
+        return output_str
 
     def __str__(self) -> str:
         items_to_exclude = [
@@ -57,17 +49,22 @@ class UserConfig:
         config_items = {
             k: str(v)
             for k, v in self.__dict__.items()
-            if (not k.startswith('_')) and (k not in items_to_exclude)
+            if (not k.startswith("_")) and (k not in items_to_exclude)
         }
 
         sorted_items = dict(sorted(config_items.items()))
 
         # Format nicely using pprint
-        return "\n".join([
-            "╭─ User Configuration ─────────────────────────────────────────────────────────────────────────────",
-            *[f"│ {key:<20} : {pprint.pformat(value)}" for key, value in sorted_items.items()],
-            "╰──────────────────────────────────────────────────────────────────────────────────────────────────"
-        ])
+        return "\n".join(
+            [
+                "╭─ User Configuration ─────────────────────────────────────────────────────────────────────────────",
+                *[
+                    f"│ {key:<20} : {pprint.pformat(value)}"
+                    for key, value in sorted_items.items()
+                ],
+                "╰──────────────────────────────────────────────────────────────────────────────────────────────────",
+            ]
+        )
 
     # =========================================================================== #
     #                               Private Methods
@@ -75,26 +72,38 @@ class UserConfig:
 
     def _validate_logs(self) -> None:
         if hasattr(self, "log_level"):
-            if(self.log_level not in LOG_LEVELS.keys()):
-                ConsoleUI.debug(f"{self.log_level} is not in {LOG_LEVELS.keys()}, setting to default {DEFAULT_LOG_LEVEL}")
+            if self.log_level not in LOG_LEVELS.keys():
+                ConsoleUI.debug(
+                    f"{self.log_level} is not in {LOG_LEVELS.keys()}, setting to default {DEFAULT_LOG_LEVEL}"
+                )
                 self.log_dir = DEFAULT_LOG_LEVEL
 
     def _validate_service_account_file(self, path: Path) -> bool:
         try:
             with open(path, "r") as f:
                 data = json.load(f)
-            
+
             required_fields = [
-                "type", "project_id", "private_key_id", "private_key",
-                "client_email", "client_id", "auth_uri", "token_uri",
-                "auth_provider_x509_cert_url", "client_x509_cert_url"
+                "type",
+                "project_id",
+                "private_key_id",
+                "private_key",
+                "client_email",
+                "client_id",
+                "auth_uri",
+                "token_uri",
+                "auth_provider_x509_cert_url",
+                "client_x509_cert_url",
             ]
             self._missing = [field for field in required_fields if field not in data]
             ConsoleUI.debug(f"Service account JSON is missing {self._missing}")
             return all(field in data for field in required_fields)
-        
+
         except (json.JSONDecodeError, FileNotFoundError):
             return False
+
+    def _normalize_path(self, path: Path):
+        return Path(path).expanduser().resolve()
 
     def _validate_paths(self) -> None:
         """
@@ -103,34 +112,47 @@ class UserConfig:
             FileNotFoundError: If credentials file does not exist.
         """
 
-        if hasattr(self, 'config'):
+        if hasattr(self, "config"):
             self.config = Path(os.path.abspath(self.config))
+            ConsoleUI.debug(f"Config path: {self.config}")
 
-        if hasattr(self, 'tiff_dir'):
-            self.tiff_dir = Path(os.path.abspath(self.tiff_dir))
+        if hasattr(self, "tiff_dir"):
+            self.tiff_dir = self._normalize_path(self.tiff_dir)
+            ConsoleUI.debug(f"tiff path: {self.tiff_dir}")
             self._try_make_path(self.tiff_dir)
 
-        if hasattr(self, 'gdf_dir'):
+        if hasattr(self, "gdf_dir"):
             self.gdf_dir = Path(os.path.abspath(self.gdf_dir))
+            self.gdf_dir = self._normalize_path(self.gdf_dir)
+            ConsoleUI.debug(f"gdf path: {self.gdf_dir}")
             self._try_make_path(self.gdf_dir)
 
         if hasattr(self, "log_dir"):
-            self.log_dir = Path(os.path.abspath(self.log_dir))
+            self.log_dir = self._normalize_path(self.log_dir)
+            ConsoleUI.debug(f"log path: {self.log_dir}")
             self._try_make_path(self.log_dir)
 
-        if hasattr(self,'credentials'):
-            self.credentials = Path(os.path.abspath(self.credentials))
+        if hasattr(self, "credentials"):
+            self.credentials = self._normalize_path(self.credentials)
+            ConsoleUI.debug(f"creds path: {self.credentials}")
 
             # prompt user for service credentials if not found
             num_retries = 3
             service_exists = os.path.exists(self.credentials)
             ConsoleUI.debug(f"Service credentials path exists: {service_exists}")
             while not service_exists:
-                if(num_retries <= 0):
-                    ConsoleUI.error(f"Google service credentials JSON {self.credentials} not found!")
-                    raise FileNotFoundError(f"Google cloud service account file not found at {self.credentials}")
+                if num_retries <= 0:
+                    ConsoleUI.error(
+                        f"Google service credentials JSON {self.credentials} not found!"
+                    )
+                    raise FileNotFoundError(
+                        f"Google cloud service account file not found at {self.credentials}"
+                    )
 
-                ConsoleUI.print(f"Google service credentials JSON {self.credentials} not found!", color="red")
+                ConsoleUI.print(
+                    f"Google service credentials JSON {self.credentials} not found!",
+                    color="red",
+                )
                 self.credentials = os.path.expanduser(ConsoleUI.prompt_path())
 
                 service_exists = os.path.exists(self.credentials)
@@ -141,33 +163,40 @@ class UserConfig:
             ConsoleUI.debug(f"Service credentials validation: {valid_service}")
             num_retries = 3
             while not valid_service:
-                if(num_retries <= 0):
-                    ConsoleUI.error(f"Google service credentials JSON {self.credentials} incorrect format! {self._missing}")
-                    raise ValueError(f"Google cloud service account at {self.credentials} is not in the right format.")
+                if num_retries <= 0:
+                    ConsoleUI.error(
+                        f"Google service credentials JSON {self.credentials} incorrect format! {self._missing}"
+                    )
+                    raise ValueError(
+                        f"Google cloud service account at {self.credentials} is not in the right format."
+                    )
 
-                ConsoleUI.print(f"Google service credentials JSON {self.credentials} is not in the correct format!", color="red")
+                ConsoleUI.print(
+                    f"Google service credentials JSON {self.credentials} is not in the correct format!",
+                    color="red",
+                )
                 self.credentials = os.path.expanduser(ConsoleUI.prompt_path())
 
-                valid_service = self._validate_service_account_file(Path(self.credentials))
+                valid_service = self._validate_service_account_file(
+                    Path(self.credentials)
+                )
                 num_retries -= 1
 
         # Sync data directory
-        if hasattr(self, 'data_dir'):
+        if hasattr(self, "data_dir"):
             self.data_dir = Path(os.path.abspath(self.data_dir))
-            if (self.data_dir != os.path.abspath(DEFAULT_DATA_DIR)):
+            if self.data_dir != os.path.abspath(DEFAULT_DATA_DIR):
 
-                if(self.tiff_dir == os.path.abspath(DEFAULT_TIFF_DIR)):
-                    self.tiff_dir = Path(self.data_dir / 'tiff')
+                if self.tiff_dir == os.path.abspath(DEFAULT_TIFF_DIR):
+                    self.tiff_dir = Path(self.data_dir / "tiff")
 
-                if(self.log_dir == os.path.abspath(DEFAULT_LOG_DIR)):
-                    self.log_dir = Path(self.data_dir / 'logs')
+                if self.log_dir == os.path.abspath(DEFAULT_LOG_DIR):
+                    self.log_dir = Path(self.data_dir / "logs")
 
-                if(self.gdf_dir == os.path.abspath(DEFAULT_GDF_DIR)):
-                    self.gdf_dir= Path(self.data_dir / 'gdfs')
+                if self.gdf_dir == os.path.abspath(DEFAULT_GDF_DIR):
+                    self.gdf_dir = Path(self.data_dir / "gdfs")
 
             self._try_make_path(self.data_dir)
-
-
 
     def _validate_time(self) -> None:
         """
@@ -175,26 +204,34 @@ class UserConfig:
         Raises:
             IndexError: If date ranges are outside of accepted year limits or incorrectly ordered.
         """
-        if(hasattr(self, "start_date") and hasattr(self, "end_date")):
+        if hasattr(self, "start_date") and hasattr(self, "end_date"):
             start_year = int(self.start_date.year)
             end_year = int(self.end_date.year)
 
-            if(start_year < MIN_YEAR):
-                raise IndexError(f"Querry year '{start_year}' is smaller than the minimum year {MIN_YEAR}")
+            if start_year < MIN_YEAR:
+                raise IndexError(
+                    f"Querry year '{start_year}' is smaller than the minimum year {MIN_YEAR}"
+                )
 
-            if(start_year > MAX_YEAR):
-                raise IndexError(f"Querry year '{start_year}' is larger than the maximum year {MAX_YEAR}")
+            if start_year > MAX_YEAR:
+                raise IndexError(
+                    f"Querry year '{start_year}' is larger than the maximum year {MAX_YEAR}"
+                )
 
-            if(end_year < MIN_YEAR):
-                raise IndexError(f"Querry year '{end_year}' is smaller than the minimum year {MIN_YEAR}")
+            if end_year < MIN_YEAR:
+                raise IndexError(
+                    f"Querry year '{end_year}' is smaller than the minimum year {MIN_YEAR}"
+                )
 
-            if(end_year > MAX_YEAR):
-                raise IndexError(f"Querry year '{end_year}' is larger than the maximum year {MAX_YEAR}")
+            if end_year > MAX_YEAR:
+                raise IndexError(
+                    f"Querry year '{end_year}' is larger than the maximum year {MAX_YEAR}"
+                )
 
-
-            if(self.start_date > self.end_date):
-                raise IndexError(f"start date '{self.start_date}' is after end date '{self.end_date}'")
-
+            if self.start_date > self.end_date:
+                raise IndexError(
+                    f"start date '{self.start_date}' is after end date '{self.end_date}'"
+                )
 
     def _try_make_path(self, path: Path) -> None:
         """
@@ -203,6 +240,7 @@ class UserConfig:
         Args:
             path (Path): Directory path to create.
         """
+        ConsoleUI.debug(f"Trying to make path: {path}")
         if not os.path.exists(path):
             try:
                 os.makedirs(path, exist_ok=True)
@@ -218,7 +256,7 @@ class UserConfig:
         """
         namespace = []
         for name in COMMAND_ARGS:
-            if(name not in ["--version", "--help"]):
+            if name not in ["--version", "--help"]:
                 fixed_name = self._fix_name(name)
                 namespace.append(fixed_name)
         return namespace
@@ -226,7 +264,7 @@ class UserConfig:
     def _get_default_values(self) -> Dict:
         values = {}
         for name in COMMAND_ARGS:
-            if(name not in ["--version", "--help"]):
+            if name not in ["--version", "--help"]:
                 _, default_val, _, _ = COMMAND_ARGS[name]
                 fixed_name = self._fix_name(name)
                 values[fixed_name] = default_val
@@ -235,15 +273,15 @@ class UserConfig:
     def _get_bools(self) -> List[str]:
         values = []
         for name in COMMAND_ARGS:
-            if(name not in ["--version", "--help"]):
+            if name not in ["--version", "--help"]:
                 aType, _, _, _ = COMMAND_ARGS[name]
                 fixed_name = self._fix_name(name)
-                if(aType is None):
+                if aType is None:
                     values.append(fixed_name)
         return values
 
     def _fix_name(self, name: str) -> str:
-        return name[2:].replace("-","_")
+        return name[2:].replace("-", "_")
 
     def _fill_namespace(self, namespace: dict) -> None:
         for key, item in namespace.items():
@@ -259,9 +297,9 @@ class UserConfig:
 
         self.validate()
 
-# =========================================================================== #
-#                               Public Methods
-# =========================================================================== #
+    # =========================================================================== #
+    #                               Public Methods
+    # =========================================================================== #
 
     def validate(self) -> None:
         self._validate_time()
@@ -284,12 +322,12 @@ class UserConfig:
         Load the combined fire geodataframe and assign it to `self.geodataframe`.
         """
         try:
-           load_fires(self) 
+            load_fires(self)
         except:
             self.geodataframe = get_fires(self)
             save_fires(self)
 
-    def change_configuration_from_yaml(self, yaml_path: Union[Path,str]) -> None:
+    def change_configuration_from_yaml(self, yaml_path: Union[Path, str]) -> None:
         """
         Load and apply configuration from a YAML file, falling back to defaults if necessary.
 
@@ -308,7 +346,6 @@ class UserConfig:
         # set the object attributes with fixed config data
         for item, value in config_data.items():
             setattr(self, item, value)
-
 
         self.validate()
         self._save_to_internal_config_file()
@@ -343,6 +380,7 @@ class UserConfig:
 
         self.validate()
         self._save_to_internal_config_file()
+
 
 def delete_user_config() -> None:
     """
