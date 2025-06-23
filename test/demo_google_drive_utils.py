@@ -39,7 +39,7 @@ def test_others():
         key="export_queue", total=EXPORT_QUEUE_SIZE, desc="Google Earth Export Queue"
     )
     # Example: queue two dummy exports
-    for i in range(10):
+    for i in range(5):
         img = ee.Image(1).rename(f"const_{i}")
         desc = f"test_const_{i}"
         name = f"Test_{i}"

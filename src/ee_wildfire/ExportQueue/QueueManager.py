@@ -1,3 +1,4 @@
+import queue
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -15,6 +16,10 @@ from ee_wildfire.constants import (
 )
 from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 
+MAX_RETRIES = 3
+RETRY_DELAY_BASE = 2  # seconds
+WORKER_COUNT = 4
+
 
 class QueueManager:
     _task_queue = []
@@ -22,17 +27,94 @@ class QueueManager:
     _failed_tasks = []
     _completed_tasks = []
     _failed_exports = []
-    # _threads = []
-    # _shutdown_event = threading.Event()
-    # _lock = threading.Lock()
+    _threads = []
+    _shutdown_event = threading.Event()
+    _lock = threading.Lock()
+    _export_jobs = queue.Queue()
+
+    # ========================================
+    #              Dunder Methods
+    # ========================================
 
     def __str__(self) -> str:
         return str(cls._active_tasks)
 
+    # ========================================
+    #              Threading Methods
+    # ========================================
+
+    @classmethod
+    def start_workers(cls, num_workers=WORKER_COUNT):
+        if cls._threads:
+            return  # already running
+
+        for _ in range(num_workers):
+            t = threading.Thread(target=cls._worker, daemon=True)
+            t.start()
+            cls._threads.append(t)
+
+    @classmethod
+    def stop_workers(cls):
+        cls._shutdown_event.set()
+        for _ in cls._threads:
+            cls._export_jobs.put(None)  # signal shutdown to each thread
+        for t in cls._threads:
+            t.join()
+        cls._threads.clear()
+        cls._shutdown_event.clear()
+
+    @classmethod
+    def _worker(cls):
+        while not cls._shutdown_event.is_set():
+            job = cls._export_jobs.get()
+            if job is None:
+                break
+
+            for attempt in range(MAX_RETRIES):
+                if cls._check_full():
+                    ConsoleUI.print("Queue full, waiting...")
+                    time.sleep(5)
+                    cls.update_queue()
+                    continue
+
+                try:
+                    task = ee.batch.Export.image.toDrive(
+                        image=job["image"],
+                        description=job["description"],
+                        folder=job["folder"],
+                        region=job["region"],
+                        crs=job["crs"],
+                        scale=job["scale"],
+                        maxPixels=job["max_pixels"],
+                        fileNamePrefix=job["filename_prefix"] or job["description"],
+                    )
+                    task.start()
+                    with cls._lock:
+                        cls._task_queue.append(task)
+                    ConsoleUI.update_bar("export_queue")
+                    break  # Success
+                except Exception as e:
+                    wait_time = RETRY_DELAY_BASE**attempt
+                    ConsoleUI.warn(
+                        f"Retry {attempt+1}/{MAX_RETRIES} for {job['description']}: {e}"
+                    )
+                    time.sleep(wait_time)
+            else:
+                with cls._lock:
+                    cls._failed_exports.append(job)
+                ConsoleUI.error(
+                    f"Failed to export {job['description']} after {MAX_RETRIES} attempts."
+                )
+
+            cls._export_jobs.task_done()
+
+    # ========================================
+    #              Private Methods
+    # ========================================
     @classmethod
     def _check_full(cls) -> bool:
         num_tasks = len(cls._task_queue)
-        return num_tasks < EXPORT_QUEUE_SIZE
+        return (EXPORT_QUEUE_SIZE - 1) <= num_tasks
 
     @classmethod
     def _count_ee_active_tasks(cls) -> None:
@@ -48,6 +130,10 @@ class QueueManager:
         ]
         ConsoleUI.debug(f"Active tasks: {cls._task_queue}")
         ConsoleUI.set_bar_position(key="export_queue", value=len(cls._task_queue))
+
+    # ========================================
+    #              Public Methods
+    # ========================================
 
     @classmethod
     def get_task_filename(cls) -> [str]:
@@ -77,70 +163,37 @@ class QueueManager:
     @classmethod
     def add_export(
         cls,
-        image: Image,
-        description: str,
-        max_pixels: float,
+        image,
+        description,
+        max_pixels,
         scale,
         filename_prefix=None,
-        region=USA_COORDS,
-        crs=CRS_CODE,
-        folder=DEFAULT_GOOGLE_DRIVE_DIR,
+        region=None,
+        crs=None,
+        folder=None,
     ):
-        """
-        Queue an export task to Google Drive.
-        """
-        # TODO: invalidate this stuff yo
-
-        if filename_prefix:
-            task = ee.batch.Export.image.toDrive(
-                image=image,
-                description=description,
-                folder=folder,
-                region=region,
-                fileNamePrefix=filename_prefix,
-                crs=crs,
-                scale=scale,
-                maxPixels=max_pixels,
-            )
-        else:
-            task = ee.batch.Export.image.toDrive(
-                image=image,
-                description=description,
-                folder=folder,
-                region=region,
-                scale=scale,
-                crs=crs,
-                maxPixels=max_pixels,
-            )
-
-        # Querry google earth queue for current tasks
-        if len(cls._task_queue) == 0:
-            cls._count_ee_active_tasks()
-
-        while True:
-
-            if cls._check_full():
-                ConsoleUI.print("Google Earth export queue is full!")
-                cls.update_queue()
-                continue
-
-            try:
-                t = task.start()
-                cls._task_queue.append(task)
-                ConsoleUI.update_bar(key="export_queue")
-
-            except Exception as e:
-                ConsoleUI.warn(f"Could not export {image} : {str(e)}")
-                cls._failed_exports.append(task)
-
-            break
+        cls.start_workers()
+        job = {
+            "image": image,
+            "description": description,
+            "max_pixels": max_pixels,
+            "scale": scale,
+            "filename_prefix": filename_prefix,
+            "region": region,
+            "crs": crs,
+            "folder": folder,
+        }
+        cls._export_jobs.put(job)
 
     @classmethod
     def wait_for_exports(cls):
+        cls._export_jobs.join()
 
         while cls._task_queue:
             cls.update_queue()
             ConsoleUI.print("Waiting for export to finish...")
+
+        time.sleep(60)  # wait for last item to export
 
     @classmethod
     def update_queue(cls, max_workers: int = 8):
