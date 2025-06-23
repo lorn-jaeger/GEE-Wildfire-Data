@@ -1,12 +1,19 @@
-import ee
-import ee.data
-import ee.batch
-from ee import Image #type: ignore
-
-from ee_wildfire.constants import CRS_CODE, DEFAULT_GOOGLE_DRIVE_DIR, EXPORT_QUEUE_SIZE, USA_COORDS
-from ee_wildfire.UserInterface.UserInterface import ConsoleUI
-
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+import ee
+import ee.batch
+import ee.data
+from ee import Image  # type: ignore
+
+from ee_wildfire.constants import (
+    CRS_CODE,
+    DEFAULT_GOOGLE_DRIVE_DIR,
+    EXPORT_QUEUE_SIZE,
+    USA_COORDS,
+)
+from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 
 
 class QueueManager:
@@ -15,16 +22,17 @@ class QueueManager:
     _failed_tasks = []
     _completed_tasks = []
     _failed_exports = []
+    # _threads = []
+    # _shutdown_event = threading.Event()
+    # _lock = threading.Lock()
 
-
+    def __str__(self) -> str:
+        return str(cls._active_tasks)
 
     @classmethod
     def _check_full(cls) -> bool:
         num_tasks = len(cls._task_queue)
-        if num_tasks < EXPORT_QUEUE_SIZE:
-            return False
-        return True
-    
+        return num_tasks < EXPORT_QUEUE_SIZE
 
     @classmethod
     def _count_ee_active_tasks(cls) -> None:
@@ -33,27 +41,55 @@ class QueueManager:
         """
         ConsoleUI.print("Querying Google Earth Queue...")
         tasks = ee.data.getTaskList()
-        active_task_dicts = [t for t in tasks if t['state'] in ['READY', 'RUNNING']]
-        cls._task_queue = [ee.batch.Task(t['id'], t['task_type'], t['state']) for t in active_task_dicts]
+        active_task_dicts = [t for t in tasks if t["state"] in ["READY", "RUNNING"]]
+        cls._task_queue = [
+            ee.batch.Task(t["id"], t["task_type"], t["state"])
+            for t in active_task_dicts
+        ]
         ConsoleUI.debug(f"Active tasks: {cls._task_queue}")
-        ConsoleUI.set_bar_position(key="export_queue",value=len(cls._task_queue))
-
+        ConsoleUI.set_bar_position(key="export_queue", value=len(cls._task_queue))
 
     @classmethod
-    def add_export(cls,
-                   image: Image,
-                   description: str,
-                   max_pixels:float,
-                   scale,
-                   filename_prefix=None,
-                   region=USA_COORDS,
-                   crs=CRS_CODE,
-                   folder=DEFAULT_GOOGLE_DRIVE_DIR):
+    def get_task_filename(cls) -> [str]:
+        """
+        Attempt to extract the filename or description associated with an Earth Engine task.
+
+        Returns:
+            A human-readable filename string, or 'unknown_filename' if none is found.
+        """
+        files = []
+        tasks = cls._completed_tasks
+
+        for task in tasks:
+            config = getattr(task, "config", {})
+            filename = (
+                # Try common export fields
+                config.get("fileNamePrefix")
+                or config.get("driveFileNamePrefix")
+                or config.get("description")
+                or f"task_{task.id}"
+                or "unknown_filename"
+            )
+            files.append(filename + ".tif")
+
+        return files
+
+    @classmethod
+    def add_export(
+        cls,
+        image: Image,
+        description: str,
+        max_pixels: float,
+        scale,
+        filename_prefix=None,
+        region=USA_COORDS,
+        crs=CRS_CODE,
+        folder=DEFAULT_GOOGLE_DRIVE_DIR,
+    ):
         """
         Queue an export task to Google Drive.
         """
         # TODO: invalidate this stuff yo
-
 
         if filename_prefix:
             task = ee.batch.Export.image.toDrive(
@@ -85,7 +121,7 @@ class QueueManager:
 
             if cls._check_full():
                 ConsoleUI.print("Google Earth export queue is full!")
-                cls._count_ee_active_tasks()
+                cls.update_queue()
                 continue
 
             try:
@@ -103,35 +139,53 @@ class QueueManager:
     def wait_for_exports(cls):
 
         while cls._task_queue:
-            cls._count_ee_active_tasks()
+            cls.update_queue()
             ConsoleUI.print("Waiting for export to finish...")
-            time.sleep(10)
 
-
-    #FIX: Slow......
     @classmethod
-    def update_queue(cls):
-        remaining_tasks = []
-        for task in cls._task_queue:
+    def update_queue(cls, max_workers: int = 8):
+        """
+        Update the export task queue by querying task statuses in parallel.
+        Categorizes tasks into active, completed, and failed.
+        """
+
+        def fetch_status(task):
             try:
                 status = task.status()
-                state = status.get("state")
+                return task, status.get("state")
             except Exception as e:
                 ConsoleUI.error(f"Could not fetch status for task {task.id}: {e}")
-                continue
+                return task, None
 
-            if state in ['READY', 'RUNNING']:
-                cls._active_tasks.append(task)
-                remaining_tasks.append(task)  # Keep in main queue
-            elif state == 'COMPLETED':
-                cls._completed_tasks.append(task)
-            elif state in ['FAILED', 'CANCELLED']:
-                cls._failed_tasks.append(task)
-            else:
-                ConsoleUI.warn(f"Unknown task state '{state}' for task {task.id}")
-                remaining_tasks.append(task)  # Conservatively keep unknowns
+        remaining_tasks = []
+        active_tasks = []
+        failed_tasks = []
+        completed_tasks = []
 
-        cls._task_queue = remaining_tasks  # Update main queue
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(fetch_status, task) for task in cls._task_queue]
+
+            for future in as_completed(futures):
+                task, state = future.result()
+                if state is None:
+                    continue  # Skip failed status calls
+
+                if state in ["READY", "RUNNING"]:
+                    active_tasks.append(task)
+                    remaining_tasks.append(task)
+                elif state == "COMPLETED":
+                    completed_tasks.append(task)
+                elif state in ["FAILED", "CANCELLED"]:
+                    failed_tasks.append(task)
+                else:
+                    ConsoleUI.warn(f"Unknown task state '{state}' for task {task.id}")
+                    remaining_tasks.append(task)
+
+        with cls._lock:
+            cls._task_queue = remaining_tasks  # okay to overwrite
+            cls._active_tasks.extend(active_tasks)
+            cls._completed_tasks.extend(completed_tasks)
+            cls._failed_tasks.extend(failed_tasks)
 
         ConsoleUI.set_bar_position(key="export_queue", value=len(cls._task_queue))
         ConsoleUI.debug(f"Task queue: {[t.id for t in cls._task_queue]}")
