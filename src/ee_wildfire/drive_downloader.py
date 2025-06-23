@@ -2,7 +2,7 @@ import io
 import os
 import time
 from pathlib import Path
-from typing import List
+from typing import Dict, List
 
 from googleapiclient.discovery import Resource
 from googleapiclient.errors import HttpError
@@ -116,7 +116,7 @@ class DriveDownloader:
         mime_type: str = "image/tiff",
         retries: int = 3,
         page_size: int = 1000,
-    ) -> List[str]:
+    ) -> Dict:
         """
         Safely list filenames in a Google Drive folder.
 
