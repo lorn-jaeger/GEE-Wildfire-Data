@@ -205,6 +205,16 @@ class UserConfig:
             IndexError: If date ranges are outside of accepted year limits or incorrectly ordered.
         """
         if hasattr(self, "start_date") and hasattr(self, "end_date"):
+            # Convert date and time if passed as string
+            try:
+                if isinstance(self.start_date, str):
+                    self.start_date = datetime.strptime(self.start_date, DATE_FORMAT)
+
+                if isinstance(self.end_date, str):
+                    self.end_date = datetime.strptime(self.end_date, DATE_FORMAT)
+
+            except ValueError as e:
+                raise ValueError(f"Invalid date format: {e}")
             start_year = int(self.start_date.year)
             end_year = int(self.end_date.year)
 
@@ -284,8 +294,12 @@ class UserConfig:
         return name[2:].replace("-", "_")
 
     def _fill_namespace(self, namespace: dict) -> None:
+        default_namespace = self._get_args_namespace()
         for key, item in namespace.items():
-            setattr(self, key, item)
+            if key in default_namespace:
+                setattr(self, key, item)
+            else:
+                ConsoleUI.error(f"key: {key} not found in {default_namespace}")
 
     def _save_to_internal_config_file(self) -> None:
         save_yaml_config(self.__dict__, INTERNAL_USER_CONFIG_DIR)
@@ -398,3 +412,8 @@ def delete_user_config() -> None:
             ConsoleUI.print(f"No config file found at: {path}", color="yellow")
     except Exception as e:
         ConsoleUI.print(f"Failed to delete config file: {e}", color="red")
+
+
+if __name__ == "__main__":
+    uf = UserConfig()
+    print(uf._validate_yaml())
