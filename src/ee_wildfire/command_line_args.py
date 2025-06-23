@@ -64,6 +64,8 @@ def run(config: UserConfig) -> None:
     if config.purge_after:
         downloader.purge_data()
 
+    ConsoleUI.print("Done!")
+
 
 def parse() -> UserConfig:
     """
