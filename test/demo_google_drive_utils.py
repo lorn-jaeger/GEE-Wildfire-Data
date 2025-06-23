@@ -38,6 +38,7 @@ def test_others():
     ConsoleUI.add_bar(
         key="export_queue", total=EXPORT_QUEUE_SIZE, desc="Google Earth Export Queue"
     )
+    QueueManager.count_ee_active_tasks()
     # Example: queue two dummy exports
     for i in range(5):
         img = ee.Image(1).rename(f"const_{i}")

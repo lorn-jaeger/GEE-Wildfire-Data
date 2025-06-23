@@ -14,6 +14,7 @@ from ee_wildfire.constants import (
 )
 from ee_wildfire.create_fire_config import create_fire_config_globfire
 from ee_wildfire.drive_downloader import DriveDownloader
+from ee_wildfire.ExportQueue.QueueManager import QueueManager as qm
 from ee_wildfire.UserConfig.UserConfig import UserConfig, delete_user_config
 from ee_wildfire.UserInterface import map_maker
 from ee_wildfire.UserInterface.UserInterface import ConsoleUI
@@ -46,14 +47,14 @@ def run(config: UserConfig) -> None:
         ConsoleUI.print("Generating Fire Configuration...")
         create_fire_config_globfire(config)
 
+        qm.count_ee_active_tasks()
+
+        ConsoleUI.print("Processing Data...")
+        export_data(yaml_path=get_full_yaml_path(config), user_config=config)
+
     if (not config.export) and config.download:
         # config.downloader.download_folder(config.google_drive_dir, config.tiff_dir)
         downloader.download_folder()
-
-    # export data from earth engine to google drive
-    if config.export:
-        ConsoleUI.print("Processing Data...")
-        export_data(yaml_path=get_full_yaml_path(config), user_config=config)
 
     # download from google drive to local machine
     if config.download:

@@ -2,10 +2,13 @@ import io
 import os
 import time
 from pathlib import Path
+from typing import List
 
+from googleapiclient.discovery import Resource
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload
 
+from ee_wildfire.constants import MAX_RETRIES, RETRY_DELAY_BASE, WORKER_COUNT
 from ee_wildfire.ExportQueue.QueueManager import QueueManager as qm
 from ee_wildfire.UserConfig.UserConfig import UserConfig
 from ee_wildfire.UserInterface.UserInterface import ConsoleUI
@@ -108,6 +111,71 @@ class DriveDownloader:
             ConsoleUI.print(f"Error downloading folder: {str(e)}")
             raise
 
+    def get_files_in_drive(
+        self,
+        mime_type: str = "image/tiff",
+        retries: int = 3,
+        page_size: int = 1000,
+    ) -> List[str]:
+        """
+        Safely list filenames in a Google Drive folder.
+
+        Args:
+            drive_service: Authenticated Google Drive API service.
+            folder_id: ID of the Drive folder to list files from.
+            mime_type: Optional MIME type filter.
+            retries: Number of times to retry on failure.
+            page_size: Number of results per page.
+
+        Returns:
+            A list of file names (str).
+        """
+
+        drive_service = self.service
+        folder_id = self.get_folder_id()
+        query = f"'{folder_id}' in parents and mimeType='{mime_type}' and trashed=false"
+        filenames = {}
+        page_token = None
+
+        while True:
+            attempt = 0
+            while attempt <= retries:
+                try:
+                    response = (
+                        drive_service.files()
+                        .list(
+                            q=query,
+                            spaces="drive",
+                            pageSize=page_size,
+                            fields="nextPageToken, files(id, name)",
+                            pageToken=page_token,
+                        )
+                        .execute()
+                    )
+                    files = response.get("files", [])
+                    # filenames.extend((f["name"], f["id"]) for f in files)
+                    filenames.update({f["name"]: f["id"] for f in files})
+                    page_token = response.get("nextPageToken", None)
+                    time.sleep(0.1)  # slight delay to avoid hammering
+                    break  # exit retry loop if successful
+                except HttpError as e:
+                    attempt += 1
+                    if attempt > retries:
+                        raise RuntimeError(
+                            f"Failed to list files after {retries} retries: {e}"
+                        )
+                    backoff = random.uniform(1, 3)
+                    print(
+                        f"Drive API error, retrying in {backoff:.1f}s... ({attempt}/{retries})"
+                    )
+                    time.sleep(backoff)
+
+            if not page_token:
+                break
+
+        print(filenames)
+        return filenames
+
     def get_files_in_drive(self):
         folder_id = self.folderID
         query = f"'{folder_id}' in parents and mimeType='image/tiff' and trashed=false"
@@ -148,7 +216,6 @@ class DriveDownloader:
         id_map = {
             f["name"]: f["id"] for f in files_in_drive if f["name"] in expected_files
         }
-
         ConsoleUI.add_bar(
             key="download", total=len(expected_files), desc="Download progress"
         )

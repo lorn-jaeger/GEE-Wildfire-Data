@@ -116,7 +116,7 @@ class QueueManager:
         return (EXPORT_QUEUE_SIZE - 1) <= num_tasks
 
     @classmethod
-    def _count_ee_active_tasks(cls) -> None:
+    def count_ee_active_tasks(cls) -> None:
         """
         Count the number of currently active Earth Engine export tasks.
         """
@@ -192,7 +192,7 @@ class QueueManager:
             cls.update_queue()
             ConsoleUI.print("Waiting for export to finish...")
 
-        time.sleep(60)  # wait for last item to export
+        time.sleep(10)  # wait for last item to export
 
     @classmethod
     def update_queue(cls, max_workers: int = 8):
