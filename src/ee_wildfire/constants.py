@@ -8,7 +8,8 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from ee_wildfire.utils.user_config_utils import StorePassedAction, parse_datetime
+from ee_wildfire.utils.user_config_utils import (StorePassedAction,
+                                                 parse_datetime)
 
 # =========== Paths ===========
 
@@ -25,7 +26,7 @@ TEMPLATE_DIR = ROOT / "UserInterface" / "templates"
 
 # =========== Needed Constants ===========
 
-VERSION = "2025.06.20"
+VERSION = "2025.06.24"
 
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 
@@ -74,6 +75,7 @@ USA_COORDS = [
         [-98.69085295525215, 26.724810345780593],
         [-96.42355704777482, 26.216515704595633],
         [-80.68508661702214, 24.546812350183075],
+id_map = { fname: fid for fname, fid in files_in_drive.items() if fname in expected_files }
         [-75.56173032587596, 26.814533788629998],
         [-67.1540159827795, 44.40095539443753],
         [-68.07548734644243, 46.981170472447374],
