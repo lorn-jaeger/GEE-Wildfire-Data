@@ -255,37 +255,43 @@ class ConsoleUI:
 
     @classmethod
     def get_log_handlers(cls):
-        if cls._logger:
-            return cls._logger.handlers
+        with cls._lock:
+            if cls._logger:
+                return cls._logger.handlers
 
     @classmethod
     def set_log_level(cls, level: str):
-        if cls._logger:
-            cls._logger.setLevel(LOG_LEVELS[level])
+        with cls._lock:
+            if cls._logger:
+                cls._logger.setLevel(LOG_LEVELS[level])
 
     @classmethod
     def debug(cls, message: str):
-        if message:
-            if cls._logger:
-                cls._logger.log(logging.DEBUG, message)
+        with cls._lock:
+            if message:
+                if cls._logger:
+                    cls._logger.log(logging.DEBUG, message)
 
     @classmethod
     def log(cls, message: str):
-        if message:
-            if cls._logger:
-                cls._logger.log(logging.INFO, message)
+        with cls._lock:
+            if message:
+                if cls._logger:
+                    cls._logger.log(logging.INFO, message)
 
     @classmethod
     def warn(cls, message: str):
-        if message:
-            if cls._logger:
-                cls._logger.log(logging.WARNING, message)
+        with cls._lock:
+            if message:
+                if cls._logger:
+                    cls._logger.log(logging.WARNING, message)
 
     @classmethod
     def error(cls, message: str):
-        if message:
-            if cls._logger:
-                cls._logger.log(logging.ERROR, message)
+        with cls._lock:
+            if message:
+                if cls._logger:
+                    cls._logger.log(logging.ERROR, message)
 
 
 def main():
