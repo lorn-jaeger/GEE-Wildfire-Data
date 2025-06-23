@@ -31,8 +31,6 @@ class UserConfig:
 
         self.bounding_area = USA_COORDS
         self._load_from_internal_config()
-        self.exported_files = []
-        self.failed_exports = []
 
     def __repr__(self) -> str:
         output_str = "UserConfig\n"
@@ -85,7 +83,6 @@ class UserConfig:
 
             required_fields = [
                 "type",
-                "project_id",
                 "private_key_id",
                 "private_key",
                 "client_email",
