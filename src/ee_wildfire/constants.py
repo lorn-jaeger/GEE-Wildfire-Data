@@ -38,6 +38,12 @@ LOG_LEVELS = {
 
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
+MAX_RETRIES = 3
+
+RETRY_DELAY_BASE = 2  # seconds
+
+WORKER_COUNT = 4
+
 CRS_CODE = "EPSG:32610"
 
 DATE_FORMAT = "%Y-%m-%d"

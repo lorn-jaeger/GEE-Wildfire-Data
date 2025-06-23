@@ -12,13 +12,12 @@ from ee_wildfire.constants import (
     CRS_CODE,
     DEFAULT_GOOGLE_DRIVE_DIR,
     EXPORT_QUEUE_SIZE,
+    MAX_RETRIES,
+    RETRY_DELAY_BASE,
     USA_COORDS,
+    WORKER_COUNT,
 )
 from ee_wildfire.UserInterface.UserInterface import ConsoleUI
-
-MAX_RETRIES = 3
-RETRY_DELAY_BASE = 2  # seconds
-WORKER_COUNT = 4
 
 
 class QueueManager:
