@@ -1,29 +1,31 @@
 """
 globfire.py
 
-A quick note describing the process for getting fires and some of the choices 
-made as well as some helpful information about the globfire dataset. 
+A quick note describing the process for getting fires and some of the choices
+made as well as some helpful information about the globfire dataset.
 
 The dataset is divided into two parts; Daily Fires and Final Fires. Daily fires
-has the geometry, area, and date of each fire for each day it burned. Final 
+has the geometry, area, and date of each fire for each day it burned. Final
 fires has the final geometry, start date, end date, and final area of each
-fire. 
+fire.
 
-Our goal is to produce a list of fires with their initial latitude and 
+Our goal is to produce a list of fires with their initial latitude and
 longitude as well as their start and end date.
 
 
 """
 
-from ee.filter import Filter
-from ee.geometry import Geometry
-from ee.featurecollection import FeatureCollection
-import pandas as pd
-import geopandas as gpd
 import os
 import time
-from ee_wildfire.UserInterface.UserInterface import ConsoleUI
+
+import geopandas as gpd
+import pandas as pd
+from ee.featurecollection import FeatureCollection
+from ee.filter import Filter
+from ee.geometry import Geometry
+
 from ee_wildfire.constants import USA_COORDS
+from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 
 usa_coords = [
     [-125.1803892906456, 35.26328285844432],
@@ -59,51 +61,52 @@ usa_coords = [
     [-121.82530604190744, 48.9830983403776],
     [-122.22085227110232, 48.63535795404536],
     [-124.59504332589562, 47.695726563030405],
-    [-125.1803892906456, 35.26328285844432]
+    [-125.1803892906456, 35.26328285844432],
 ]
 
 
 def create_usa_geometry():
     return Geometry.Polygon(USA_COORDS)
 
+
 def create_misc_geometry(bounds):
     ConsoleUI.debug(f"globfire creating geometry: {bounds}")
     return Geometry.Polygon(bounds)
 
+
 def compute_area(feature):
-    return feature.set({'area': feature.area()})
+    return feature.set({"area": feature.area()})
+
 
 def compute_centroid(feature):
     centroid = feature.geometry().centroid().coordinates()
-    return feature.set({
-        'lon': centroid.get(0),
-        'lat': centroid.get(1)
-    })
+    return feature.set({"lon": centroid.get(0), "lat": centroid.get(1)})
+
 
 def ee_featurecollection_to_gdf(fc):
-    return gpd.GeoDataFrame([f['properties'] for f in fc.getInfo()['features']])
+    return gpd.GeoDataFrame([f["properties"] for f in fc.getInfo()["features"]])
+
 
 def get_final_fires(config, collection, start, end, region):
     fc = (
-            FeatureCollection(collection)
-            .filterBounds(region)
-            .map(compute_area)
-            .filter(Filter.gte('area', config.min_size))
-            .filter(Filter.lt('area', 1e20))
-            .filter(Filter.gte('IDate', start))
-            .filter(Filter.lt('IDate', end))
-        )
-        
+        FeatureCollection(collection)
+        .filterBounds(region)
+        .map(compute_area)
+        .filter(Filter.gte("area", config.min_size))
+        .filter(Filter.lt("area", 1e20))
+        .filter(Filter.gte("IDate", start))
+        .filter(Filter.lt("IDate", end))
+    )
+
     final = ee_featurecollection_to_gdf(fc)
 
     return final
 
+
 def get_daily_fires(region, row):
-    years = sorted(set(pd.date_range(
-        start=row['IDate'],
-        end=row['FDate'],
-        freq='D'
-    ).year))
+    years = sorted(
+        set(pd.date_range(start=row["IDate"], end=row["FDate"], freq="D").year)
+    )
 
     daily = []
 
@@ -112,7 +115,7 @@ def get_daily_fires(region, row):
         fc = (
             FeatureCollection(collection)
             .filterBounds(region)
-            .filter(Filter.eq('Id', row['Id']))
+            .filter(Filter.eq("Id", row["Id"]))
             .map(compute_centroid)
         )
 
@@ -122,7 +125,7 @@ def get_daily_fires(region, row):
             daily.append(gdf)
 
     if not daily:
-        return gpd.GeoDataFrame(columns=['Id', 'IDate', 'lat', 'lon']) # type: ignore
+        return gpd.GeoDataFrame(columns=["Id", "IDate", "lat", "lon"])  # type: ignore
 
     daily = gpd.GeoDataFrame(pd.concat(daily, ignore_index=True))
 
@@ -132,42 +135,57 @@ def get_daily_fires(region, row):
 def get_initial_coordinates(row, region):
 
     gdf = get_daily_fires(region, row)
-    
+
     if gdf.empty:
-        return pd.Series({'lat': pd.NA, 'lon': pd.NA})
+        return pd.Series({"lat": pd.NA, "lon": pd.NA})
 
-    gdf['IDate'] = pd.to_datetime(gdf['IDate'], unit='ms')
-    gdf['timedelta'] = (row['IDate'] - gdf['IDate']).abs()
-    gdf = gdf.sort_values('timedelta')
-    
-    if gdf['timedelta'].iloc[0] > pd.Timedelta(hours=24):
-            return pd.Series({'lat': pd.NA, 'lon': pd.NA})
+    gdf["IDate"] = pd.to_datetime(gdf["IDate"], unit="ms")
+    gdf["timedelta"] = (row["IDate"] - gdf["IDate"]).abs()
+    gdf = gdf.sort_values("timedelta")
 
-    return pd.Series({'lat': gdf['lat'].iloc[0], 'lon': gdf['lon'].iloc[0]})
+    if gdf["timedelta"].iloc[0] > pd.Timedelta(hours=24):
+        return pd.Series({"lat": pd.NA, "lon": pd.NA})
+
+    return pd.Series({"lat": gdf["lat"].iloc[0], "lon": gdf["lon"].iloc[0]})
 
 
 def format_gdf(fires):
-    fires = fires.dropna(subset=['Id', 'IDate', 'FDate'])
-    fires['IDate'] = pd.to_datetime(fires['IDate'], unit='ms')
-    fires['FDate'] = pd.to_datetime(fires['FDate'], unit='ms')
+    fires = fires.dropna(subset=["Id", "IDate", "FDate"])
+    fires["IDate"] = pd.to_datetime(fires["IDate"], unit="ms")
+    fires["FDate"] = pd.to_datetime(fires["FDate"], unit="ms")
 
-    fires['lat'] = pd.NA
-    fires['lon'] = pd.NA
+    fires["lat"] = pd.NA
+    fires["lon"] = pd.NA
 
-    fires = fires[['Id', 'IDate', 'FDate', 'lat', 'lon', 'area']]
- 
+    fires = fires[["Id", "IDate", "FDate", "lat", "lon", "area"]]
+
     return fires
 
 
+def get_fire_count(config):
+    collection = "JRC/GWIS/GlobFire/v2/FinalPerimeters"
+    region = create_misc_geometry(config.bounding_area)
+    weeks = pd.date_range(start=config.start_date, end=config.end_date, freq="W")
+    gdfs = []
+    for week in weeks:
+        start = int(week.timestamp() * 1000)
+        end = int((week + pd.Timedelta(days=1)).timestamp() * 1000)
+        gdf = get_final_fires(config, collection, start, end, region)
+        if not gdf.empty:
+            gdfs.append(gdf)
+    fires = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True))
+    fires = format_gdf(fires)
+    return len(fires)
+
+
 def get_fires(config):
-    collection = 'JRC/GWIS/GlobFire/v2/FinalPerimeters'
+    collection = "JRC/GWIS/GlobFire/v2/FinalPerimeters"
     # region = create_usa_geometry()
     region = create_misc_geometry(config.bounding_area)
     gdfs = []
-    weeks = pd.date_range(start=config.start_date, end=config.end_date, freq='W')
+    weeks = pd.date_range(start=config.start_date, end=config.end_date, freq="W")
 
     ConsoleUI.add_bar("fires", total=len(weeks), desc=collection, color="green")
-
 
     for week in weeks:
         start = int(week.timestamp() * 1000)
@@ -179,27 +197,16 @@ def get_fires(config):
 
     if not gdfs:
         ConsoleUI.error("No fires found under current parameters.")
-        raise FileNotFoundError(f"No fires were found. Please adjust your configuration.")
+        raise FileNotFoundError(
+            f"No fires were found. Please adjust your configuration."
+        )
 
     fires = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True))
     fires = format_gdf(fires)
 
-    # Applying to the whole dataframe. This is iterating over rows
-    # internally and takes about as long as the uncommented way
-    
-    # tqdm.pandas(desc="Initial coordinates")
-    # fires[['lat', 'lon']] = fires.progress_apply(
-    #     get_initial_coordinates,
-    #     axis=1,
-    #     args=(region,),
-    # )
-    #
-    # fires = fires.dropna()
-    #
-    # return fires
-    #
-
-    ConsoleUI.add_bar("coords", total=len(fires), desc="Initial coordinates", color="green")
+    ConsoleUI.add_bar(
+        "coords", total=len(fires), desc="Initial coordinates", color="green"
+    )
     lats = []
     lons = []
 
@@ -209,15 +216,16 @@ def get_fires(config):
         lons.append(lon)
         ConsoleUI.update_bar("coords")
 
-
-    fires['lat'] = lats
-    fires['lon'] = lons
-    fires = fires.dropna()    
+    fires["lat"] = lats
+    fires["lon"] = lons
+    fires = fires.dropna()
 
     return fires
 
+
 def sanitize_filename(value):
     return str(value).replace(":", "-").replace(" ", "_")
+
 
 def get_fire_cache_path(config):
     # output_dir = os.path.join(config.data_dir, "gdfs")
@@ -233,9 +241,10 @@ def get_fire_cache_path(config):
 
 def save_fires(config):
     ConsoleUI.print("Caching fire query...")
-    time.sleep(1) # can remove these. this is just so the message shows
+    time.sleep(1)  # can remove these. this is just so the message shows
     output_path = get_fire_cache_path(config)
     config.geodataframe.to_pickle(output_path)
+
 
 def load_fires(config):
     input_path = get_fire_cache_path(config)
@@ -246,4 +255,3 @@ def load_fires(config):
     ConsoleUI.print("GeoDataFrame already exists. Loading from file cache instead.")
     time.sleep(1)
     config.geodataframe = pd.read_pickle(input_path)
-

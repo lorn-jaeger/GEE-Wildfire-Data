@@ -5,6 +5,7 @@ this file will handle all the command line argument parsing.
 """
 
 import argparse
+import time
 
 from ee_wildfire.constants import (
     COMMAND_ARGS,
@@ -18,7 +19,7 @@ from ee_wildfire.ExportQueue.QueueManager import QueueManager as qm
 from ee_wildfire.UserConfig.UserConfig import UserConfig, delete_user_config
 from ee_wildfire.UserInterface import map_maker
 from ee_wildfire.UserInterface.UserInterface import ConsoleUI
-from ee_wildfire.utils.google_drive_util import export_data
+from ee_wildfire.utils.google_drive_util import export_data, get_location_count
 from ee_wildfire.utils.yaml_utils import get_full_yaml_path
 
 
@@ -37,6 +38,20 @@ def run(config: UserConfig) -> None:
 
     if config.purge_before:
         downloader.purge_data()
+
+    if config.count_fires:
+
+        # generate geodata frame
+        ConsoleUI.print("Generating GeoDataFrame...")
+        config.get_geodataframe()
+
+        # generate the YAML output config
+        ConsoleUI.print("Generating Fire Configuration...")
+        create_fire_config_globfire(config)
+
+        num_fires = get_location_count(yaml_path=get_full_yaml_path(config))
+        ConsoleUI.print(f"Number of fires: {num_fires}")
+        time.sleep(5)
 
     if config.export:
         # generate geodata frame
@@ -140,7 +155,7 @@ def parse() -> UserConfig:
 def main():
     ui = ConsoleUI()
     config = parse()
-    # ConsoleUI.prompt_path()
+    run(config)
 
 
 if __name__ == "__main__":

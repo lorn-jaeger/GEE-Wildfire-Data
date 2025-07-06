@@ -240,6 +240,12 @@ COMMAND_ARGS = {
         "store_true",
         "show the current bounding box for querry.",
     ),
+    "--count-fires": (
+        None,
+        False,
+        "store_true",
+        "Returns the number of fire locations found in text file",
+    ),
 }
 
 

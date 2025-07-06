@@ -184,13 +184,13 @@ class UserConfig:
             self.data_dir = Path(os.path.abspath(self.data_dir))
             if self.data_dir != os.path.abspath(DEFAULT_DATA_DIR):
 
-                if self.tiff_dir == os.path.abspath(DEFAULT_TIFF_DIR):
+                if self.tiff_dir == DEFAULT_TIFF_DIR:
                     self.tiff_dir = Path(self.data_dir / "tiff")
 
-                if self.log_dir == os.path.abspath(DEFAULT_LOG_DIR):
+                if self.log_dir == DEFAULT_LOG_DIR:
                     self.log_dir = Path(self.data_dir / "logs")
 
-                if self.gdf_dir == os.path.abspath(DEFAULT_GDF_DIR):
+                if self.gdf_dir == DEFAULT_GDF_DIR:
                     self.gdf_dir = Path(self.data_dir / "gdfs")
 
             self._try_make_path(self.data_dir)
