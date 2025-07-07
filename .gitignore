@@ -19,3 +19,5 @@ __pycache__/
 
 docs/meeting_notes/
 src/ee_wildfire/config
+
+*.csv

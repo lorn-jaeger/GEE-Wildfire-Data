@@ -1,9 +1,12 @@
-from datetime import datetime, timedelta
+from collections import defaultdict
+from datetime import datetime
 
+import numpy as np
+import pandas as pd
 from dateutil.relativedelta import *
 
 from ee_wildfire.command_line_args import parse, run
-from ee_wildfire.constants import DATE_FORMAT
+from ee_wildfire.constants import DATE_FORMAT, INTERNAL_USER_CONFIG_DIR
 from ee_wildfire.create_fire_config import create_fire_config_globfire
 from ee_wildfire.globfire import get_fire_count, get_fires, load_fires, save_fires
 from ee_wildfire.UserConfig.UserConfig import UserConfig
@@ -11,82 +14,75 @@ from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 from ee_wildfire.utils.google_drive_util import get_location_count
 from ee_wildfire.utils.yaml_utils import get_full_yaml_path
 
-MIN_CUTOFF = 10000000
-MAX_CUTUFF = 100000000
+MIN_CUTOFF = 100000
+MIN_STEP = 500
+MAX_CUTUFF = 10000000
+# ACRE_MOD = 0.000247105
+ACRE_TO_KM_MOD = 0.00404686
 
-# Start and end dates as strings
-start_str = "2001-01-01"
-end_str = "2021-12-01"
+classes_in_km = {
+    "A": 0.25 * ACRE_TO_KM_MOD,
+    "B": 9.9 * ACRE_TO_KM_MOD,
+    "C": 99.9 * ACRE_TO_KM_MOD,
+    "D": 299 * ACRE_TO_KM_MOD,
+    "E": 999 * ACRE_TO_KM_MOD,
+    "F": 4999 * ACRE_TO_KM_MOD,
+    "G": 9999 * ACRE_TO_KM_MOD,
+}
 
-# Parse to datetime objects
-start_date = datetime.strptime(start_str, DATE_FORMAT)
-
-END_DATE_CUTOFF = datetime.strptime(end_str, DATE_FORMAT)
-START_DATE_CUTOFF = start_date
-
+# authenticate and setup
 ConsoleUI.set_verbose(False)
-uf = parse()
-uf.silent = True
+uf = UserConfig()
+uf.change_configuration_from_yaml(INTERNAL_USER_CONFIG_DIR)
 uf.authenticate()
-uf.max_size = MAX_CUTUFF
 
 
-def get_date_range(start, end):
+# date intervals
+start = datetime(2017, 1, 1)
+end = datetime(2022, 1, 1)
+step = relativedelta(months=+1)
+date_range = []
+current = start
 
-    if type(start) is str:
-        start = datetime.strptime(start, DATE_FORMAT)
+while current < end:
+    date_range.append(current.strftime(DATE_FORMAT))
+    current += step
 
-    if type(end) is str:
-        end = datetime.strptime(end, DATE_FORMAT)
+# define min_val values
+min_vals = list(range(1000, MIN_CUTOFF + MIN_STEP, MIN_STEP))
 
-    current = end
-    date_range = []
+pivot_table = {min_val: [] for min_val in min_vals}
+# pivot_table = defaultdict(lambda: defaultdict(list))
+col_headers = []
+date_labels = set()
 
-    while current >= start:
-        date_range.append(current.strftime(DATE_FORMAT))
-        current = current - relativedelta(months=+1)
+for i in range(len(date_range) - 1):
+    start_date = date_range[i]
+    end_date = date_range[i + 1]
+    col_label = f"{start_date} to {end_date}"
+    col_headers.append(col_label)
 
-    return date_range
+    for min_val in min_vals:
+
+        # setup user config
+        uf.start_date = start_date
+        uf.end_date = end_date
+        uf.min_size = min_val
+        uf.max_size = MAX_CUTUFF
+        print(
+            f"Fire count for {start_date} -> {end_date} at {min_val}km^2 to {MAX_CUTUFF}km^2 = ",
+            end="",
+        )
+        count = get_fire_count(uf)
+        # count = 69
+        print(f"{count} fires")
+        pivot_table[min_val].append(count)
+        date_labels.add(col_label)
 
 
-target_date = start_date + relativedelta(years=+1)
-date_range = get_date_range(start_date, target_date)
-
-fire_counts = []
-num_fires = 0
-end_date = datetime.strptime(date_range[0], DATE_FORMAT)
-
-
-while end_date <= END_DATE_CUTOFF:
-
-    for start_date in date_range:
-        for min_val in range(1000, MIN_CUTOFF, 1000):
-
-            # setup user config
-            uf.min_size = min_val
-            uf.start_date = start_date
-            uf.end_date = end_date
-            print(
-                f"Mid computation: {start_date}, {end_date}, {min_val}, {uf.max_size}"
-            )
-
-            # get number of fires
-            prev_num_fires = num_fires
-
-            try:
-                num_fires = get_fire_count(uf)
-            except Exception as e:
-                print(str(e))
-                break
-
-            fire_counts.append((min_val, num_fires, start_date, end_date))
-            print(start_date, end_date, min_val, num_fires)
-
-            if num_fires == prev_num_fires:
-                break
-
-    target_date = datetime.strptime(start_date, DATE_FORMAT) + relativedelta(years=+1)
-    date_range = get_date_range(start_date, target_date)
-    end_date = datetime.strptime(date_range[0], DATE_FORMAT)
-
-print(fire_counts)
+# convert pivot table to dataframe
+df = pd.DataFrame.from_dict(
+    pivot_table, orient="index", columns=list(sorted(date_labels))
+)
+df.index.name = "min_val"
+df.to_csv("FireCounts.csv", index=True)
