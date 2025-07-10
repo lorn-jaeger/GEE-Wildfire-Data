@@ -15,7 +15,7 @@ from ee_wildfire.utils.google_drive_util import get_location_count
 from ee_wildfire.utils.yaml_utils import get_full_yaml_path
 
 MIN_CUTOFF = 100000
-MIN_STEP = 500
+MIN_STEP = 1000
 MAX_CUTUFF = 10000000
 # ACRE_MOD = 0.000247105
 ACRE_TO_KM_MOD = 0.00404686
