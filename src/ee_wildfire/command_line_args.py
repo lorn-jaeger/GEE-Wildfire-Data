@@ -88,6 +88,8 @@ def parse() -> UserConfig:
     Returns:
             UserConfig: A fully initialized user configuration.
     """
+
+    # FIX: This is funky. Just hardcode each of the commandline args
     base_parser = argparse.ArgumentParser(add_help=False)
     for cmd in COMMAND_ARGS.keys():
         _type, _default, _action, _help = COMMAND_ARGS[cmd]

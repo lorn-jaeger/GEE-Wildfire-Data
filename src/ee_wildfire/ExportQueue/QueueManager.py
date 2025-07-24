@@ -145,17 +145,19 @@ class QueueManager:
         files = []
         tasks = cls._completed_tasks
 
+        # FIX: breaks when downloading
         for task in tasks:
             config = getattr(task, "config", {})
-            filename = (
-                # Try common export fields
-                config.get("fileNamePrefix")
-                or config.get("driveFileNamePrefix")
-                or config.get("description")
-                or f"task_{task.id}"
-                or "unknown_filename"
-            )
-            files.append(filename + ".tif")
+            if config:
+                filename = (
+                    # Try common export fields
+                    config.get("fileNamePrefix")
+                    or config.get("driveFileNamePrefix")
+                    or config.get("description")
+                    or f"task_{task.id}"
+                    or "unknown_filename"
+                )
+                files.append(filename + ".tif")
 
         return files
 
