@@ -157,7 +157,7 @@ You can also edit configuration on the fly with command line arguments:
 | `--start-date` | `datetime` | Starting date for Earth Engine query (e.g., `2020-01-01`). |
 | `--end-date` | `datetime` | Ending date for Earth Engine query (e.g., `2020-12-31`). |
 | `--silent` | None | No command line output. |
-| `--reset-config` | None | Resets internal YAML file to default values. |
+| `--reset_config` | None | Resets internal YAML file to default values. |
 | `--no-log` | None | Disable logging. |
 | `--log-dir` | `PATH` | Directory where you want your logs files stored.|
 | `--log-level` | `'debug', 'info', 'warn', or 'error'` | Sets the level of verbosity for log files.|

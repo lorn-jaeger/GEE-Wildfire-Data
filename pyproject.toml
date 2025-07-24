@@ -14,7 +14,11 @@ ee_wildfire = ["config_options.yml"]
 [project]
 name = "ee-wildfire"
 # version is just the date that package is publish to PyPi: YYYY.MM.DD
+<<<<<<< HEAD
 version = "2025.06.24"
+=======
+version = "2025.06.14"
+>>>>>>> 0dab1c798b1138d7f97bfadcc38b093edf4c2347
 description = "Pulls data from Google Earth Engine, syncs it to Google Drive, and downloads files."
 authors = [
     { name = "Kyle Krstulich", email = "kylekrstulich@gmail.com" },

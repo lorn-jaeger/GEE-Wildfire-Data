@@ -109,6 +109,7 @@ class UserConfig:
             FileNotFoundError: If credentials file does not exist.
         """
 
+
         if hasattr(self, "config"):
             self.config = Path(os.path.abspath(self.config))
             ConsoleUI.debug(f"Config path: {self.config}")
@@ -184,14 +185,17 @@ class UserConfig:
             self.data_dir = Path(os.path.abspath(self.data_dir))
             if self.data_dir != os.path.abspath(DEFAULT_DATA_DIR):
 
-                if self.tiff_dir == DEFAULT_TIFF_DIR:
-                    self.tiff_dir = Path(self.data_dir / "tiff")
+                if hasattr(self, 'tiff_dir'):
+                    if self.tiff_dir == DEFAULT_TIFF_DIR:
+                        self.tiff_dir = Path(self.data_dir / "tiff")
 
-                if self.log_dir == DEFAULT_LOG_DIR:
-                    self.log_dir = Path(self.data_dir / "logs")
+                if hasattr(self, 'log_dir'):
+                    if self.log_dir == DEFAULT_LOG_DIR:
+                        self.log_dir = Path(self.data_dir / "logs")
 
-                if self.gdf_dir == DEFAULT_GDF_DIR:
-                    self.gdf_dir = Path(self.data_dir / "gdfs")
+                if hasattr(self,'gdf_dir'):
+                    if self.gdf_dir == DEFAULT_GDF_DIR:
+                        self.gdf_dir = Path(self.data_dir / "gdfs")
 
             self._try_make_path(self.data_dir)
 
