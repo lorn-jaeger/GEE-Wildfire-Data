@@ -112,11 +112,11 @@ credentials: ~/ee_wildfire_data/OAuth/credentials.json
 # retry_failed: false
 # purge_after: false
 
-# Logs
+# === Logs ===
 # no_log: false
 # log_level: info # levels: debug, info, warn, error
 
-# Misc
+# === Misc ===
 # silent: false
 ```
 
