@@ -310,7 +310,7 @@ def apply_to_user_config(args: argparse.Namespace) -> UserConfig:
 
     # bounding box setup
     if config_dict["draw_bbox"]:
-        map_maker.setup_logging(config)
+        map_maker.setup_logging(config_dict["log_level"])
         map_maker.get_map_html()
         config_dict["bounding_area"] = map_maker.launch_draw_map()
     else:
@@ -319,8 +319,6 @@ def apply_to_user_config(args: argparse.Namespace) -> UserConfig:
     # apply to user config
     uf = UserConfig(vars(args))
 
-    ConsoleUI.clear_screen()
-    ConsoleUI.write(str(uf))
     ConsoleUI.debug(uf.__repr__())
 
     return uf

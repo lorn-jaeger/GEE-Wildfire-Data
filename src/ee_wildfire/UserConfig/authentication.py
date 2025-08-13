@@ -74,16 +74,3 @@ class AuthManager:
 
     def get_drive_service(self) -> Resource:
         return self.drive_service
-
-
-# def main():
-#     am = AuthManager(
-#         service_json="/home/kyle/NRML/OAuth/service-account-credentials.json",
-#     )
-#     am.authenticate_earth_engine()
-#     am.authenticate_drive()
-#     print(am.get_project_id())
-#
-#
-# if __name__ == "__main__":
-#     main()

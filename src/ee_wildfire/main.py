@@ -1,10 +1,13 @@
+from ee_wildfire.command_line_args import apply_to_user_config, parse, run
 from ee_wildfire.UserInterface.UserInterface import ConsoleUI
-from ee_wildfire.command_line_args import parse, run
+
 
 def main():
     config = parse()
-    run(config)
-    # ConsoleUI.clear_screen()
+    uf = apply_to_user_config(config)
+    ConsoleUI.clear_screen()
+    ConsoleUI.write(str(uf))
+    run(uf)
 
 
 if __name__ == "__main__":
