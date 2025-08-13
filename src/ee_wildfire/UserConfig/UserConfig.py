@@ -24,13 +24,16 @@ class UserConfig:
     #                               Dunder Methods
     # =========================================================================== #
 
-    def __init__(self):
+    def __init__(self, args: dict):
         """
         Initialize the UserConfig object by loading and validating the configuration.
         """
+        self._data = args
 
-        self.bounding_area = USA_COORDS
-        self._load_from_internal_config()
+        for key, val in args.items():
+            setattr(self, key, val)
+
+        self.validate()
 
     def __repr__(self) -> str:
         output_str = "UserConfig\n"
@@ -64,9 +67,41 @@ class UserConfig:
             ]
         )
 
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def __setitem__(self, key, value):
+        self._data[key] = value
+
+    def __delitem__(self, key):
+        del self._data[key]
+
+    def __iter__(self):
+        return iter(self._data)
+
+    def __len__(self):
+        return len(self._data)
+
     # =========================================================================== #
     #                               Private Methods
     # =========================================================================== #
+
+    def _try_make_path(self, path: Path) -> None:
+        """
+        Attempt to create a directory if it does not already exist.
+
+        Args:
+            path (Path): Directory path to create.
+        """
+        ConsoleUI.debug(f"Trying to make path: {path}")
+        if not os.path.exists(path):
+            try:
+                os.makedirs(path, exist_ok=True)
+            except PermissionError:
+                print(f"Permission denied: Unable to create '{path}'")
+
+    def _normalize_path(self, path: Path):
+        return Path(path).expanduser().resolve()
 
     def _validate_logs(self) -> None:
         if hasattr(self, "log_level"):
@@ -99,103 +134,81 @@ class UserConfig:
         except (json.JSONDecodeError, FileNotFoundError):
             return False
 
-    def _normalize_path(self, path: Path):
-        return Path(path).expanduser().resolve()
-
     def _validate_paths(self) -> None:
         """
         Ensure necessary file system paths exist or are created.
         Raises:
             FileNotFoundError: If credentials file does not exist.
         """
+        path_attrs = [
+            "config",
+            "tiff_dir",
+            "gdf_dir",
+            "log_dir",
+            "credentials",
+        ]
 
+        for pa in path_attrs:
+            setattr(self, pa, self._normalize_path(getattr(self, pa)))
+            ConsoleUI.debug(f"{pa} path: {getattr(self, pa)}")
+            self._try_make_path(getattr(self, pa))
 
-        if hasattr(self, "config"):
-            self.config = Path(os.path.abspath(self.config))
-            ConsoleUI.debug(f"Config path: {self.config}")
+        # prompt user for service credentials if not found
+        num_retries = 3
+        service_exists = os.path.exists(self.credentials)
+        ConsoleUI.debug(f"Service credentials path exists: {service_exists}")
+        while not service_exists:
+            if num_retries <= 0:
+                ConsoleUI.error(
+                    f"Google service credentials JSON {self.credentials} not found!"
+                )
+                raise FileNotFoundError(
+                    f"Google cloud service account file not found at {self.credentials}"
+                )
 
-        if hasattr(self, "tiff_dir"):
-            self.tiff_dir = self._normalize_path(self.tiff_dir)
-            ConsoleUI.debug(f"tiff path: {self.tiff_dir}")
-            self._try_make_path(self.tiff_dir)
+            ConsoleUI.print(
+                f"Google service credentials JSON {self.credentials} not found!",
+                color="red",
+            )
+            self.credentials = os.path.expanduser(ConsoleUI.prompt_path())
 
-        if hasattr(self, "gdf_dir"):
-            self.gdf_dir = Path(os.path.abspath(self.gdf_dir))
-            self.gdf_dir = self._normalize_path(self.gdf_dir)
-            ConsoleUI.debug(f"gdf path: {self.gdf_dir}")
-            self._try_make_path(self.gdf_dir)
-
-        if hasattr(self, "log_dir"):
-            self.log_dir = self._normalize_path(self.log_dir)
-            ConsoleUI.debug(f"log path: {self.log_dir}")
-            self._try_make_path(self.log_dir)
-
-        if hasattr(self, "credentials"):
-            self.credentials = self._normalize_path(self.credentials)
-            ConsoleUI.debug(f"creds path: {self.credentials}")
-
-            # prompt user for service credentials if not found
-            num_retries = 3
             service_exists = os.path.exists(self.credentials)
-            ConsoleUI.debug(f"Service credentials path exists: {service_exists}")
-            while not service_exists:
-                if num_retries <= 0:
-                    ConsoleUI.error(
-                        f"Google service credentials JSON {self.credentials} not found!"
-                    )
-                    raise FileNotFoundError(
-                        f"Google cloud service account file not found at {self.credentials}"
-                    )
+            num_retries -= 1
 
-                ConsoleUI.print(
-                    f"Google service credentials JSON {self.credentials} not found!",
-                    color="red",
+        # validate service credentials format
+        valid_service = self._validate_service_account_file(Path(self.credentials))
+        ConsoleUI.debug(f"Service credentials validation: {valid_service}")
+        num_retries = 3
+        while not valid_service:
+            if num_retries <= 0:
+                ConsoleUI.error(
+                    f"Google service credentials JSON {self.credentials} incorrect format! {self._missing}"
                 )
-                self.credentials = os.path.expanduser(ConsoleUI.prompt_path())
+                raise ValueError(
+                    f"Google cloud service account at {self.credentials} is not in the right format."
+                )
 
-                service_exists = os.path.exists(self.credentials)
-                num_retries -= 1
+            ConsoleUI.print(
+                f"Google service credentials JSON {self.credentials} is not in the correct format!",
+                color="red",
+            )
+            self.credentials = os.path.expanduser(ConsoleUI.prompt_path())
 
-            # validate service credentials format
             valid_service = self._validate_service_account_file(Path(self.credentials))
-            ConsoleUI.debug(f"Service credentials validation: {valid_service}")
-            num_retries = 3
-            while not valid_service:
-                if num_retries <= 0:
-                    ConsoleUI.error(
-                        f"Google service credentials JSON {self.credentials} incorrect format! {self._missing}"
-                    )
-                    raise ValueError(
-                        f"Google cloud service account at {self.credentials} is not in the right format."
-                    )
-
-                ConsoleUI.print(
-                    f"Google service credentials JSON {self.credentials} is not in the correct format!",
-                    color="red",
-                )
-                self.credentials = os.path.expanduser(ConsoleUI.prompt_path())
-
-                valid_service = self._validate_service_account_file(
-                    Path(self.credentials)
-                )
-                num_retries -= 1
+            num_retries -= 1
 
         # Sync data directory
-        if hasattr(self, "data_dir"):
-            self.data_dir = Path(os.path.abspath(self.data_dir))
-            if self.data_dir != os.path.abspath(DEFAULT_DATA_DIR):
+        self.data_dir = self._normalize_path(self.data_dir)
+        if self.data_dir != self._normalize_path(DEFAULT_DATA_DIR):
 
-                if hasattr(self, 'tiff_dir'):
-                    if self.tiff_dir == DEFAULT_TIFF_DIR:
-                        self.tiff_dir = Path(self.data_dir / "tiff")
+            if self.tiff_dir == DEFAULT_TIFF_DIR:
+                self.tiff_dir = Path(self.data_dir / "tiff")
 
-                if hasattr(self, 'log_dir'):
-                    if self.log_dir == DEFAULT_LOG_DIR:
-                        self.log_dir = Path(self.data_dir / "logs")
+            if self.log_dir == DEFAULT_LOG_DIR:
+                self.log_dir = Path(self.data_dir / "logs")
 
-                if hasattr(self,'gdf_dir'):
-                    if self.gdf_dir == DEFAULT_GDF_DIR:
-                        self.gdf_dir = Path(self.data_dir / "gdfs")
+            if self.gdf_dir == DEFAULT_GDF_DIR:
+                self.gdf_dir = Path(self.data_dir / "gdfs")
 
             self._try_make_path(self.data_dir)
 
@@ -244,74 +257,6 @@ class UserConfig:
                     f"start date '{self.start_date}' is after end date '{self.end_date}'"
                 )
 
-    def _try_make_path(self, path: Path) -> None:
-        """
-        Attempt to create a directory if it does not already exist.
-
-        Args:
-            path (Path): Directory path to create.
-        """
-        ConsoleUI.debug(f"Trying to make path: {path}")
-        if not os.path.exists(path):
-            try:
-                os.makedirs(path, exist_ok=True)
-            except PermissionError:
-                print(f"Permission denied: Unable to create '{path}'")
-
-    def _get_args_namespace(self) -> list[str]:
-        """
-        Build a list of normalized command-line argument keys.
-
-        Returns:
-            List[str]: A list of keys stripped of dashes and converted to snake_case.
-        """
-        namespace = []
-        for name in COMMAND_ARGS:
-            if name not in ["--version", "--help"]:
-                fixed_name = self._fix_name(name)
-                namespace.append(fixed_name)
-        return namespace
-
-    def _get_default_values(self) -> Dict:
-        values = {}
-        for name in COMMAND_ARGS:
-            if name not in ["--version", "--help"]:
-                _, default_val, _, _ = COMMAND_ARGS[name]
-                fixed_name = self._fix_name(name)
-                values[fixed_name] = default_val
-        return values
-
-    def _get_bools(self) -> List[str]:
-        values = []
-        for name in COMMAND_ARGS:
-            if name not in ["--version", "--help"]:
-                aType, _, _, _ = COMMAND_ARGS[name]
-                fixed_name = self._fix_name(name)
-                if aType is None:
-                    values.append(fixed_name)
-        return values
-
-    def _fix_name(self, name: str) -> str:
-        return name[2:].replace("-", "_")
-
-    def _fill_namespace(self, namespace: dict) -> None:
-        default_namespace = self._get_args_namespace()
-        for key, item in namespace.items():
-            if key in default_namespace:
-                setattr(self, key, item)
-            else:
-                ConsoleUI.error(f"key: {key} not found in {default_namespace}")
-
-    def _save_to_internal_config_file(self) -> None:
-        save_yaml_config(self.__dict__, INTERNAL_USER_CONFIG_DIR)
-
-    def _load_from_internal_config(self) -> None:
-        if os.path.exists(INTERNAL_USER_CONFIG_DIR):
-            config_data = load_yaml_config(INTERNAL_USER_CONFIG_DIR)
-            self._fill_namespace(config_data)
-
-        self.validate()
-
     # =========================================================================== #
     #                               Public Methods
     # =========================================================================== #
@@ -328,7 +273,6 @@ class UserConfig:
         self.auth = AuthManager(
             service_json=self.credentials,
         )
-        # self.drive_service = self.auth.drive_service
         self.drive_service = self.auth.get_drive_service()
         self.project_id = self.auth.get_project_id()
 
@@ -341,78 +285,6 @@ class UserConfig:
         except:
             self.geodataframe = get_fires(self)
             save_fires(self)
-
-    def change_configuration_from_yaml(self, yaml_path: Union[Path, str]) -> None:
-        """
-        Load and apply configuration from a YAML file, falling back to defaults if necessary.
-
-        Args:
-            yaml_path (Union[Path,str]): Path to the YAML config file.
-        """
-        config_data = load_yaml_config(yaml_path)
-        defaults = self._get_default_values()
-        namespace = defaults.keys()
-
-        # fill in missing config options with default
-        for name in namespace:
-            if name not in config_data.keys():
-                config_data[name] = defaults[name]
-
-        # set the object attributes with fixed config data
-        for item, value in config_data.items():
-            setattr(self, item, value)
-
-        self.validate()
-        self._save_to_internal_config_file()
-
-    def change_configuration_from_args(self, args: argparse.Namespace):
-        """
-        Update internal boolean flags (`export`, `download`) from parsed CLI arguments.
-
-        Args:
-            args (Any): Parsed argparse namespace object.
-        """
-        explicit = getattr(args, "_explicit_args", set())
-        bool_keys = self._get_bools()
-        all_keys = self._get_args_namespace()
-
-        for key in all_keys:
-            arg_val = getattr(args, key)
-
-            # Always set booleans (they're binary state toggles)
-            if key in bool_keys:
-                setattr(self, key, arg_val)
-                continue
-
-            # Set if the attribute doesn't exist
-            if not hasattr(self, key):
-                setattr(self, key, arg_val)
-                continue
-
-            # Only override if user explicitly passed it
-            if key in explicit:
-                setattr(self, key, arg_val)
-
-        self.validate()
-        self._save_to_internal_config_file()
-
-
-def delete_user_config() -> None:
-    """
-    Deletes the user_config.yml file if it exists.
-
-    Args:
-        path (Path): Path to the config file. Defaults to standard location.
-    """
-    path = Path(INTERNAL_USER_CONFIG_DIR)
-    try:
-        if path.exists():
-            path.unlink()
-            ConsoleUI.print(f"Deleted config file: {path}")
-        else:
-            ConsoleUI.print(f"No config file found at: {path}", color="yellow")
-    except Exception as e:
-        ConsoleUI.print(f"Failed to delete config file: {e}", color="red")
 
 
 if __name__ == "__main__":

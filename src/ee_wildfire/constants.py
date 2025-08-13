@@ -129,7 +129,7 @@ DEFAULT_GDF_DIR = DEFAULT_DATA_DIR / "gdfs"
 
 DEFAULT_HDF5_DIR = DEFAULT_DATA_DIR / "hdf5"
 
-DEFAULT_OAUTH_DIR = DEFAULT_DATA_DIR / "OAuth" / "credentials.json"
+DEFAULT_OAUTH_DIR = DEFAULT_DATA_DIR / "OAuth" / "service-account-credentials.json"
 
 DEFAULT_GOOGLE_DRIVE_DIR = "GoogleEarthEngine"
 
