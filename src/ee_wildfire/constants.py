@@ -25,7 +25,7 @@ TEMPLATE_DIR = ROOT / "UserInterface" / "templates"
 
 # =========== Needed Constants ===========
 
-VERSION = "2025.06.24"
+VERSION = "2025.08.13"
 
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 
