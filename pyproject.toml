@@ -41,31 +41,31 @@ classifiers = [
 keywords = ["wildfire", "earth engine"]
 
 dependencies = [
-	"earthengine-api",
-	"tqdm",
-	"pandas",
-	"raster_tools",
-	"geopandas",
-	"shapely",
-	"numpy",
-	"geemap",
-	"tdqm",
-	"google-api-python-client",
-	"google-auth-httplib2",
-	"google-auth-oauthlib",
-	"setuptools",
-	"wheel",
-	"prompt_toolkit",
-	"colorama",
-	"folium",
-	"flask",
-	"flask-cors",
+  "earthengine-api>=1.6.3,<1.7",
+  "tqdm",
+  "pandas",
+  "raster_tools",
+  "geopandas",
+  "shapely<2.0",
+  "numpy",
+  "geemap",
+  "google-api-python-client",
+  "google-auth-httplib2",
+  "google-auth-oauthlib",
+  "setuptools<81",
+  "wheel",
+  "prompt_toolkit",
+  "colorama",
+  "folium",
+  "flask",
+  "flask-cors",
 ]
 
 
 [project.urls]
 Homepage = "https://github.com/KylesCorner/Earth-Engine-Wildfire-Data/tree/master"
 Issues = "https://github.com/KylesCorner/Earth-Engine-Wildfire-Data/issues"
+Trello = "https://trello.com/b/eEd18oio/natrual-resource-management-lab"
 
 [project.scripts]
 ee-wildfire = "ee_wildfire.main:main"
