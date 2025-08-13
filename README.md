@@ -91,47 +91,36 @@ Template for configuration:
 credentials: ~/ee_wildfire_data/OAuth/credentials.json
 
 # OPTIONAL
-# These items have default values if not provided in YAML file.
+# These are the default entries if not modified in YAML file.
 
-# Fire query
-min_size: 10000000.0
+# === Fire query ===
+# min_size: 10000000.0
+# max_size: 1000000000.0
+# start_date: 2021-01-01 00:00:00
+# end_date: 2021-04-20 00:00:00
 
-max_size: 1000000000.0
+# === Directories ===
+# data_dir: ~/ee_wildfire_data # changing this will also sync the rest of the directories.
+# tiff_dir: ~/ee_wildfire_data/tiff
+# log_dir : ~/ee_wildfire_data/logs
+# google_drive_dir: GoogleEarthEngine
 
-start_date: 2021-01-01 00:00:00
-
-end_date: 2021-04-20 00:00:00
-
-# Directories
-tiff_dir: ~/ee_wildfire_data/tiff
-
-data_dir: ~/ee_wildfire_data
-
-log_dir : ~/ee_wildfire_data/logs
-
-google_drive_dir: GoogleEarthEngine
-
-# Pipeline
-purge_before: false
-
-download: false
-
-export: false
-
-retry_failed: false
-
-purge_after: false
+# === Pipeline ===
+# purge_before: false
+# download: false
+# export: false
+# retry_failed: false
+# purge_after: false
 
 # Logs
-no_log: false
-
-log_level: info # levels: debug, info, warn, error
+# no_log: false
+# log_level: info # levels: debug, info, warn, error
 
 # Misc
-silent: false
+# silent: false
 ```
 
-To finish configuration you will need to use the `-config` command line argument.
+To finish configuration you will need to use the `--config or -c` command line argument.
 
 
 ## Command-Line Interface (CLI)
@@ -141,26 +130,25 @@ You can also edit configuration on the fly with command line arguments:
 | Argument | Parameters | Description |
 | -------- |------------|-------------|
 | `--version` | None | Show current version. |
-| `--config` | `PATH` | Path to YAML config file. Overrides all other command-line arguments. |
-| `--export` | None | Export data from Google Earth Engine to Google Drive. |
-| `--download` | None | Download data from Google Drive to your local machine. |
-| `--show-config` | None | Show user configuration. |
-| `--credentials` | `PATH` | Path to Google authentication `.json` service account file. |
-| `--data-dir` | `PATH` | Path to output data directory on your local machine. |
-| `--tiff-dir` | `PATH` | Path where downloaded `.tif` files are stored. |
-| `--google-drive-dir` | `str` | Name of your Google Drive folder for exporting. |
-| `--min-size` | `float` | Minimum size of fire area to detect (in hectares). |
-| `--max-size` | `float` | Maximum size of fire area to detect (in hectares). |
-| `--retry-failed` | None | Retry failed Earth Engine locations. |
-| `--purge-before` | None | Purge files from Google Drive before exporting new data. |
-| `--purge-after` | None | Purge files from Google Drive after downloading. |
-| `--start-date` | `datetime` | Starting date for Earth Engine query (e.g., `2020-01-01`). |
-| `--end-date` | `datetime` | Ending date for Earth Engine query (e.g., `2020-12-31`). |
-| `--silent` | None | No command line output. |
-| `--reset_config` | None | Resets internal YAML file to default values. |
-| `--no-log` | None | Disable logging. |
-| `--log-dir` | `PATH` | Directory where you want your logs files stored.|
-| `--log-level` | `'debug', 'info', 'warn', or 'error'` | Sets the level of verbosity for log files.|
+| `--help` | None | Show help screen. |
+| `--config, -c` | `PATH` | Path to YAML config file. Overrides all other command-line arguments. |
+| `--export, -e` | None | Export data from Google Earth Engine to Google Drive. |
+| `--download, -d` | None | Download data from Google Drive to your local machine. |
+| `--credentials, -C` | `PATH` | Path to Google authentication `.json` service account file. |
+| `--data-dir, -D` | `PATH` | Path to output data directory on your local machine. |
+| `--tiff-dir, -t` | `PATH` | Path where downloaded `.tif` files are stored. |
+| `--google-drive-dir, -g` | `str` | Name of your Google Drive folder for exporting. |
+| `--min-size, -m` | `float` | Minimum size of fire area to detect (in hectares). |
+| `--max-size, -M` | `float` | Maximum size of fire area to detect (in hectares). |
+| `--retry-failed, -r` | None | Retry failed Earth Engine locations. |
+| `--purge-before, -p` | None | Purge files from Google Drive before exporting new data. |
+| `--purge-after, -P` | None | Purge files from Google Drive after downloading. |
+| `--start-date, -S` | `datetime` | Starting date for Earth Engine query (e.g., `2020-01-01`). |
+| `--end-date, -E` | `datetime` | Ending date for Earth Engine query (e.g., `2020-12-31`). |
+| `--silent, -s` | None | No command line output. |
+| `--no-log, -n` | None | Disable logging. |
+| `--log-dir, l` | `PATH` | Directory where you want your logs files stored.|
+| `--log-level, L` | `'debug', 'info', 'warn', or 'error'` | Sets the level of verbosity for log files.|
 ###  Basic Usage
 
 ```bash
