@@ -1,19 +1,18 @@
-from flask import Flask, render_template, request, jsonify, cli
-import threading
-import webbrowser
-import time
-import folium
 import tempfile
+import threading
+import time
+import webbrowser
+from typing import List
+
+import ee
+import folium
 import geemap
+from flask import Flask, cli, jsonify, render_template, request
 from folium.plugins import Draw
 
 from ee_wildfire.constants import *
-from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 from ee_wildfire.UserConfig.UserConfig import UserConfig
-
-import ee
-
-from typing import List
+from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 
 app = Flask(__name__)
 bbox_coords = None
@@ -22,6 +21,7 @@ bbox_coords = None
 @app.route("/")
 def index():
     return render_template("map.html")  # Load the cleaned-up HTML
+
 
 @app.route("/submit", methods=["POST"])
 def submit():
@@ -36,15 +36,21 @@ def submit():
     # complete the circle
     ConsoleUI.debug(f"map maker first point before fix: {raw_bbox[0][0]}")
     ConsoleUI.debug(f"map maker last point before fix: {raw_bbox[0][-1]}")
-    ConsoleUI.debug(f"map maker complete points before fix? {raw_bbox[0][0] == raw_bbox[0][-1]}")
+    ConsoleUI.debug(
+        f"map maker complete points before fix? {raw_bbox[0][0] == raw_bbox[0][-1]}"
+    )
 
     if raw_bbox[0][0] != raw_bbox[0][-1]:
-        ConsoleUI.debug(f"map maker, circle incomplete appending point: {raw_bbox[0][0]}")
+        ConsoleUI.debug(
+            f"map maker, circle incomplete appending point: {raw_bbox[0][0]}"
+        )
         raw_bbox[0].append(raw_bbox[0][0])
 
     ConsoleUI.debug(f"map maker first point after fix: {raw_bbox[0][0]}")
     ConsoleUI.debug(f"map maker last point after fix: {raw_bbox[0][-1]}")
-    ConsoleUI.debug(f"map maker complete points after fix? {raw_bbox[0][0] == raw_bbox[0][-1]}")
+    ConsoleUI.debug(
+        f"map maker complete points after fix? {raw_bbox[0][0] == raw_bbox[0][-1]}"
+    )
 
     ConsoleUI.debug(f"map maker raw bbox: {raw_bbox}")
     bbox_coords = raw_bbox
@@ -53,14 +59,15 @@ def submit():
     ConsoleUI.log(f"Bounding box polygon: {bbox_coords}")
     return jsonify(success=True)
 
-def setup_logging(user_config: UserConfig):
 
-    flask_loggers = ['werkzeug', 'flask.app']
+def setup_logging(log_level: str):
+
+    flask_loggers = ["werkzeug", "flask.app"]
 
     for name in flask_loggers:
         logger = logging.getLogger(name)
         logger.handers = []
-        logger.setLevel(LOG_LEVELS[user_config.log_level])
+        logger.setLevel(LOG_LEVELS[log_level])
         logger.propagate = False
 
         handlers = ConsoleUI.get_log_handlers()
@@ -69,34 +76,37 @@ def setup_logging(user_config: UserConfig):
             for handler in handlers:
                 logger.addHandler(handler)
 
+
 def get_map_html():
     ConsoleUI.print("Generating HTML")
     mapObj = folium.Map(location=USA_CENTER)
 
-    mapObj.get_root().html.add_child(folium.Element(
-        """
+    mapObj.get_root().html.add_child(
+        folium.Element(
+            """
         <div style="position:fixed;left:70px;top:150px;height:100px;z-index:900">
         <button id="submit-btn">Submit</button>
         </div>
         <script src="/static/js/draw_handler.js"></script>
         """
-    ))
+        )
+    )
 
     draw = Draw(
-        export=False, 
+        export=False,
         draw_options={
-            'polyline': False,
-            'rectangle': False,
-            'polygon': False,
-            'circle': False,
-            'marker': False,
-            'circlemarker': False,
+            "polyline": False,
+            "rectangle": False,
+            "polygon": False,
+            "circle": False,
+            "marker": False,
+            "circlemarker": False,
         },
-        )
+    )
     draw.add_to(mapObj)
 
-
     mapObj.save(TEMPLATE_DIR / "map.html")
+
 
 def launch_draw_map() -> List:
     ConsoleUI.print("Launching web browser")
@@ -104,7 +114,7 @@ def launch_draw_map() -> List:
     bbox_coords = None
 
     def run():
-        cli.show_server_banner = lambda *args, **kwargs:None
+        cli.show_server_banner = lambda *args, **kwargs: None
         app.run(port=5000, debug=False, use_reloader=False)
 
     thread = threading.Thread(target=run, daemon=True)
@@ -114,7 +124,9 @@ def launch_draw_map() -> List:
     try:
         webbrowser.open("http://127.0.0.1:5000")
     except webbrowser.Error as e:
-        ConsoleUI.error(f"Unable to open webbrowser: {str(e)}. Setting bounding box to USA.")
+        ConsoleUI.error(
+            f"Unable to open webbrowser: {str(e)}. Setting bounding box to USA."
+        )
         bbox_coords = USA_COORDS
 
     # Wait until user submits bbox
@@ -123,9 +135,10 @@ def launch_draw_map() -> List:
 
     return bbox_coords
 
+
 def show_bbox_on_map(bbox: List, center=None, zoom=8):
     """Display the bounding box in a standalone browser window."""
-    bbox = ee.Geometry.Polygon(bbox) # type: ignore
+    bbox = ee.Geometry.Polygon(bbox)  # type: ignore
     if center is None:
         coords = bbox.bounds().coordinates().getInfo()[0]
         lons = [pt[0] for pt in coords]
@@ -134,7 +147,7 @@ def show_bbox_on_map(bbox: List, center=None, zoom=8):
 
     # Create map
     m = geemap.Map(center=center, zoom=zoom)
-    m.addLayer(bbox, {}, 'Bounding Box')
+    m.addLayer(bbox, {}, "Bounding Box")
     m.addLayerControl()
 
     # Export to HTML and open in browser
@@ -145,6 +158,7 @@ def show_bbox_on_map(bbox: List, center=None, zoom=8):
         except webbrowser.Error as e:
             ConsoleUI.error(f"Unable to open webbrowser: {str(e)}")
             return
+
 
 if __name__ == "__main__":
     ConsoleUI.setup_logging(log_dir=DEFAULT_LOG_DIR, log_level="info")
