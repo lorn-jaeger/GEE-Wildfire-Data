@@ -2,6 +2,7 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
+import pytest
 from utils import *
 
 from ee_wildfire.command_line_args import apply_to_user_config, parse, run
@@ -21,6 +22,7 @@ def test_config_application():
         assert uf[key] == val
 
 
+@pytest.mark.integration  # optional, mark so you can run only integration tests
 def test_single_run():
     data_dir = TMP_DIR / "data"
 
