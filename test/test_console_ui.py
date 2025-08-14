@@ -5,8 +5,8 @@ from pathlib import Path
 
 from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 
-DATA_DIR = Path("/home/kyle/opt")
-LOG_DIR = DATA_DIR / "log_test"
+DATA_DIR = Path("/tmp/ee_wildfire_logs/").mkdir(parents=True, exist_ok=True)
+LOG_DIR = Path(DATA_DIR / "log_test").mkdir(parents=True, exist_ok=True)
 
 
 def test_multithreaded_logging(tmp_path):
