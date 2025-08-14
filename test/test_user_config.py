@@ -11,6 +11,7 @@ from ee_wildfire.constants import *
 TMP_DIR = Path("/tmp/ee_wildfire_test")
 
 
+@pytest.mark.unit  # optional, mark so you can run only integration tests
 def test_config_application():
 
     yaml_path = create_test_yaml()

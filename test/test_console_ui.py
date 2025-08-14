@@ -3,12 +3,15 @@ import threading
 import time
 from pathlib import Path
 
+import pytest
+
 from ee_wildfire.UserInterface.UserInterface import ConsoleUI
 
 DATA_DIR = Path("/tmp/ee_wildfire_logs/")
 LOG_DIR = DATA_DIR / "log_test"
 
 
+@pytest.mark.unit
 def test_multithreaded_logging(tmp_path):
     # Setup logging to a temporary directory
     log_dir = LOG_DIR
@@ -47,6 +50,7 @@ def test_multithreaded_logging(tmp_path):
             assert f"[Thread-{thread_id}] error {i}" in log_content
 
 
+@pytest.mark.unit
 def test_multithreaded_progress_bars(capfd):
     ConsoleUI.set_verbose(True)  # Enable printing
     ConsoleUI._bars.clear()  # Clean slate for test

@@ -5,6 +5,7 @@ import pytest
 from ee_wildfire.UserConfig.authentication import AuthManager
 
 
+@pytest.mark.unit
 def test_singleton_behavior(tmp_path, mocker):
     fake_json = tmp_path / "service.json"
     fake_json.write_text('{"client_email": "fake@example.com"}')
