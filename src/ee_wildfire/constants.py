@@ -119,7 +119,7 @@ DEFAULT_MAX_SIZE = 1e10
 
 DEFAULT_DATA_DIR = HOME / "ee_wildfire_data"
 
-DEFAULT_LOG_DIR = DEFAULT_DATA_DIR / "logs"
+DEFAULT_LOG_DIR = Path("/tmp/ee_wildfire_logs/")
 
 DEFAULT_LOG_LEVEL = "info"
 

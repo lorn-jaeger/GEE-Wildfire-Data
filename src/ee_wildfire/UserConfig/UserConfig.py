@@ -150,8 +150,23 @@ class UserConfig:
 
         for pa in path_attrs:
             setattr(self, pa, self._normalize_path(getattr(self, pa)))
-            ConsoleUI.debug(f"{pa} path: {getattr(self, pa)}")
-            self._try_make_path(getattr(self, pa))
+            ConsoleUI.debug(f"Item {pa} has path {getattr(self, pa)}")
+
+        # Sync data directory
+        self.data_dir = self._normalize_path(self.data_dir)
+        if self.data_dir != self._normalize_path(DEFAULT_DATA_DIR):
+
+            if self.tiff_dir == DEFAULT_TIFF_DIR:
+                self.tiff_dir = Path(self.data_dir / "tiff")
+
+            if self.gdf_dir == DEFAULT_GDF_DIR:
+                self.gdf_dir = Path(self.data_dir / "gdfs")
+
+        # make all the paths
+        self._try_make_path(self.tiff_dir)
+        self._try_make_path(self.log_dir)
+        self._try_make_path(self.gdf_dir)
+        self._try_make_path(self.data_dir)
 
         # prompt user for service credentials if not found
         num_retries = 3
@@ -196,21 +211,6 @@ class UserConfig:
 
             valid_service = self._validate_service_account_file(Path(self.credentials))
             num_retries -= 1
-
-        # Sync data directory
-        self.data_dir = self._normalize_path(self.data_dir)
-        if self.data_dir != self._normalize_path(DEFAULT_DATA_DIR):
-
-            if self.tiff_dir == DEFAULT_TIFF_DIR:
-                self.tiff_dir = Path(self.data_dir / "tiff")
-
-            if self.log_dir == DEFAULT_LOG_DIR:
-                self.log_dir = Path(self.data_dir / "logs")
-
-            if self.gdf_dir == DEFAULT_GDF_DIR:
-                self.gdf_dir = Path(self.data_dir / "gdfs")
-
-            self._try_make_path(self.data_dir)
 
     def _validate_time(self) -> None:
         """
@@ -262,8 +262,8 @@ class UserConfig:
     # =========================================================================== #
 
     def validate(self) -> None:
-        self._validate_time()
         self._validate_paths()
+        self._validate_time()
         self._validate_logs()
 
     def authenticate(self) -> None:

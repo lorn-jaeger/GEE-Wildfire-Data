@@ -325,8 +325,7 @@ def apply_to_user_config(args: argparse.Namespace) -> UserConfig:
 
 
 def main():
-    ui = ConsoleUI()
-    config = parse()
+    config = parse(["-c", "~/NRML/testing_config.yml"])
     print(config)
 
 
