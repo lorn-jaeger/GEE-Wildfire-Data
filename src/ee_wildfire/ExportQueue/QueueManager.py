@@ -190,9 +190,9 @@ class QueueManager:
     def wait_for_exports(cls):
         cls._export_jobs.join()
 
+        ConsoleUI.print("Waiting for export to finish...")
         while cls._task_queue:
             cls.update_queue()
-            ConsoleUI.print("Waiting for export to finish...")
 
         time.sleep(10)  # wait for last item to export
 
