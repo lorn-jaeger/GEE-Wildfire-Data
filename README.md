@@ -102,7 +102,7 @@ credentials: ~/ee_wildfire_data/OAuth/credentials.json
 # === Directories ===
 # data_dir: ~/ee_wildfire_data # changing this will also sync the rest of the directories.
 # tiff_dir: ~/ee_wildfire_data/tiff
-# log_dir : ~/ee_wildfire_data/logs
+# log_dir : /tmp/ee_wildfire_logs
 # google_drive_dir: GoogleEarthEngine
 
 # === Pipeline ===
