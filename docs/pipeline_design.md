@@ -42,7 +42,7 @@ schema:
 ```
 
 ### Notes
-- `dataset` references a registered name within `ee_wildfire.datasets`.
+- `dataset` references a registered name within `raster_builder.datasets`.
 - `function` is optional and only required for `custom` entries that are not pre-registered.
 - Each options block is passed verbatim to the dataset fetch function.
 - Pipeline stages are optional; if a section is omitted it is skipped.
@@ -50,7 +50,7 @@ schema:
 ## Module Layout
 
 ```
-ee_wildfire/
+raster_builder/
 ├── config.py            # Data classes + YAML loader
 ├── pipeline.py          # Stage orchestrator
 ├── context.py           # Execution context/shared state (index results, paths)

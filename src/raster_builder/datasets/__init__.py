@@ -19,11 +19,10 @@ __all__ = [
 def load_builtin_datasets() -> None:
     """Ensure built-in dataset modules are imported so their registrations run."""
     modules = [
-        "ee_wildfire.datasets.index",
-        "ee_wildfire.datasets.earthengine",
-        "ee_wildfire.datasets.earthaccess",
-        "ee_wildfire.datasets.custom",
+        "raster_builder.datasets.index",
+        "raster_builder.datasets.earthengine",
+        "raster_builder.datasets.earthaccess",
+        "raster_builder.datasets.custom",
     ]
     for module in modules:
         import_module(module)
-

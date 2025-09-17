@@ -1,2 +1,1 @@
-recursive-include src/ee_wildfire *.yml
-
+recursive-include src/raster_builder *.yml

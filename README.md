@@ -1,196 +1,86 @@
-# Project Summary
-Earth-Engine-Wildfire-Data is a Python command-line utility and library for extracting and
-transforming wildfire-related geospatial data from Google Earth Engine. It supports:
+# raster-builder
 
-- Access to MODIS, VIIRS, GRIDMET, and other remote sensing datasets.
+`raster-builder` is a configuration-first pipeline for assembling wildfire-oriented raster datasets. A
+single YAML file defines credentials, working directories, and the datasets to materialise. The
+pipeline then executes deterministic stages—index → Earth Engine → earthaccess → custom—so new data
+sources can be added without rewriting orchestration code.
 
-- Filtering wildfire perimeters by date, size, and region.
+## Features
+- YAML-only user interface; no interactive prompts
+- Dataset registry so data sources are defined once and reused across projects
+- Built-in GlobFire index stage that prepares fire start locations and timelines
+- Extensible stages for Google Earth Engine, NASA earthaccess, and custom/local datasets
 
-- Combining daily and final fire perimeters.
-
-- Generating YAML config files for use in simulation or prediction tools.
-
-- Command-line configurability with persistent YAML-based settings.
-
-- This tool is intended for researchers, data scientists, or modelers working with wildfire data
-pipelines, particularly those interested in integrating Earth Engine datasets into geospatial ML
-workflows.
-
-- The [Trello page](https://trello.com/b/eEd18oio/natrual-resource-management-lab) contains the current development status.
-
-## Refactored Pipeline Overview
-
-The project is transitioning to a configuration-first workflow. Instead of chaining many command
-line switches, users now supply a single YAML file that defines credential locations, working
-directories, and the dataset schema to assemble. Run the pipeline with:
+## Installation
+Clone the repository and install in editable mode:
 
 ```bash
-python -m ee_wildfire path/to/pipeline.yml
-```
-
-An example configuration file is provided in `docs/examples/pipeline.example.yml`. The schema lists
-datasets grouped by stage (index → Earth Engine → earthaccess → custom). Each dataset entry names a
-registered loader and its options. The index dataset (currently GlobFire) seeds the rest of the
-pipeline with fire start locations and dates.
-
-Refer to `docs/pipeline_design.md` for design notes during the refactor. Legacy CLI behaviour
-remains in the repository for reference although it will be retired once the new pipeline covers all
-use cases.
-
-# Prerequisite
-
- Requires at least python 3.10.
-
- As of mid-2023, Google Earth Engine access must be linked to a Google Cloud Project, even for
- free/non-commercial usage. So sign up for a [non-commercial earth engine account](https://earthengine.google.com/noncommercial/).
-
-# 🔐 Google API Setup Instructions
-
-To run this project with Google Earth Engine and Google Drive access, follow the steps below to create and configure your credentials.
-
----
-
-## Step 1. Create a Google Cloud Project
-- Go the [Google Cloud Console.](https://console.cloud.google.com/)
-- Click the project drop-down (top bar) -> **New Project**.
-- Name your project (eg., ee-wildfire) and click **Create**.
-
-## Step 2. Enable Required APIs
-- [Earth Engine API](https://console.cloud.google.com/flows/enableapi?apiid=earthengine.googleapis.com)
-- [Google Drive API](https://console.cloud.google.com/flows/enableapi?apiid=drive.googleapis.com)
-
-## Step 3. Create a Service Account
-- In the left sidebar: **IAM & Admin** → **Service Accounts**.
-- Click **+ Create Service Account**.
-- Name it (e.g., `wildfire-access`) and click **Create and Continue**.
-- Assign the following roles to the service account:
-  - Owner
-  - Service Usage Admin
-  - Service Usage Consumer
-  - Storage Admin
-  - Storage Object Creator
-- On the list, find your service account → Click **Actions (⋮)** → **Manage keys**.
-- Under **Keys**, click **Add Key → Create new key → JSON**.
-- Save the downloaded JSON file somewhere safe (e.g., `service_account.json`).
-
-## Step 4. Share Google Drive Folder
-If your code needs to read/write to Google Drive:
-
-- Create a folder in [Google Drive](https://drive.google.com/).
-- Right-click → **Share**.
-- Share it with your **service account email** (e.g., `your-sa@your-project.iam.gserviceaccount.com`).
-- Grant **Editor** permission.
-
----
-
-# Install Instructions
-
-For the stable build:
-```bash
-pip install ee-wildfire
-```
-
-For the experimental build:
-```bash
-git clone git@github.com:KylesCorner/Earth-Engine-Wildfire-Data.git
-cd Earth-Engine-Wildfire-Data
+git clone https://github.com/lorn-jaeger/raster-builder.git
+cd raster-builder
 pip install -e .
 ```
 
-# Configuration
-This program uses a YAML file for user configuration.
-
-Template for configuration:
+## Configuration
+A configuration file controls the entire pipeline. Key sections:
 
 ```yaml
-# NEEDED
-
-# You need a google cloud service account JSON, if not provided here the program
-# will prompt you for one
-credentials: ~/ee_wildfire_data/OAuth/credentials.json
-
-# OPTIONAL
-# These items have default values if not provided in YAML file.
-
-# Fire query
-min_size: 10000000.0
-
-max_size: 1000000000.0
-
-start_date: 2021-01-01 00:00:00
-
-end_date: 2021-04-20 00:00:00
-
-# Directories
-tiff_dir: ~/ee_wildfire_data/tiff
-
-data_dir: ~/ee_wildfire_data
-
-log_dir : ~/ee_wildfire_data/logs
-
-google_drive_dir: GoogleEarthEngine
-
-# Pipeline
-purge_before: false
-
-download: false
-
-export: false
-
-retry_failed: false
-
-purge_after: false
-
-# Logs
-no_log: false
-
-log_level: info # levels: debug, info, warn, error
-
-# Misc
-silent: false
+credentials:
+  earthengine_service_account: ./credentials/service_account.json
+  earthaccess_netrc: ~/.netrc
+paths:
+  raw_data: ./data/raw
+  processed_data: ./data/processed
+schema:
+  index:
+    dataset: globfire
+    options:
+      start_date: 2021-01-01
+      end_date: 2021-03-01
+      min_size: 1.0e7
+  earthengine:
+    - dataset: firepred_daily
+      options:
+        buffer_days: 4
+        utm_zone: 32610
+  earthaccess:
+    - dataset: example
+      options:
+        short_name: MYD11A2
+  custom: []
 ```
 
-To finish configuration you will need to use the `-config` command line argument.
+- `credentials`: absolute or config-relative paths to authentication material.
+- `paths`: directories created on demand for pipeline outputs.
+- `schema`: ordered dataset declarations. Each entry names a registered dataset and forwards `options`
+  to its loader. The `index` dataset seeds downstream stages.
 
+A working example lives at `docs/examples/pipeline.example.yml`.
 
-## Command-Line Interface (CLI)
-
-You can also edit configuration on the fly with command line arguments:
-
-| Argument | Parameters | Description |
-| -------- |------------|-------------|
-| `--version` | None | Show current version. |
-| `--config` | `PATH` | Path to YAML config file. Overrides all other command-line arguments. |
-| `--export` | None | Export data from Google Earth Engine to Google Drive. |
-| `--download` | None | Download data from Google Drive to your local machine. |
-| `--show-config` | None | Show user configuration. |
-| `--credentials` | `PATH` | Path to Google authentication `.json` service account file. |
-| `--data-dir` | `PATH` | Path to output data directory on your local machine. |
-| `--tiff-dir` | `PATH` | Path where downloaded `.tif` files are stored. |
-| `--google-drive-dir` | `str` | Name of your Google Drive folder for exporting. |
-| `--min-size` | `float` | Minimum size of fire area to detect (in hectares). |
-| `--max-size` | `float` | Maximum size of fire area to detect (in hectares). |
-| `--retry-failed` | None | Retry failed Earth Engine locations. |
-| `--purge-before` | None | Purge files from Google Drive before exporting new data. |
-| `--purge-after` | None | Purge files from Google Drive after downloading. |
-| `--start-date` | `datetime` | Starting date for Earth Engine query (e.g., `2020-01-01`). |
-| `--end-date` | `datetime` | Ending date for Earth Engine query (e.g., `2020-12-31`). |
-| `--silent` | None | No command line output. |
-| `--reset_config` | None | Resets internal YAML file to default values. |
-| `--no-log` | None | Disable logging. |
-| `--log-dir` | `PATH` | Directory where you want your logs files stored.|
-| `--log-level` | `'debug', 'info', 'warn', or 'error'` | Sets the level of verbosity for log files.|
-###  Basic Usage
+## Usage
+Run the pipeline by pointing to your YAML file:
 
 ```bash
-ee-wildfire --config /path/to/some/config.yml
+python -m raster_builder path/to/pipeline.yml
+# or, after installation with entry points
+raster-builder path/to/pipeline.yml
 ```
 
-```bash
-ee-wildfire --credentials PATH_TO_CREDS --export --download --min-size 10 --log-level warn
-```
+The command authenticates Google Earth Engine using the configured service account, loads the index
+stage, then executes Earth Engine, earthaccess, and custom stages in order. Outputs land in the
+configured directories (e.g., `data/raw/index/globfire/index.csv`).
 
-# Acknowledgements
+## Pipeline Stages
+- **index** – Produces the core table of fire events (currently GlobFire).
+- **earthengine** – Pulls imagery or rasters from Google Earth Engine for each indexed event.
+- **earthaccess** – Adds NASA Earthdata products (placeholder implementations supplied).
+- **custom** – Invokes user-provided callables for arbitrary enrichment.
 
-This project builds on work from the [WildfireSpreadTSCreateDataset](https://github.com/SebastianGer/WildfireSpreadTSCreateDataset). Credit to original authors for providing data, methods,
-and insights.
+Each stage is optional; omit the section from the schema to skip it. Custom datasets can reference any
+`module:function` path available on the Python path.
+
+## Development
+- Python 3.10+
+- Earth Engine API access with a linked Google Cloud project
+- Optional: NASA Earthdata credentials for `earthaccess`
+
+Design notes for the ongoing refactor are tracked in `docs/pipeline_design.md`.

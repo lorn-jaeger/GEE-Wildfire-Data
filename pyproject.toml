@@ -9,22 +9,19 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-ee_wildfire = ["config_options.yml"]
+raster_builder = []
 
 [project]
-name = "ee-wildfire"
+name = "raster-builder"
 # version is just the date that package is publish to PyPi: YYYY.MM.DD
 version = "2025.06.14"
-description = "Pulls data from Google Earth Engine, syncs it to Google Drive, and downloads files."
+description = "Configuration-first pipeline for assembling wildfire raster datasets."
 authors = [
-    { name = "Jake Bova", email = "developer.montana@gmail.com" },
-    { name = "Lorn Jaeger", email = "lornjaeger@proton.me" }, 
-    { name = "Kyle Krstulich", email = "kylekrstulich@gmail.com" },
+    { name = "Lorn Jaeger", email = "lornjaeger@proton.me" }
 ]
 
-maintainers = [ 
-    { name = "Kyle Krstulich", email = "kylekrstulich@gmail.com" },
-    { name = "Lorn Jaeger", email = "lornjaeger@proton.me" },
+maintainers = [
+    { name = "Lorn Jaeger", email = "lornjaeger@proton.me" }
 ]
 
 readme = "README.md"
@@ -38,32 +35,21 @@ classifiers = [
     "Programming Language :: Python"
 ]
 
-keywords = ["wildfire", "earth engine"]
+keywords = ["wildfire", "earth engine", "raster"]
 
 dependencies = [
 	"earthengine-api",
-	"tqdm",
-	"pandas",
-	"raster_tools",
 	"geopandas",
-	"shapely",
 	"numpy",
-	"geemap",
-	"tdqm",
-	"google-api-python-client",
-	"google-auth-httplib2",
-	"google-auth-oauthlib",
-	"setuptools",
-	"wheel",
-	"prompt_toolkit",
-	"colorama",
+	"pandas",
 	"PyYAML",
+	"shapely",
 ]
 
 
 [project.urls]
-Homepage = "https://github.com/KylesCorner/Earth-Engine-Wildfire-Data/tree/master"
-Issues = "https://github.com/KylesCorner/Earth-Engine-Wildfire-Data/issues"
+Homepage = "https://github.com/lorn-jaeger/raster-builder"
+Issues = "https://github.com/lorn-jaeger/raster-builder/issues"
 
 [project.scripts]
-ee-wildfire = "ee_wildfire.main:main"
+raster-builder = "raster_builder.main:main"
