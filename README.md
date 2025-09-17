@@ -18,6 +18,25 @@ workflows.
 
 - The [Trello page](https://trello.com/b/eEd18oio/natrual-resource-management-lab) contains the current development status.
 
+## Refactored Pipeline Overview
+
+The project is transitioning to a configuration-first workflow. Instead of chaining many command
+line switches, users now supply a single YAML file that defines credential locations, working
+directories, and the dataset schema to assemble. Run the pipeline with:
+
+```bash
+python -m ee_wildfire path/to/pipeline.yml
+```
+
+An example configuration file is provided in `docs/examples/pipeline.example.yml`. The schema lists
+datasets grouped by stage (index → Earth Engine → earthaccess → custom). Each dataset entry names a
+registered loader and its options. The index dataset (currently GlobFire) seeds the rest of the
+pipeline with fire start locations and dates.
+
+Refer to `docs/pipeline_design.md` for design notes during the refactor. Legacy CLI behaviour
+remains in the repository for reference although it will be retired once the new pipeline covers all
+use cases.
+
 # Prerequisite
 
  Requires at least python 3.10.
@@ -175,4 +194,3 @@ ee-wildfire --credentials PATH_TO_CREDS --export --download --min-size 10 --log-
 
 This project builds on work from the [WildfireSpreadTSCreateDataset](https://github.com/SebastianGer/WildfireSpreadTSCreateDataset). Credit to original authors for providing data, methods,
 and insights.
-
